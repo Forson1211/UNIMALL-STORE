@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -163,7 +163,8 @@ const Products = () => {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
               {filteredProducts.map((product) => (
-                <div
+                <Link
+                  to={`/products/${product.id}`}
                   key={product.id}
                   className="group bg-card rounded-2xl border border-border overflow-hidden hover:shadow-lg hover:border-primary/20 transition-all duration-300"
                 >
@@ -179,11 +180,14 @@ const Products = () => {
                         {Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
                       </span>
                     )}
-                    <button className="absolute top-3 right-3 w-9 h-9 bg-background/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-background hover:text-destructive">
+                    <button 
+                      className="absolute top-3 right-3 w-9 h-9 bg-background/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-background hover:text-destructive"
+                      onClick={(e) => e.preventDefault()}
+                    >
                       <Heart className="w-4 h-4" />
                     </button>
                     <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <Button size="sm" className="w-full" onClick={() => handleAddToCart(product)}>
+                      <Button size="sm" className="w-full" onClick={(e) => { e.preventDefault(); handleAddToCart(product); }}>
                         <ShoppingCart className="w-4 h-4 mr-2" />
                         Add to Cart
                       </Button>
@@ -208,7 +212,7 @@ const Products = () => {
                       )}
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
