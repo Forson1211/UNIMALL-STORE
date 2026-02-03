@@ -13,6 +13,22 @@ import HowItWorks from "./pages/HowItWorks";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 
+// Admin Pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminVendors from "./pages/admin/AdminVendors";
+import AdminProducts from "./pages/admin/AdminProducts";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminSettings from "./pages/admin/AdminSettings";
+
+// Vendor Pages
+import VendorDashboard from "./pages/vendor/VendorDashboard";
+import VendorProducts from "./pages/vendor/VendorProducts";
+import VendorOrders from "./pages/vendor/VendorOrders";
+import VendorAnalytics from "./pages/vendor/VendorAnalytics";
+import VendorSettings from "./pages/vendor/VendorSettings";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -30,6 +46,23 @@ const App = () => (
           <Route path="/about" element={<About />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/contact" element={<Contact />} />
+          
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/vendors" element={<AdminVendors />} />
+          <Route path="/admin/products" element={<AdminProducts />} />
+          <Route path="/admin/orders" element={<AdminOrders />} />
+          <Route path="/admin/analytics" element={<AdminAnalytics />} />
+          <Route path="/admin/settings" element={<AdminSettings />} />
+          
+          {/* Vendor Routes */}
+          <Route path="/vendor" element={<VendorDashboard />} />
+          <Route path="/vendor/products" element={<VendorProducts />} />
+          <Route path="/vendor/orders" element={<VendorOrders />} />
+          <Route path="/vendor/analytics" element={<VendorAnalytics />} />
+          <Route path="/vendor/settings" element={<VendorSettings />} />
+          
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
