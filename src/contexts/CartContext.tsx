@@ -48,7 +48,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       return [...prev, { ...newItem, quantity: 1 }];
     });
-    setIsOpen(true);
+    // Don't auto-open cart drawer when adding items
   };
 
   const removeItem = (id: string) => {

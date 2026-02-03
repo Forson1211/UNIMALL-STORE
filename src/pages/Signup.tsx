@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ const Signup = () => {
   const [searchParams] = useSearchParams();
   const initialRole = searchParams.get("role") === "vendor" ? "vendor" : "buyer";
   
-  const [role, setRole] = useState<"buyer" | "vendor">(initialRole);
+  const [selectedRole, setSelectedRole] = useState<"buyer" | "vendor">(initialRole);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,9 +20,22 @@ const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   
-  const { signUp } = useAuth();
+  const { signUp, user, role, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Redirect already logged-in users
+  useEffect(() => {
+    if (!authLoading && user && role) {
+      if (role === "admin") {
+        navigate("/admin", { replace: true });
+      } else if (role === "vendor") {
+        navigate("/vendor", { replace: true });
+      } else {
+        navigate("/account", { replace: true });
+      }
+    }
+  }, [user, role, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,8 +64,8 @@ const Signup = () => {
       email,
       password,
       fullName,
-      role,
-      role === "vendor" ? storeName : undefined
+      selectedRole,
+      selectedRole === "vendor" ? storeName : undefined
     );
 
     if (error) {
@@ -64,7 +77,7 @@ const Signup = () => {
     } else {
       toast({
         title: "Account created!",
-        description: "Please check your email to verify your account.",
+        description: "Please check your email to verify your account, then log in.",
       });
       navigate("/login");
     }
@@ -98,27 +111,27 @@ const Signup = () => {
           <div className="grid grid-cols-2 gap-4 mb-8">
             <button
               type="button"
-              onClick={() => setRole("buyer")}
+              onClick={() => setSelectedRole("buyer")}
               className={`p-4 rounded-2xl border-2 transition-all duration-300 text-left ${
-                role === "buyer"
+                selectedRole === "buyer"
                   ? "border-primary bg-accent"
                   : "border-border hover:border-primary/50"
               }`}
             >
-              <ShoppingCart className={`w-6 h-6 mb-2 ${role === "buyer" ? "text-primary" : "text-muted-foreground"}`} />
+              <ShoppingCart className={`w-6 h-6 mb-2 ${selectedRole === "buyer" ? "text-primary" : "text-muted-foreground"}`} />
               <p className="font-semibold text-foreground">Buyer</p>
               <p className="text-sm text-muted-foreground">Shop products</p>
             </button>
             <button
               type="button"
-              onClick={() => setRole("vendor")}
+              onClick={() => setSelectedRole("vendor")}
               className={`p-4 rounded-2xl border-2 transition-all duration-300 text-left ${
-                role === "vendor"
+                selectedRole === "vendor"
                   ? "border-primary bg-accent"
                   : "border-border hover:border-primary/50"
               }`}
             >
-              <Store className={`w-6 h-6 mb-2 ${role === "vendor" ? "text-primary" : "text-muted-foreground"}`} />
+              <Store className={`w-6 h-6 mb-2 ${selectedRole === "vendor" ? "text-primary" : "text-muted-foreground"}`} />
               <p className="font-semibold text-foreground">Vendor</p>
               <p className="text-sm text-muted-foreground">Sell products</p>
             </button>
@@ -184,7 +197,7 @@ const Signup = () => {
               </p>
             </div>
 
-            {role === "vendor" && (
+            {selectedRole === "vendor" && (
               <div className="space-y-2">
                 <Label htmlFor="storeName">Store name</Label>
                 <div className="relative">
@@ -219,7 +232,7 @@ const Signup = () => {
             </div>
 
             <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating account..." : `Create ${role === "vendor" ? "Vendor" : "Buyer"} Account`}
+              {isLoading ? "Creating account..." : `Create ${selectedRole === "vendor" ? "Vendor" : "Buyer"} Account`}
               <ArrowRight className="w-5 h-5" />
             </Button>
           </form>
@@ -263,13 +276,13 @@ const Signup = () => {
         
         <div className="relative z-10 text-center text-white max-w-lg">
           <div className="w-20 h-20 rounded-3xl bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-8">
-            {role === "vendor" ? <Store className="w-10 h-10" /> : <ShoppingCart className="w-10 h-10" />}
+            {selectedRole === "vendor" ? <Store className="w-10 h-10" /> : <ShoppingCart className="w-10 h-10" />}
           </div>
           <h2 className="text-4xl font-bold mb-4">
-            {role === "vendor" ? "Start Selling Today" : "Start Shopping Today"}
+            {selectedRole === "vendor" ? "Start Selling Today" : "Start Shopping Today"}
           </h2>
           <p className="text-xl text-white/80">
-            {role === "vendor"
+            {selectedRole === "vendor"
               ? "Join hundreds of student entrepreneurs already earning on Unimall."
               : "Discover amazing products from vendors right on your campus."}
           </p>

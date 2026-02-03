@@ -9,9 +9,11 @@ import { CartProvider } from "@/contexts/CartContext";
 import { SearchProvider } from "@/contexts/SearchContext";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { SearchDialog } from "@/components/search/SearchDialog";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 import Index from "./pages/Index";
 import Products from "./pages/Products";
+import ProductDetail from "./pages/ProductDetail";
 import Vendors from "./pages/Vendors";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -57,8 +59,10 @@ const App = () => (
                 <CartDrawer />
                 <SearchDialog />
                 <Routes>
+                  {/* Public Routes */}
                   <Route path="/" element={<Index />} />
                   <Route path="/products" element={<Products />} />
+                  <Route path="/products/:id" element={<ProductDetail />} />
                   <Route path="/vendors" element={<Vendors />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
@@ -67,26 +71,86 @@ const App = () => (
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/checkout" element={<Checkout />} />
                   
-                  {/* Buyer Account Routes */}
-                  <Route path="/account" element={<BuyerAccount />} />
-                  <Route path="/account/orders" element={<BuyerOrders />} />
-                  <Route path="/account/wishlist" element={<BuyerWishlist />} />
+                  {/* Buyer Account Routes - Protected for authenticated users */}
+                  <Route path="/account" element={
+                    <ProtectedRoute>
+                      <BuyerAccount />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/account/orders" element={
+                    <ProtectedRoute>
+                      <BuyerOrders />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/account/wishlist" element={
+                    <ProtectedRoute>
+                      <BuyerWishlist />
+                    </ProtectedRoute>
+                  } />
                   
-                  {/* Admin Routes */}
-                  <Route path="/admin" element={<AdminDashboard />} />
-                  <Route path="/admin/users" element={<AdminUsers />} />
-                  <Route path="/admin/vendors" element={<AdminVendors />} />
-                  <Route path="/admin/products" element={<AdminProducts />} />
-                  <Route path="/admin/orders" element={<AdminOrders />} />
-                  <Route path="/admin/analytics" element={<AdminAnalytics />} />
-                  <Route path="/admin/settings" element={<AdminSettings />} />
+                  {/* Admin Routes - Protected for admin role only */}
+                  <Route path="/admin" element={
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/users" element={
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                      <AdminUsers />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/vendors" element={
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                      <AdminVendors />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/products" element={
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                      <AdminProducts />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/orders" element={
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                      <AdminOrders />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/analytics" element={
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                      <AdminAnalytics />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/settings" element={
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                      <AdminSettings />
+                    </ProtectedRoute>
+                  } />
                   
-                  {/* Vendor Routes */}
-                  <Route path="/vendor" element={<VendorDashboard />} />
-                  <Route path="/vendor/products" element={<VendorProducts />} />
-                  <Route path="/vendor/orders" element={<VendorOrders />} />
-                  <Route path="/vendor/analytics" element={<VendorAnalytics />} />
-                  <Route path="/vendor/settings" element={<VendorSettings />} />
+                  {/* Vendor Routes - Protected for vendor role only */}
+                  <Route path="/vendor" element={
+                    <ProtectedRoute allowedRoles={["vendor"]}>
+                      <VendorDashboard />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/vendor/products" element={
+                    <ProtectedRoute allowedRoles={["vendor"]}>
+                      <VendorProducts />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/vendor/orders" element={
+                    <ProtectedRoute allowedRoles={["vendor"]}>
+                      <VendorOrders />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/vendor/analytics" element={
+                    <ProtectedRoute allowedRoles={["vendor"]}>
+                      <VendorAnalytics />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/vendor/settings" element={
+                    <ProtectedRoute allowedRoles={["vendor"]}>
+                      <VendorSettings />
+                    </ProtectedRoute>
+                  } />
                   
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />

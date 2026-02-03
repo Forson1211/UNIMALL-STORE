@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,9 +12,29 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, role } = useAuth();
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const { signIn, role, user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Redirect logged-in users based on their role
+  useEffect(() => {
+    if (!authLoading && user && role && !isRedirecting) {
+      setIsRedirecting(true);
+      const from = (location.state as any)?.from?.pathname;
+      
+      if (from) {
+        navigate(from, { replace: true });
+      } else if (role === "admin") {
+        navigate("/admin", { replace: true });
+      } else if (role === "vendor") {
+        navigate("/vendor", { replace: true });
+      } else {
+        navigate("/account", { replace: true });
+      }
+    }
+  }, [user, role, authLoading, navigate, location, isRedirecting]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,18 +49,8 @@ const Login = () => {
         variant: "destructive",
       });
       setIsLoading(false);
-    } else {
-      // Navigate based on role after successful login
-      setTimeout(() => {
-        if (role === "admin") {
-          navigate("/admin");
-        } else if (role === "vendor") {
-          navigate("/vendor");
-        } else {
-          navigate("/");
-        }
-      }, 100);
     }
+    // Redirect will happen via useEffect when role is loaded
   };
 
   return (
