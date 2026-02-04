@@ -1,18 +1,21 @@
 import { ShoppingCart, Store, Shield, Truck, CreditCard, MessageSquare } from "lucide-react";
+import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 
 const FeaturesSection = () => {
+  const { siteName } = useSiteSettingsContext();
+
   const features = [
     {
       icon: ShoppingCart,
       title: "Easy Shopping",
       description: "Browse products from verified campus vendors with just a few clicks.",
-      color: "bg-emerald-light text-emerald",
+      color: "bg-primary/10 text-primary",
     },
     {
       icon: Store,
       title: "Start Selling",
       description: "Set up your store in minutes and reach thousands of students on your campus.",
-      color: "bg-coral-light text-coral",
+      color: "bg-secondary/10 text-secondary",
     },
     {
       icon: Shield,
@@ -24,13 +27,13 @@ const FeaturesSection = () => {
       icon: Truck,
       title: "Campus Delivery",
       description: "Fast and convenient delivery right to your campus location.",
-      color: "bg-emerald-light text-emerald",
+      color: "bg-primary/10 text-primary",
     },
     {
       icon: CreditCard,
       title: "Mobile Money",
       description: "Pay easily with MoMo, cards, or other payment methods you trust.",
-      color: "bg-coral-light text-coral",
+      color: "bg-secondary/10 text-secondary",
     },
     {
       icon: MessageSquare,
@@ -46,7 +49,7 @@ const FeaturesSection = () => {
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-16">
           <span className="inline-block px-4 py-1.5 bg-accent text-accent-foreground text-sm font-medium rounded-full mb-4">
-            Why Unimall?
+            Why {siteName}?
           </span>
           <h2 className="text-3xl lg:text-5xl font-bold text-foreground mb-4">
             Everything You Need to

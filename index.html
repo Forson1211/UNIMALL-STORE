@@ -1,26 +1,60 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- TODO: Set the document title to the name of your application -->
-    <title>Lovable App</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
 
-    <!-- TODO: Update og:title to match your application name -->
-    <meta property="og:title" content="Lovable App" />
-    <meta property="og:description" content="Lovable Generated Project" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unimall - Your Campus Marketplace</title>
+  <meta name="description"
+    content="Unimall is a modern multi-vendor e-commerce platform designed for tertiary institution students to buy and sell products on campus." />
+  <meta name="author" content="Unimall" />
+  <meta name="keywords"
+    content="campus marketplace, student shopping, university marketplace, campus e-commerce, student vendors" />
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Lovable" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-  </head>
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:title" content="Unimall - Your Campus Marketplace" />
+  <meta property="og:description"
+    content="Buy and sell products on campus with Unimall - the ultimate student marketplace platform" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="/og-image.png" />
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+  <!-- Twitter Card Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@Unimall" />
+  <meta name="twitter:title" content="Unimall - Your Campus Marketplace" />
+  <meta name="twitter:description" content="Buy and sell products on campus with Unimall" />
+  <meta name="twitter:image" content="/og-image.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=Lexend:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Open+Sans:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Lato:wght@300;400;700&family=Ubuntu:wght@300;400;500;700&family=Merriweather:wght@300;400;700&family=Oswald:wght@200;300;400;500;600;700&family=Nunito:wght@200;300;400;500;600;700&family=Sora:wght@100;200;300;400;500;600;700;800&family=Kanit:wght@100;200;300;400;500;600;700&family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&family=Cormorant+Garamond:wght@300;400;500;600;700&family=Manrope:wght@200;300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <!-- Critical CSS to prevent FOUC -->
+  <style>
+    :root {
+      --background: 0 0% 99%;
+      --foreground: 210 20% 12%;
+      --primary: 25 95% 53%;
+      --border: 210 20% 90%;
+    }
+
+    body {
+      background-color: hsl(0 0% 99%);
+      margin: 0;
+    }
+
+    #root {
+      min-height: 100vh;
+    }
+  </style>
+
+</head>
+
+<body style="background-color: #fcfcfc; margin: 0;">
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

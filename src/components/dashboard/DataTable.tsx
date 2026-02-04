@@ -29,6 +29,7 @@ interface DataTableProps<T> {
   pageSize?: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function DataTable<T extends Record<string, any>>({
   title,
   data,
@@ -45,7 +46,7 @@ export function DataTable<T extends Record<string, any>>({
 
   const filteredData = useMemo(() => {
     let result = [...data];
-    
+
     if (search && searchKey) {
       result = result.filter((item) =>
         String(item[searchKey]).toLowerCase().includes(search.toLowerCase())

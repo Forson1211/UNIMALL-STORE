@@ -7,7 +7,7 @@ const CTASection = () => {
     <section className="py-20 lg:py-32 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-hero" />
-      
+
       {/* Decorative Circles */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
       <div className="absolute bottom-0 right-0 w-80 h-80 bg-white/5 rounded-full translate-x-1/2 translate-y-1/2" />
@@ -34,8 +34,8 @@ const CTASection = () => {
           </div>
 
           {/* Vendor CTA */}
-          <div className="bg-coral/20 backdrop-blur-lg rounded-3xl p-8 lg:p-10 border border-coral/30">
-            <div className="w-16 h-16 rounded-2xl bg-coral/30 flex items-center justify-center mb-6">
+          <div className="bg-primary/10 backdrop-blur-lg rounded-3xl p-8 lg:p-10 border border-primary/20">
+            <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center mb-6">
               <Store className="w-8 h-8 text-white" />
             </div>
             <h3 className="text-2xl lg:text-3xl font-bold text-white mb-4">

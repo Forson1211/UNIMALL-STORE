@@ -4,7 +4,98 @@
 
 /* Unimall Design System - Campus Marketplace */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+/* Font Utility Classes */
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
+
+.font-roboto {
+  font-family: 'Roboto', sans-serif;
+}
+
+.font-open-sans {
+  font-family: 'Open Sans', sans-serif;
+}
+
+.font-poppins {
+  font-family: 'Poppins', sans-serif;
+}
+
+.font-montserrat {
+  font-family: 'Montserrat', sans-serif;
+}
+
+.font-jakarta {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.font-outfit {
+  font-family: 'Outfit', sans-serif;
+}
+
+.font-lexend {
+  font-family: 'Lexend', sans-serif;
+}
+
+.font-space {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.font-bebas {
+  font-family: 'Bebas Neue', cursive;
+}
+
+.font-raleway {
+  font-family: 'Raleway', sans-serif;
+}
+
+.font-playfair {
+  font-family: 'Playfair Display', serif;
+}
+
+.font-lato {
+  font-family: 'Lato', sans-serif;
+}
+
+.font-ubuntu {
+  font-family: 'Ubuntu', sans-serif;
+}
+
+.font-merriweather {
+  font-family: 'Merriweather', serif;
+}
+
+.font-oswald {
+  font-family: 'Oswald', sans-serif;
+}
+
+.font-nunito {
+  font-family: 'Nunito', sans-serif;
+}
+
+.font-sora {
+  font-family: 'Sora', sans-serif;
+}
+
+.font-kanit {
+  font-family: 'Kanit', sans-serif;
+}
+
+.font-syne {
+  font-family: 'Syne', sans-serif;
+}
+
+.font-dmsans {
+  font-family: 'DM Sans', sans-serif;
+}
+
+.font-cormorant {
+  font-family: 'Cormorant Garamond', serif;
+}
+
+.font-manrope {
+  font-family: 'Manrope', sans-serif;
+}
 
 @layer base {
   :root {
@@ -18,58 +109,65 @@
     --popover: 0 0% 100%;
     --popover-foreground: 210 20% 12%;
 
-    /* Emerald Green - Growth & Campus */
-    --primary: 160 84% 39%;
+    /* Orange - Primary Brand */
+    --primary: 25 95% 53%;
     --primary-foreground: 0 0% 100%;
 
-    /* Warm Coral - Energy & Youth */
-    --secondary: 16 85% 65%;
+    /* Darker Orange - Secondary */
+    --secondary: 15 90% 48%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 210 20% 96%;
     --muted-foreground: 210 15% 45%;
 
-    --accent: 160 60% 95%;
-    --accent-foreground: 160 84% 30%;
+    --accent: 25 60% 95%;
+    --accent-foreground: 25 84% 30%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 210 20% 90%;
     --input: 210 20% 90%;
-    --ring: 160 84% 39%;
+    --ring: var(--primary);
 
     --radius: 0.75rem;
 
     /* Custom Unimall colors */
-    --emerald: 160 84% 39%;
-    --emerald-light: 160 60% 95%;
-    --emerald-dark: 160 84% 30%;
-    --coral: 16 85% 65%;
+    --header-background: 0 0% 100%;
+    --header-foreground: 210 20% 12%;
+    --footer-background: 215 25% 15%;
+    --footer-foreground: 0 0% 100%;
+    --font-family: 'Plus Jakarta Sans', sans-serif;
+    --container-max-width: 1280px;
+
+    --emerald: var(--primary);
+    --emerald-light: 25 90% 95%;
+    --emerald-dark: 25 95% 40%;
+    --coral: var(--secondary);
     --coral-light: 16 85% 92%;
     --gold: 45 93% 58%;
     --navy: 220 40% 20%;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(160 84% 39%), hsl(170 80% 45%));
-    --gradient-hero: linear-gradient(135deg, hsl(160 84% 39%) 0%, hsl(180 70% 45%) 50%, hsl(200 80% 50%) 100%);
-    --gradient-warm: linear-gradient(135deg, hsl(16 85% 65%), hsl(30 90% 60%));
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(160 30% 98%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+    --gradient-warm: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--primary)));
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(var(--accent) / 0.05) 100%);
 
     /* Shadows */
     --shadow-sm: 0 2px 8px -2px hsl(210 20% 12% / 0.08);
     --shadow-md: 0 8px 24px -4px hsl(210 20% 12% / 0.12);
     --shadow-lg: 0 16px 48px -8px hsl(210 20% 12% / 0.15);
-    --shadow-glow: 0 0 40px hsl(160 84% 39% / 0.2);
+    --shadow-glow: 0 0 40px hsl(var(--primary) / 0.2);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 160 84% 39%;
+    --sidebar-primary: var(--primary);
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 160 60% 95%;
-    --sidebar-accent-foreground: 160 84% 30%;
+    --sidebar-accent: 25 60% 95%;
+    --sidebar-accent-foreground: 25 84% 30%;
     --sidebar-border: 210 20% 90%;
-    --sidebar-ring: 160 84% 39%;
+    --sidebar-ring: var(--primary);
   }
 
   .dark {
@@ -82,8 +180,8 @@
     --popover: 220 25% 12%;
     --popover-foreground: 0 0% 95%;
 
-    --primary: 160 70% 50%;
-    --primary-foreground: 220 25% 8%;
+    --primary: 25 95% 53%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 16 75% 55%;
     --secondary-foreground: 0 0% 100%;
@@ -91,32 +189,37 @@
     --muted: 220 20% 18%;
     --muted-foreground: 210 15% 60%;
 
-    --accent: 160 40% 20%;
-    --accent-foreground: 160 70% 60%;
+    --accent: 25 40% 20%;
+    --accent-foreground: 25 70% 60%;
 
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 220 20% 20%;
     --input: 220 20% 20%;
-    --ring: 160 70% 50%;
+    --ring: var(--primary);
 
-    --emerald: 160 70% 50%;
-    --emerald-light: 160 40% 20%;
-    --emerald-dark: 160 70% 40%;
-    --coral: 16 75% 55%;
+    --emerald: var(--primary);
+    --emerald-light: 25 40% 20%;
+    --emerald-dark: 25 70% 40%;
+    --coral: var(--secondary);
     --coral-light: 16 40% 20%;
     --gold: 45 80% 50%;
     --navy: 220 40% 95%;
 
     --sidebar-background: 220 25% 10%;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 160 70% 50%;
+    --sidebar-primary: var(--primary);
     --sidebar-primary-foreground: 220 25% 8%;
-    --sidebar-accent: 160 40% 20%;
-    --sidebar-accent-foreground: 160 70% 60%;
+    --sidebar-accent: 25 40% 20%;
+    --sidebar-accent-foreground: 25 70% 60%;
     --sidebar-border: 220 20% 20%;
-    --sidebar-ring: 160 70% 50%;
+    --sidebar-ring: var(--primary);
+
+    --header-background: 220 25% 8%;
+    --header-foreground: 0 0% 95%;
+    --footer-background: 220 25% 10%;
+    --footer-foreground: 0 0% 95%;
   }
 }
 
@@ -127,10 +230,20 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: var(--font-family);
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  /* Force container to respect the custom max-width if set */
+  .container {
+    max-width: var(--container-max-width) !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-bold tracking-tight;
   }
 }
@@ -183,13 +296,27 @@
   }
 
   @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
+
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+
+    50% {
+      transform: translateY(-20px);
+    }
   }
 
   @keyframes pulse-soft {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.8; }
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.8;
+    }
   }
 
   .glass {
@@ -198,5 +325,18 @@
 
   .glass-dark {
     @apply bg-black/20 backdrop-blur-lg border border-white/10;
+  }
+
+  .bg-header {
+    background-color: hsl(var(--header-background) / 0.95);
+  }
+
+  .bg-footer {
+    background-color: hsl(var(--footer-background));
+  }
+
+  .no-animations * {
+    transition: none !important;
+    animation: none !important;
   }
 }

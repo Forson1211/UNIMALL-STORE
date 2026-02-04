@@ -19,7 +19,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
+        sans: ["var(--font-family)", "Plus Jakarta Sans", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -131,5 +131,6 @@ export default {
       },
     },
   },
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   plugins: [require("tailwindcss-animate")],
 } satisfies Config;

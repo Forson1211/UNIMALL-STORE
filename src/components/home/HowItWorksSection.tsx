@@ -1,13 +1,16 @@
 import { UserPlus, Search, ShoppingBag, Truck, Store, Package, BarChart3, Wallet } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 
 const HowItWorksSection = () => {
+  const { siteName } = useSiteSettingsContext();
+
   const buyerSteps = [
     {
       icon: UserPlus,
       step: "01",
       title: "Create Account",
-      description: "Sign up with your student email and join the Unimall community.",
+      description: `Sign up with your student email and join the ${siteName} community.`,
     },
     {
       icon: Search,
@@ -56,24 +59,24 @@ const HowItWorksSection = () => {
     },
   ];
 
-  const StepCard = ({ step, index }: { step: typeof buyerSteps[0]; index: number }) => (
+  const StepCard = ({ step, index }: { step: any; index: number }) => (
     <div className="relative">
       {/* Connector Line */}
       {index < 3 && (
         <div className="hidden lg:block absolute top-14 left-[calc(50%+3.5rem)] w-[calc(100%-3.5rem)] h-0.5 bg-gradient-to-r from-primary/30 to-primary/10" />
       )}
-      
+
       <div className="relative flex flex-col items-center text-center p-6">
         {/* Step Number */}
-        <div className="absolute -top-2 -right-2 w-8 h-8 bg-coral text-secondary-foreground text-sm font-bold rounded-full flex items-center justify-center">
+        <div className="absolute -top-2 -right-2 w-8 h-8 bg-primary text-primary-foreground text-sm font-bold rounded-full flex items-center justify-center">
           {step.step}
         </div>
-        
+
         {/* Icon */}
-        <div className="w-28 h-28 rounded-3xl bg-gradient-primary flex items-center justify-center mb-6 shadow-lg shadow-primary/20">
+        <div className="w-28 h-28 rounded-3xl bg-primary flex items-center justify-center mb-6 shadow-lg shadow-primary/20">
           <step.icon className="w-12 h-12 text-primary-foreground" />
         </div>
-        
+
         {/* Content */}
         <h3 className="text-xl font-semibold text-foreground mb-2">{step.title}</h3>
         <p className="text-muted-foreground text-sm max-w-[250px]">{step.description}</p>
@@ -90,7 +93,7 @@ const HowItWorksSection = () => {
             Simple Steps
           </span>
           <h2 className="text-3xl lg:text-5xl font-bold text-foreground mb-4">
-            How <span className="text-gradient-primary">Unimall</span> Works
+            How <span className="text-primary">{siteName}</span> Works
           </h2>
           <p className="text-muted-foreground text-lg">
             Whether you're buying or selling, we've made the process incredibly simple.
@@ -107,7 +110,7 @@ const HowItWorksSection = () => {
               For Vendors
             </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="buyer" className="mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {buyerSteps.map((step, index) => (
@@ -115,7 +118,7 @@ const HowItWorksSection = () => {
               ))}
             </div>
           </TabsContent>
-          
+
           <TabsContent value="vendor" className="mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {vendorSteps.map((step, index) => (

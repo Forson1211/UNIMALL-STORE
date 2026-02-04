@@ -7,15 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Mail, Phone, MapPin, Package, Heart, Settings, LogOut } from "lucide-react";
+import { User, Mail, Phone, MapPin, Package, Heart, Settings, LogOut, ShieldAlert, Store } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 const BuyerAccount = () => {
-  const { user, profile, signOut, updateProfile } = useAuth();
+  const { user, profile, role, signOut, updateProfile, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || "",
     phone: profile?.phone || "",
@@ -30,7 +30,7 @@ const BuyerAccount = () => {
   };
 
   const handleSave = async () => {
-    setIsLoading(true);
+    setIsSaving(true);
     const { error } = await updateProfile(formData);
     if (error) {
       toast({
@@ -39,8 +39,16 @@ const BuyerAccount = () => {
         variant: "destructive",
       });
     }
-    setIsLoading(false);
+    setIsSaving(false);
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -65,7 +73,7 @@ const BuyerAccount = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-4xl">
           {/* Header */}
@@ -109,7 +117,37 @@ const BuyerAccount = () => {
                 </CardContent>
               </Card>
             </Link>
-            <Card 
+            {role === "admin" && (
+              <Link to="/admin">
+                <Card className="border-primary/50 hover:border-primary transition-all cursor-pointer h-full bg-primary/5">
+                  <CardContent className="p-6 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                      <ShieldAlert className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-primary">Admin Dashboard</p>
+                      <p className="text-sm text-muted-foreground">Manage platform</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            )}
+            {role === "vendor" && (
+              <Link to="/vendor">
+                <Card className="border-primary/50 hover:border-primary transition-all cursor-pointer h-full bg-primary/5">
+                  <CardContent className="p-6 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                      <Store className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-primary">Vendor Portal</p>
+                      <p className="text-sm text-muted-foreground">Manage your store</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            )}
+            <Card
               className="hover:border-destructive transition-colors cursor-pointer"
               onClick={signOut}
             >
@@ -195,8 +233,8 @@ const BuyerAccount = () => {
                     </div>
                   </div>
                 </div>
-                <Button onClick={handleSave} disabled={isLoading}>
-                  {isLoading ? "Saving..." : "Save Changes"}
+                <Button onClick={handleSave} disabled={isSaving}>
+                  {isSaving ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
             </CardContent>

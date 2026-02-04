@@ -84,7 +84,7 @@ const ProductCard = ({ product, showDiscount = false }: { product: Product; show
             NEW
           </span>
         )}
-        <button 
+        <button
           className="absolute top-3 right-3 w-9 h-9 bg-background/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-background hover:text-destructive"
           onClick={(e) => e.preventDefault()}
         >

@@ -44,12 +44,12 @@ const CategoriesSection = () => {
             >
               {/* Gradient Background on Hover */}
               <div className={`absolute inset-0 bg-gradient-to-br ${category.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
-              
+
               {/* Icon */}
               <div className={`w-14 h-14 lg:w-16 lg:h-16 rounded-2xl bg-gradient-to-br ${category.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
                 <category.icon className="w-7 h-7 lg:w-8 lg:h-8 text-white" />
               </div>
-              
+
               {/* Content */}
               <h3 className="text-lg font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
                 {category.name}

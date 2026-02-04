@@ -73,9 +73,9 @@ export const salesData: SalesData[] = [
 
 // Category Distribution
 export const categoryData: CategoryData[] = [
-  { name: 'Electronics', value: 35, fill: 'hsl(var(--primary))' },
-  { name: 'Books', value: 25, fill: 'hsl(var(--secondary))' },
-  { name: 'Fashion', value: 20, fill: 'hsl(var(--gold))' },
-  { name: 'Stationery', value: 12, fill: 'hsl(var(--emerald-dark))' },
-  { name: 'Food', value: 8, fill: 'hsl(var(--coral))' },
+  { name: 'Electronics', value: 35, fill: '#3b82f6' }, // Blue
+  { name: 'Books', value: 25, fill: '#8b5cf6' }, // Purple
+  { name: 'Fashion', value: 20, fill: '#ec4899' }, // Pink
+  { name: 'Stationery', value: 12, fill: '#10b981' }, // Green
+  { name: 'Food', value: 8, fill: '#f97316' }, // Orange
 ];

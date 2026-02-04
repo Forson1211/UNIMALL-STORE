@@ -2,8 +2,10 @@ import { Link } from "react-router-dom";
 import { ShoppingBag, Facebook, Twitter, Instagram, Youtube, Mail, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 
 const Footer = () => {
+  const { siteName, siteTagline, logoUrl } = useSiteSettingsContext();
   const quickLinks = [
     { name: "Home", path: "/" },
     { name: "Shop", path: "/products" },
@@ -33,7 +35,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-foreground text-background">
+    <footer className="bg-footer text-[hsl(var(--footer-foreground))]">
       {/* Newsletter Section */}
       <div className="border-b border-background/10">
         <div className="container mx-auto px-4 py-12">
@@ -66,15 +68,19 @@ const Footer = () => {
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
-                <ShoppingBag className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-bold">Unimall</span>
+              {logoUrl ? (
+                <img src={logoUrl} alt={siteName} className="w-10 h-10 object-contain" />
+              ) : (
+                <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
+                  <ShoppingBag className="w-5 h-5 text-primary-foreground" />
+                </div>
+              )}
+              <span className="text-xl font-bold">{siteName}</span>
             </Link>
-            <p className="text-lg font-medium text-primary mb-2">Your Campus Marketplace</p>
+            <p className="text-lg font-medium text-primary mb-2">{siteTagline}</p>
             <p className="text-background/60 text-sm leading-relaxed max-w-sm">
-              Connecting students across campuses to buy and sell products safely. 
-              Join thousands of students already trading on Unimall.
+              Connecting students across campuses to buy and sell products safely.
+              Join thousands of students already trading on {siteName}.
             </p>
             <div className="flex gap-3 mt-6">
               {socialLinks.map((social) => (
@@ -147,7 +153,7 @@ const Footer = () => {
       <div className="border-t border-background/10">
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-background/50">
-            <p>© {new Date().getFullYear()} Unimall. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} {siteName}. All rights reserved.</p>
             <p>Made with ❤️ for students, by students</p>
           </div>
         </div>

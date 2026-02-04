@@ -25,7 +25,17 @@ import {
   ShoppingBag,
   ChevronLeft,
   ChevronRight,
+  Palette,
+  FileText,
+  Bell,
+  CreditCard,
+  Star,
+  Ticket,
+  MessageSquare,
+  LifeBuoy,
+  Scroll,
 } from "lucide-react";
+import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 
 interface DashboardSidebarProps {
   type: 'admin' | 'vendor';
@@ -37,7 +47,16 @@ const adminMenuItems = [
   { title: "Vendors", url: "/admin/vendors", icon: Store },
   { title: "Products", url: "/admin/products", icon: Package },
   { title: "Orders", url: "/admin/orders", icon: ShoppingCart },
+  { title: "Transactions", url: "/admin/transactions", icon: CreditCard },
+  { title: "Reviews", url: "/admin/reviews", icon: Star },
+  { title: "Coupons", url: "/admin/coupons", icon: Ticket },
+  { title: "Messages", url: "/admin/messages", icon: MessageSquare },
+  { title: "Content Management", url: "/admin/content", icon: FileText },
+  { title: "Site Customization", url: "/admin/site-customization", icon: Palette },
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
+  { title: "Notifications", url: "/admin/notifications", icon: Bell },
+  { title: "Support Tickets", url: "/admin/support", icon: LifeBuoy },
+  { title: "System Logs", url: "/admin/logs", icon: Scroll },
   { title: "Settings", url: "/admin/settings", icon: Settings },
 ];
 
@@ -54,6 +73,7 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
   const menuItems = type === 'admin' ? adminMenuItems : vendorMenuItems;
+  const { siteName, logoUrl } = useSiteSettingsContext();
 
   const isActive = (path: string) => {
     if (path === `/${type}`) {
@@ -66,12 +86,16 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
     <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-md shrink-0">
-            <ShoppingBag className="w-5 h-5 text-primary-foreground" />
-          </div>
+          {logoUrl ? (
+            <img src={logoUrl} alt={siteName} className="w-10 h-10 rounded-xl object-contain bg-background" />
+          ) : (
+            <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-md shrink-0">
+              <ShoppingBag className="w-5 h-5 text-primary-foreground" />
+            </div>
+          )}
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="text-lg font-bold text-gradient-primary">Unimall</span>
+              <span className="text-lg font-bold text-gradient-primary">{siteName}</span>
               <span className="text-xs text-muted-foreground capitalize">{type} Portal</span>
             </div>
           )}
