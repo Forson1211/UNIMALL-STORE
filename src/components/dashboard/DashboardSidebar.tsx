@@ -70,7 +70,7 @@ const vendorMenuItems = [
 
 export function DashboardSidebar({ type }: DashboardSidebarProps) {
   const location = useLocation();
-  const { state, toggleSidebar } = useSidebar();
+  const { state, toggleSidebar, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const menuItems = type === 'admin' ? adminMenuItems : vendorMenuItems;
   const { siteName, logoUrl } = useSiteSettingsContext();
@@ -82,10 +82,16 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
     return location.pathname.startsWith(path);
   };
 
+  const handleMobileClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   return (
     <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border p-4">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2" onClick={handleMobileClick}>
           {logoUrl ? (
             <img src={logoUrl} alt={siteName} className="w-10 h-10 rounded-xl object-contain bg-background" />
           ) : (
@@ -115,6 +121,7 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
                     asChild
                     isActive={isActive(item.url)}
                     tooltip={collapsed ? item.title : undefined}
+                    onClick={handleMobileClick}
                   >
                     <Link to={item.url} className="flex items-center gap-3">
                       <item.icon className="w-5 h-5 shrink-0" />
@@ -139,7 +146,7 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
         </Button>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={collapsed ? "Back to Store" : undefined}>
+            <SidebarMenuButton asChild tooltip={collapsed ? "Back to Store" : undefined} onClick={handleMobileClick}>
               <Link to="/" className="flex items-center gap-3 text-muted-foreground">
                 <ShoppingBag className="w-5 h-5 shrink-0" />
                 {!collapsed && <span>Back to Store</span>}
@@ -147,7 +154,7 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={collapsed ? "Logout" : undefined}>
+            <SidebarMenuButton asChild tooltip={collapsed ? "Logout" : undefined} onClick={handleMobileClick}>
               <Link to="/login" className="flex items-center gap-3 text-destructive">
                 <LogOut className="w-5 h-5 shrink-0" />
                 {!collapsed && <span>Logout</span>}

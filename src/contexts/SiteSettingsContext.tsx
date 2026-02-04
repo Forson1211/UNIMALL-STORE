@@ -71,7 +71,8 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
         if (previewSettings[previewKey] !== undefined) {
             return previewSettings[previewKey] as T;
         }
-        return (getSetting(key, defaultValue as any) as T) ?? defaultValue;
+        const val = getSetting(key, defaultValue as any);
+        return (val as T) ?? defaultValue;
     };
 
     const siteName = getValue("site_name", "Unimall", "siteName");
@@ -96,6 +97,17 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
 
     const animationsEnabled = getValue("animations_enabled", true, "animationsEnabled");
     const darkModeEnabled = getValue("dark_mode_enabled", false, "darkModeEnabled");
+
+    // Log whenever key values change
+    useEffect(() => {
+        console.log("📋 Context values updated:", {
+            siteName,
+            fontFamily,
+            primaryColor,
+            secondaryColor,
+            accentColor
+        });
+    }, [siteName, fontFamily, primaryColor, secondaryColor, accentColor]);
 
     const updatePreviewSettings = useCallback((newSettings: Partial<SiteSettingsContextValue>) => {
         setPreviewSettings(prev => ({ ...prev, ...newSettings }));
@@ -159,19 +171,48 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
             const isDark = resolvedTheme === 'dark';
 
             if (isDark) {
-                // In dark mode, remove inline overrides so CSS .dark classes take effect
+                // In dark mode, remove inline overrides for general background so CSS .dark classes take effect
                 root.style.removeProperty("--background");
                 root.style.removeProperty("--header-background");
-                root.style.removeProperty("--footer-background");
             } else {
                 // In light mode, apply the custom colors
                 applyHSL("--background", backgroundColor);
                 applyHSL("--header-background", headerBgColor);
-                applyHSL("--footer-background", footerBgColor);
             }
 
+            // Apply footer background consistently in both modes if requested
+            applyHSL("--footer-background", footerBgColor);
+
             root.style.setProperty("--radius", borderRadius);
+
+            // AGGRESSIVE FONT APPLICATION - Nuclear option
+            console.log("🔤 FORCING font family:", fontFamily);
+
+            // Method 1: CSS variable
             root.style.setProperty("--font-family", fontFamily);
+
+            // Method 2: Direct on html
+            root.style.fontFamily = fontFamily;
+
+            // Method 3: Direct on body with !important via setAttribute
+            document.body.setAttribute('style', `font-family: ${fontFamily} !important;`);
+
+            // Method 4: Create global style override
+            let fontStyleTag = document.getElementById('custom-font-override');
+            if (!fontStyleTag) {
+                fontStyleTag = document.createElement('style');
+                fontStyleTag.id = 'custom-font-override';
+                document.head.appendChild(fontStyleTag);
+            }
+            fontStyleTag.textContent = `
+                * {
+                    font-family: ${fontFamily} !important;
+                }
+                body, html, div, p, span, h1, h2, h3, h4, h5, h6, a, button, input, textarea, select, label {
+                    font-family: ${fontFamily} !important;
+                }
+            `;
+
             root.style.setProperty("--font-size", fontSize);
             root.style.setProperty("--container-max-width", containerMaxWidth);
 
@@ -181,7 +222,12 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
                 root.classList.remove("no-animations");
             }
 
-            console.log("🎨 Site customization applied", { darkModeEnabled, resolvedTheme });
+            console.log("🎨 Site customization applied", {
+                darkModeEnabled,
+                resolvedTheme,
+                fontFamily,
+                fontSize
+            });
         }
     }, [settings, isLoading, primaryColor, secondaryColor, accentColor, backgroundColor, headerBgColor, footerBgColor, borderRadius, fontFamily, fontSize, containerMaxWidth, animationsEnabled, darkModeEnabled, resolvedTheme]);
 
@@ -192,21 +238,22 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
                 document.title = siteName;
             }
 
-            // Update favicon
-            const faviconUrl = getSetting("favicon_url", "") as string;
-            if (faviconUrl) {
+            // Update favicon - use logo as fallback if no favicon is set
+            const favicon = faviconUrl || logoUrl;
+            if (favicon) {
+                console.log("🎨 Setting favicon to:", favicon);
                 const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
                 if (!link) {
                     const newLink = document.createElement('link');
                     newLink.rel = 'icon';
-                    newLink.href = faviconUrl;
+                    newLink.href = favicon;
                     document.head.appendChild(newLink);
                 } else {
-                    link.href = faviconUrl;
+                    link.href = favicon;
                 }
             }
         }
-    }, [siteName, isLoading, getSetting]);
+    }, [siteName, faviconUrl, logoUrl, isLoading]);
 
     const value: SiteSettingsContextValue = useMemo(() => ({
         siteName,

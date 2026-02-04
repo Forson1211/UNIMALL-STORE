@@ -22,11 +22,7 @@ export function DashboardHeader({ title, userName = "John Doe", userRole = "Admi
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-background/95 backdrop-blur px-4 lg:px-6">
       <div className="flex items-center gap-4">
-        <SidebarTrigger className="lg:hidden">
-          <Button variant="ghost" size="icon">
-            <Menu className="h-5 w-5" />
-          </Button>
-        </SidebarTrigger>
+        <SidebarTrigger className="lg:hidden" />
         <h1 className="text-xl font-semibold text-foreground">{title}</h1>
       </div>
 

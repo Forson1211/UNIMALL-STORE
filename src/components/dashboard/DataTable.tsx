@@ -17,6 +17,7 @@ interface Column<T> {
   header: string;
   render?: (item: T) => React.ReactNode;
   sortable?: boolean;
+  className?: string;
 }
 
 interface DataTableProps<T> {
@@ -105,14 +106,14 @@ export function DataTable<T extends Record<string, any>>({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="rounded-lg border overflow-hidden">
+        <div className="rounded-lg border overflow-hidden overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 {columns.map((column) => (
                   <TableHead
                     key={String(column.key)}
-                    className={column.sortable ? "cursor-pointer hover:bg-muted/50" : ""}
+                    className={`${column.sortable ? "cursor-pointer hover:bg-muted/50" : ""} ${column.className || ""}`}
                     onClick={() => column.sortable && handleSort(String(column.key))}
                   >
                     {column.header}
@@ -134,7 +135,7 @@ export function DataTable<T extends Record<string, any>>({
                 paginatedData.map((item, index) => (
                   <TableRow key={index} className="hover:bg-muted/30">
                     {columns.map((column) => (
-                      <TableCell key={String(column.key)}>
+                      <TableCell key={String(column.key)} className={column.className}>
                         {column.render
                           ? column.render(item)
                           : item[column.key as keyof T]}

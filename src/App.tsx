@@ -57,7 +57,18 @@ import BuyerAccount from "./pages/account/BuyerAccount";
 import BuyerOrders from "./pages/account/BuyerOrders";
 import BuyerWishlist from "./pages/account/BuyerWishlist";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes (data considers fresh for 5 mins)
+      gcTime: 1000 * 60 * 60 * 24, // 24 hours (keep unused data in cache)
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

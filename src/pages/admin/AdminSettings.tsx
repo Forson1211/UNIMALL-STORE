@@ -29,36 +29,36 @@ const AdminSettings = () => {
   return (
     <DashboardLayout type="admin" title="Settings">
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-8 gap-2">
-          <TabsTrigger value="general">
+        <TabsList className="flex flex-wrap h-auto w-full gap-2 p-1 bg-muted/20">
+          <TabsTrigger value="general" className="flex-1 min-w-[120px]">
             <Settings className="w-4 h-4 mr-2" />
             General
           </TabsTrigger>
-          <TabsTrigger value="notifications">
+          <TabsTrigger value="notifications" className="flex-1 min-w-[140px]">
             <Bell className="w-4 h-4 mr-2" />
             Notifications
           </TabsTrigger>
-          <TabsTrigger value="security">
+          <TabsTrigger value="security" className="flex-1 min-w-[120px]">
             <Shield className="w-4 h-4 mr-2" />
             Security
           </TabsTrigger>
-          <TabsTrigger value="platform">
+          <TabsTrigger value="platform" className="flex-1 min-w-[120px]">
             <Globe className="w-4 h-4 mr-2" />
             Platform
           </TabsTrigger>
-          <TabsTrigger value="maintenance">
+          <TabsTrigger value="maintenance" className="flex-1 min-w-[140px]">
             <Wrench className="w-4 h-4 mr-2" />
             Maintenance
           </TabsTrigger>
-          <TabsTrigger value="backup">
+          <TabsTrigger value="backup" className="flex-1 min-w-[120px]">
             <Database className="w-4 h-4 mr-2" />
             Backup
           </TabsTrigger>
-          <TabsTrigger value="system">
+          <TabsTrigger value="system" className="flex-1 min-w-[120px]">
             <Activity className="w-4 h-4 mr-2" />
             System
           </TabsTrigger>
-          <TabsTrigger value="api">
+          <TabsTrigger value="api" className="flex-1 min-w-[100px]">
             <Key className="w-4 h-4 mr-2" />
             API
           </TabsTrigger>

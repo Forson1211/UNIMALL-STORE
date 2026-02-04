@@ -46,6 +46,7 @@ const userColumns = [
   {
     key: "role",
     header: "Role",
+    className: "hidden md:table-cell",
     render: (user: User) => (
       <Badge variant="outline" className={roleStyles[user.role]}>
         {user.role}
@@ -55,6 +56,7 @@ const userColumns = [
   {
     key: "campus",
     header: "Campus",
+    className: "hidden md:table-cell",
     render: (user: User) => user.campus || "-",
   },
   {
@@ -70,6 +72,7 @@ const userColumns = [
     key: "createdAt",
     header: "Joined",
     sortable: true,
+    className: "hidden lg:table-cell",
     render: (user: User) => new Date(user.createdAt).toLocaleDateString(),
   },
   {

@@ -7,17 +7,17 @@ import { DataTable } from "@/components/dashboard/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { 
-  adminStats, 
-  salesData, 
-  categoryData, 
-  mockOrders, 
-  mockVendors 
+import {
+  adminStats,
+  salesData,
+  categoryData,
+  mockOrders,
+  mockVendors
 } from "@/data/mockDashboardData";
-import { 
-  DollarSign, 
-  ShoppingCart, 
-  Package, 
+import {
+  DollarSign,
+  ShoppingCart,
+  Package,
   Users,
   Star,
   CheckCircle,
@@ -46,11 +46,13 @@ const vendorColumns = [
   {
     key: "campus",
     header: "Campus",
+    className: "hidden md:table-cell",
   },
   {
     key: "products",
     header: "Products",
     sortable: true,
+    className: "hidden sm:table-cell",
   },
   {
     key: "rating",
@@ -132,8 +134,8 @@ const AdminDashboard = () => {
 
       {/* Recent Orders & Top Vendors */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <RecentOrders 
-          orders={mockOrders} 
+        <RecentOrders
+          orders={mockOrders}
           onViewAll={() => navigate('/admin/orders')}
         />
         <DataTable

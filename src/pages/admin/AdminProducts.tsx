@@ -37,6 +37,7 @@ const productColumns = [
   {
     key: "vendorName",
     header: "Vendor",
+    className: "hidden md:table-cell",
   },
   {
     key: "price",
@@ -48,6 +49,7 @@ const productColumns = [
     key: "stock",
     header: "Stock",
     sortable: true,
+    className: "hidden md:table-cell",
     render: (product: Product) => (
       <span className={product.stock < 10 ? "text-destructive font-medium" : ""}>
         {product.stock}
@@ -57,6 +59,7 @@ const productColumns = [
   {
     key: "status",
     header: "Status",
+    className: "hidden sm:table-cell",
     render: (product: Product) => (
       <Badge variant="outline" className={statusStyles[product.status]}>
         {product.status.replace('_', ' ')}

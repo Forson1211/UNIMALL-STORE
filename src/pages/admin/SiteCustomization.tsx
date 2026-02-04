@@ -84,16 +84,27 @@ export default function SiteCustomization() {
     // Load settings on mount
     useEffect(() => {
         if (!isLoading && settings) {
-            console.log("Hydrating settings:", settings);
+            console.log("=== LOADING SETTINGS FROM DB ===");
+            console.log("Raw settings object:", settings);
+
             const loadedName = getSetting("site_name", "Unimall") as string;
-            console.log("Loaded site name:", loadedName);
+            const loadedTagline = getSetting("site_tagline", "Your Campus Marketplace") as string;
+            const loadedFont = getSetting("font_family", "'Plus Jakarta Sans', sans-serif") as string;
+            const loadedPrimary = getSetting("primary_color", "#10b981") as string;
+
+            console.log("Decoded values:", {
+                siteName: loadedName,
+                siteTagline: loadedTagline,
+                fontFamily: loadedFont,
+                primaryColor: loadedPrimary
+            });
 
             setSiteName(loadedName);
-            setSiteTagline(getSetting("site_tagline", "Your Campus Marketplace") as string);
+            setSiteTagline(loadedTagline);
             setLogoUrl(getSetting("logo_url", "") as string);
             setFaviconUrl(getSetting("favicon_url", "") as string);
 
-            setPrimaryColor(getSetting("primary_color", "#10b981") as string);
+            setPrimaryColor(loadedPrimary);
             setSecondaryColor(getSetting("secondary_color", "#3b82f6") as string);
             setAccentColor(getSetting("accent_color", "#f59e0b") as string);
             setBackgroundColor(getSetting("background_color", "#ffffff") as string);
@@ -110,8 +121,10 @@ export default function SiteCustomization() {
             setBorderRadius(getSetting("border_radius", "0.5rem") as string);
             setAnimationsEnabled(getSetting("animations_enabled", true) as boolean);
 
-            setFontFamily(getSetting("font_family", "'Plus Jakarta Sans', sans-serif") as string);
+            setFontFamily(loadedFont);
             setFontSize(getSetting("font_size", "16px") as string);
+
+            console.log("=== SETTINGS LOADED SUCCESSFULLY ===");
         }
     }, [isLoading, settings, getSetting]);
 
@@ -125,29 +138,64 @@ export default function SiteCustomization() {
     // Handle file upload
     const handleFileUpload = async (file: File, type: "logo" | "favicon" | "hero") => {
         try {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${type}_${Math.random()}.${fileExt}`;
-            const filePath = `${fileName}`;
+            console.log(`📤 Starting ${type} upload:`, {
+                fileName: file.name,
+                fileSize: file.size,
+                fileType: file.type
+            });
 
-            const { error: uploadError } = await supabase.storage
-                .from('site-assets')
-                .upload(filePath, file);
-
-            if (uploadError) {
-                console.error('Supabase upload error:', uploadError);
-                throw uploadError;
+            // Validate file
+            if (!file) {
+                throw new Error("No file selected");
             }
 
+            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                throw new Error("File size must be less than 5MB");
+            }
+
+            // Generate unique filename
+            const fileExt = file.name.split('.').pop();
+            const timestamp = Date.now();
+            const fileName = `${type}_${timestamp}.${fileExt}`;
+            const filePath = `${fileName}`;
+
+            console.log(`📁 Uploading to site-assets/${filePath}`);
+
+            // Upload to Supabase Storage
+            const { error: uploadError } = await supabase.storage
+                .from('site-assets')
+                .upload(filePath, file, {
+                    cacheControl: '3600',
+                    upsert: true // Replace if exists
+                });
+
+            if (uploadError) {
+                console.error('❌ Supabase upload error:', uploadError);
+                throw new Error(uploadError.message);
+            }
+
+            // Get public URL
             const { data } = supabase.storage
                 .from('site-assets')
                 .getPublicUrl(filePath);
 
-            toast.success(`${type} uploaded successfully`);
+            console.log(`✅ Upload successful! URL:`, data.publicUrl);
+            toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} uploaded successfully`);
+
             return data.publicUrl;
         } catch (error: any) {
-            console.error('Upload error details:', error);
+            console.error(`❌ Upload error for ${type}:`, error);
             const errorMessage = error.message || error.error_description || "Unknown error";
-            toast.error(`Failed to upload ${type}: ${errorMessage}`);
+
+            // Provide more helpful error messages
+            if (errorMessage.includes('not found')) {
+                toast.error(`Storage bucket not configured. Please contact administrator.`);
+            } else if (errorMessage.includes('JWT')) {
+                toast.error(`Authentication error. Please try logging in again.`);
+            } else {
+                toast.error(`Failed to upload ${type}: ${errorMessage}`);
+            }
+
             return null;
         }
     };
@@ -189,6 +237,16 @@ export default function SiteCustomization() {
     // Save all settings
     const handleSaveSettings = async () => {
         setIsSaving(true);
+        console.log("=== SAVE SETTINGS STARTED ===");
+        console.log("Current values:", {
+            siteName,
+            siteTagline,
+            fontFamily,
+            primaryColor,
+            secondaryColor,
+            accentColor
+        });
+
         try {
             const updates = {
                 site_name: { value: siteName, category: "branding" },
@@ -217,11 +275,20 @@ export default function SiteCustomization() {
                 font_size: { value: fontSize, category: "typography" },
             };
 
-            await updateSettings(updates);
-            toast.success("Site customization saved successfully!");
-            setPreviewMode(false); // Exit preview after save
+            console.log("Updates object prepared:", updates);
+
+            const result = await updateSettings(updates);
+            console.log("Update result:", result);
+
+            if (result.success !== false) {
+                toast.success("Site customization saved successfully!");
+                setPreviewMode(false); // Exit preview after save
+                console.log("=== SAVE COMPLETED SUCCESSFULLY ===");
+            } else {
+                throw new Error("Update returned failure");
+            }
         } catch (error) {
-            console.error("Error saving settings:", error);
+            console.error("=== SAVE FAILED ===", error);
             toast.error("Failed to save settings");
         } finally {
             setIsSaving(false);
@@ -250,14 +317,14 @@ export default function SiteCustomization() {
         <DashboardLayout type="admin" title="Site Customization">
             <div className="space-y-6">
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">Site Customization</h1>
                         <p className="text-muted-foreground mt-1">
                             Customize your Unimall platform appearance and branding
                         </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         <Button
                             variant="outline"
                             onClick={() => setPreviewMode(!previewMode)}
@@ -284,7 +351,7 @@ export default function SiteCustomization() {
 
                 {/* Main Tabs */}
                 <Tabs defaultValue="branding" className="space-y-6">
-                    <TabsList className="grid w-full grid-cols-6">
+                    <TabsList className="grid w-full h-auto grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">
                         <TabsTrigger value="branding">
                             <Sparkles className="mr-2 h-4 w-4" />
                             Branding
@@ -327,7 +394,10 @@ export default function SiteCustomization() {
                                         <Input
                                             id="siteName"
                                             value={siteName}
-                                            onChange={(e) => setSiteName(e.target.value)}
+                                            onChange={(e) => {
+                                                setSiteName(e.target.value);
+                                                updatePreviewSettings({ siteName: e.target.value });
+                                            }}
                                             placeholder="Unimall"
                                         />
                                     </div>
@@ -336,7 +406,10 @@ export default function SiteCustomization() {
                                         <Input
                                             id="siteTagline"
                                             value={siteTagline}
-                                            onChange={(e) => setSiteTagline(e.target.value)}
+                                            onChange={(e) => {
+                                                setSiteTagline(e.target.value);
+                                                updatePreviewSettings({ siteTagline: e.target.value });
+                                            }}
                                             placeholder="Your Campus Marketplace"
                                         />
                                     </div>
@@ -649,7 +722,12 @@ export default function SiteCustomization() {
                                         <Label htmlFor="fontFamily">Font Family</Label>
                                         <Select
                                             value={fontFamily}
-                                            onValueChange={setFontFamily}
+                                            onValueChange={(value) => {
+                                                console.log("Font changed to:", value);
+                                                setFontFamily(value);
+                                                // Immediately update preview
+                                                updatePreviewSettings({ fontFamily: value });
+                                            }}
                                         >
                                             <SelectTrigger id="fontFamily" className="w-full" style={{ fontFamily }}>
                                                 <SelectValue placeholder="Select font" />

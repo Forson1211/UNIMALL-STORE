@@ -41,7 +41,7 @@ const Footer = () => {
         <div className="container mx-auto px-4 py-12">
           <div className="max-w-2xl mx-auto text-center">
             <h3 className="text-2xl lg:text-3xl font-bold mb-3">Stay Updated</h3>
-            <p className="text-background/70 mb-6">
+            <p className="text-[hsl(var(--footer-foreground)/0.7)] mb-6">
               Get the latest deals, new vendors, and campus marketplace updates delivered to your inbox.
             </p>
             <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
@@ -50,7 +50,7 @@ const Footer = () => {
                 <Input
                   type="email"
                   placeholder="Enter your email"
-                  className="pl-10 h-12 bg-background/10 border-background/20 text-background placeholder:text-background/50 focus:border-primary"
+                  className="pl-10 h-12 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-primary"
                 />
               </div>
               <Button variant="coral" size="lg" className="shrink-0">
@@ -78,7 +78,7 @@ const Footer = () => {
               <span className="text-xl font-bold">{siteName}</span>
             </Link>
             <p className="text-lg font-medium text-primary mb-2">{siteTagline}</p>
-            <p className="text-background/60 text-sm leading-relaxed max-w-sm">
+            <p className="text-[hsl(var(--footer-foreground)/0.6)] text-sm leading-relaxed max-w-sm">
               Connecting students across campuses to buy and sell products safely.
               Join thousands of students already trading on {siteName}.
             </p>
@@ -88,7 +88,7 @@ const Footer = () => {
                   key={social.label}
                   href={social.href}
                   aria-label={social.label}
-                  className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                  className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all duration-300"
                 >
                   <social.icon className="w-5 h-5" />
                 </a>
@@ -104,7 +104,7 @@ const Footer = () => {
                 <li key={link.name}>
                   <Link
                     to={link.path}
-                    className="text-background/60 hover:text-primary transition-colors text-sm"
+                    className="text-[hsl(var(--footer-foreground)/0.6)] hover:text-primary transition-colors text-sm"
                   >
                     {link.name}
                   </Link>
@@ -121,7 +121,7 @@ const Footer = () => {
                 <li key={link.name}>
                   <Link
                     to={link.path}
-                    className="text-background/60 hover:text-primary transition-colors text-sm"
+                    className="text-[hsl(var(--footer-foreground)/0.6)] hover:text-primary transition-colors text-sm"
                   >
                     {link.name}
                   </Link>
@@ -138,7 +138,7 @@ const Footer = () => {
                 <li key={link.name}>
                   <Link
                     to={link.path}
-                    className="text-background/60 hover:text-primary transition-colors text-sm"
+                    className="text-[hsl(var(--footer-foreground)/0.6)] hover:text-primary transition-colors text-sm"
                   >
                     {link.name}
                   </Link>
@@ -152,7 +152,7 @@ const Footer = () => {
       {/* Copyright */}
       <div className="border-t border-background/10">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-background/50">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-[hsl(var(--footer-foreground)/0.5)]">
             <p>© {new Date().getFullYear()} {siteName}. All rights reserved.</p>
             <p>Made with ❤️ for students, by students</p>
           </div>

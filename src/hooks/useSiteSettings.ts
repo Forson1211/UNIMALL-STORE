@@ -29,22 +29,22 @@ export function useSiteSettings() {
 
             if (error) throw error;
 
-            console.log("Fetched settings from DB:", data);
+            console.log("📥 Fetched settings from DB:", data);
 
-            // Convert array to key-value object
+            // Convert array to key-value object - NO JSON parsing needed
+            // Supabase JSONB automatically returns the correct types
             const settingsObj: Record<string, Json> = {};
             data?.forEach((setting: any) => {
-                // We know setting_value is Json compatible from the DB
-                settingsObj[setting.setting_key] = setting.setting_value as unknown as Json;
+                settingsObj[setting.setting_key] = setting.setting_value;
             });
 
-            console.log("Mapped settings object:", settingsObj);
+            console.log("📋 Mapped settings:", settingsObj);
 
             setSettings(settingsObj);
             setError(null);
         } catch (err) {
             setError(err as Error);
-            console.error("Error fetching site settings:", err);
+            console.error("❌ Error fetching site settings:", err);
         } finally {
             setIsLoading(false);
         }
@@ -77,31 +77,42 @@ export function useSiteSettings() {
     // Update multiple settings at once
     const updateSettings = useCallback(async (updates: Record<string, { value: Json; category: string }>) => {
         try {
-            console.log("Saving settings to DB:", updates);
-            const upsertData = Object.entries(updates).map(([key, { value, category }]) => ({
-                setting_key: key,
-                setting_value: value,
-                setting_category: category,
-            }));
+            console.log("💾 Saving settings to DB:", updates);
+
+            // Supabase JSONB handles values automatically - NO encoding needed
+            const upsertData = Object.entries(updates).map(([key, { value, category }]) => {
+                console.log(`📝 Preparing ${key}:`, value, `(${typeof value})`);
+
+                return {
+                    setting_key: key,
+                    setting_value: value, // Raw value - Supabase handles JSONB
+                    setting_category: category,
+                };
+            });
+
+            console.log("📤 Sending to Supabase:", upsertData);
 
             const { data, error } = await (supabase as any)
                 .from("site_settings")
-                .upsert(upsertData, { onConflict: 'setting_key' });
+                .upsert(upsertData, {
+                    onConflict: 'setting_key',
+                    ignoreDuplicates: false
+                })
+                .select();
 
             if (error) {
-                console.error("Supabase upsert error:", error);
+                console.error("❌ Supabase error:", error);
                 throw error;
             }
 
-            console.log("Supabase upsert success:", data);
+            console.log("✅ Upsert success! Data:", data);
 
             // Refetch all settings from DB to ensure local state is in sync
             await fetchSettings();
 
-            toast.success("Settings updated successfully");
             return { success: true };
         } catch (err) {
-            console.error("Error updating settings:", err);
+            console.error("❌ Update failed:", err);
             toast.error(`Failed to update settings: ${(err as Error).message || "Unknown error"}`);
             return { success: false, error: err };
         }
@@ -122,7 +133,7 @@ export function useSiteSettings() {
                 "postgres_changes",
                 { event: "*", schema: "public", table: "site_settings" },
                 (payload: any) => {
-                    console.log("Settings changed:", payload);
+                    console.log("🔄 Settings changed:", payload);
                     if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
                         const newRecord = payload.new as SiteSetting;
                         setSettings((prev) => ({

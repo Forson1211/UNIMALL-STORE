@@ -45,21 +45,25 @@ const vendorColumns = [
   {
     key: "campus",
     header: "Campus",
+    className: "hidden md:table-cell",
   },
   {
     key: "products",
     header: "Products",
     sortable: true,
+    className: "hidden lg:table-cell",
   },
   {
     key: "totalSales",
     header: "Total Sales",
     sortable: true,
+    className: "hidden lg:table-cell",
     render: (vendor: Vendor) => `$${vendor.totalSales.toLocaleString()}`,
   },
   {
     key: "rating",
     header: "Rating",
+    className: "hidden md:table-cell",
     render: (vendor: Vendor) => (
       <div className="flex items-center gap-1">
         <Star className="w-4 h-4 fill-gold text-gold" />
