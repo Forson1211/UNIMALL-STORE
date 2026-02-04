@@ -13,6 +13,7 @@ interface SiteSettingsContextValue {
     backgroundColor: string;
     headerBgColor: string;
     footerBgColor: string;
+    footerTextColor: string;
     borderRadius: string;
     fontFamily: string;
     fontSize: string;
@@ -41,6 +42,7 @@ const SiteSettingsContext = createContext<SiteSettingsContextValue>({
     backgroundColor: "#ffffff",
     headerBgColor: "#ffffff",
     footerBgColor: "#1f2937",
+    footerTextColor: "#ffffff",
     borderRadius: "0.75rem",
     fontFamily: "'Plus Jakarta Sans', sans-serif",
     fontSize: "16px",
@@ -89,6 +91,7 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
     const backgroundColor = getValue("background_color", "#ffffff", "backgroundColor");
     const headerBgColor = getValue("header_bg_color", "#ffffff", "headerBgColor");
     const footerBgColor = getValue("footer_bg_color", "#1f2937", "footerBgColor");
+    const footerTextColor = getValue("footer_text_color", "#ffffff", "footerTextColor");
 
     const borderRadius = getValue("border_radius", "0.75rem", "borderRadius");
     const fontFamily = getValue("font_family", "'Plus Jakarta Sans', sans-serif", "fontFamily");
@@ -182,6 +185,7 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
 
             // Apply footer background consistently in both modes if requested
             applyHSL("--footer-background", footerBgColor);
+            applyHSL("--footer-foreground", footerTextColor);
 
             root.style.setProperty("--radius", borderRadius);
 
@@ -266,6 +270,7 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
         backgroundColor,
         headerBgColor,
         footerBgColor,
+        footerTextColor,
         borderRadius,
         fontFamily,
         fontSize,
@@ -282,7 +287,7 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
         getSetting,
     }), [
         siteName, siteTagline, logoUrl, faviconUrl, heroBackgroundUrl, heroOverlayOpacity,
-        accentColor, backgroundColor, headerBgColor, footerBgColor,
+        accentColor, backgroundColor, headerBgColor, footerBgColor, footerTextColor,
         borderRadius, fontFamily, fontSize, containerMaxWidth,
         animationsEnabled, darkModeEnabled, primaryColor, secondaryColor,
         isLoading, updatePreviewSettings, settings, updateSettings, getSetting // resetSettings is constant/dummy so technically optional but good practice

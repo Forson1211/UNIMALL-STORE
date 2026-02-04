@@ -22,6 +22,8 @@ import About from "./pages/About";
 import HowItWorks from "./pages/HowItWorks";
 import Contact from "./pages/Contact";
 import Checkout from "./pages/Checkout";
+import News from "./pages/News";
+import NewsDetail from "./pages/NewsDetail";
 import NotFound from "./pages/NotFound";
 
 // Admin Pages
@@ -95,6 +97,8 @@ const App = () => (
                     <Route path="/how-it-works" element={<HowItWorks />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/news" element={<News />} />
+                    <Route path="/news/:id" element={<NewsDetail />} />
 
                     {/* Buyer Account Routes - Protected for authenticated users */}
                     <Route path="/account" element={

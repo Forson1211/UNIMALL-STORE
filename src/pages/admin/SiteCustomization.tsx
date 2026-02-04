@@ -63,6 +63,7 @@ export default function SiteCustomization() {
     const [backgroundColor, setBackgroundColor] = useState("#ffffff");
     const [headerBgColor, setHeaderBgColor] = useState("#ffffff");
     const [footerBgColor, setFooterBgColor] = useState("#1f2937");
+    const [footerTextColor, setFooterTextColor] = useState("#ffffff");
 
     // Theme State
     const [darkModeEnabled, setDarkModeEnabled] = useState(false);
@@ -110,6 +111,7 @@ export default function SiteCustomization() {
             setBackgroundColor(getSetting("background_color", "#ffffff") as string);
             setHeaderBgColor(getSetting("header_bg_color", "#ffffff") as string);
             setFooterBgColor(getSetting("footer_bg_color", "#1f2937") as string);
+            setFooterTextColor(getSetting("footer_text_color", "#ffffff") as string);
 
             setDarkModeEnabled(getSetting("dark_mode_enabled", false) as boolean);
             setCurrentTheme(getSetting("current_theme", "default") as string);
@@ -209,6 +211,7 @@ export default function SiteCustomization() {
             backgroundColor,
             headerBgColor,
             footerBgColor,
+            footerTextColor,
             borderRadius,
             fontFamily,
             fontSize,
@@ -260,6 +263,7 @@ export default function SiteCustomization() {
                 background_color: { value: backgroundColor, category: "theme" },
                 header_bg_color: { value: headerBgColor, category: "theme" },
                 footer_bg_color: { value: footerBgColor, category: "theme" },
+                footer_text_color: { value: footerTextColor, category: "theme" },
 
                 dark_mode_enabled: { value: darkModeEnabled, category: "theme" },
                 current_theme: { value: currentTheme, category: "theme" },
@@ -305,6 +309,7 @@ export default function SiteCustomization() {
         setBackgroundColor("#ffffff");
         setHeaderBgColor("#ffffff");
         setFooterBgColor("#1f2937");
+        setFooterTextColor("#ffffff");
         setBorderRadius("0.75rem");
         setFontFamily("'Plus Jakarta Sans', sans-serif");
         setFontSize("16px");
@@ -546,7 +551,7 @@ export default function SiteCustomization() {
 
                                 <Separator />
 
-                                <div className="grid gap-6 md:grid-cols-3">
+                                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="headerBgColor">Header Background</Label>
                                         <div className="flex gap-2">
@@ -577,6 +582,23 @@ export default function SiteCustomization() {
                                             <Input
                                                 value={footerBgColor}
                                                 onChange={(e) => setFooterBgColor(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="footerTextColor">Footer Text Color</Label>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                id="footerTextColor"
+                                                type="color"
+                                                value={footerTextColor}
+                                                onChange={(e) => setFooterTextColor(e.target.value)}
+                                                className="h-10 w-20"
+                                            />
+                                            <Input
+                                                value={footerTextColor}
+                                                onChange={(e) => setFooterTextColor(e.target.value)}
                                             />
                                         </div>
                                     </div>

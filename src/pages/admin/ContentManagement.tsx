@@ -40,7 +40,9 @@ interface Page {
 
 const ContentManagementSystem = () => {
     const [pages, setPages] = useState<Page[]>([]);
+    const [news, setNews] = useState<any[]>([]);
     const [selectedPage, setSelectedPage] = useState<Page | null>(null);
+    const [selectedNews, setSelectedNews] = useState<any | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
         title: "",
@@ -50,10 +52,32 @@ const ContentManagementSystem = () => {
         meta_description: "",
         is_published: false,
     });
+    const [newsFormData, setNewsFormData] = useState({
+        title: "",
+        excerpt: "",
+        content: "",
+        image_url: "",
+        category: "Campus Life",
+        is_published: true,
+    });
 
     useEffect(() => {
         fetchPages();
+        fetchNews();
     }, []);
+
+    const fetchNews = async () => {
+        const { data, error } = await (supabase as any)
+            .from("campus_news")
+            .select("*")
+            .order("publish_date", { ascending: false });
+
+        if (error) {
+            console.error("News fetch error:", error);
+            return;
+        }
+        setNews(data || []);
+    };
 
     const fetchPages = async () => {
         const { data, error } = await (supabase as any)
@@ -130,6 +154,57 @@ const ContentManagementSystem = () => {
         fetchPages();
     };
 
+    const handleCreateOrUpdateNews = async () => {
+        if (selectedNews) {
+            const { error } = await (supabase as any)
+                .from("campus_news")
+                .update(newsFormData)
+                .eq("id", selectedNews.id);
+
+            if (error) {
+                toast.error("Failed to update news");
+                return;
+            }
+            toast.success("News updated successfully");
+        } else {
+            const { error } = await (supabase as any)
+                .from("campus_news")
+                .insert([newsFormData]);
+
+            if (error) {
+                toast.error("Failed to create news");
+                return;
+            }
+            toast.success("News created successfully");
+        }
+        fetchNews();
+        resetNewsForm();
+    };
+
+    const handleDeleteNews = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this news article?")) return;
+        const { error } = await (supabase as any).from("campus_news").delete().eq("id", id);
+        if (error) {
+            toast.error("Failed to delete news");
+            return;
+        }
+        toast.success("News deleted successfully");
+        fetchNews();
+    };
+
+    const resetNewsForm = () => {
+        setNewsFormData({
+            title: "",
+            excerpt: "",
+            content: "",
+            image_url: "",
+            category: "Campus Life",
+            is_published: true,
+        });
+        setSelectedNews(null);
+        setIsEditing(false);
+    };
+
     const resetForm = () => {
         setFormData({
             title: "",
@@ -150,6 +225,10 @@ const ContentManagementSystem = () => {
                     <TabsTrigger value="pages">
                         <FileText className="w-4 h-4 mr-2" />
                         Pages
+                    </TabsTrigger>
+                    <TabsTrigger value="news">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Campus News
                     </TabsTrigger>
                     <TabsTrigger value="menus">
                         <Menu className="w-4 h-4 mr-2" />
@@ -322,6 +401,127 @@ const ContentManagementSystem = () => {
                                         <p className="text-muted-foreground">
                                             Select a page to edit or create a new one
                                         </p>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+                </TabsContent>
+
+                {/* News Tab */}
+                <TabsContent value="news">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <Card className="lg:col-span-1">
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <CardTitle>All News</CardTitle>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => {
+                                            resetNewsForm();
+                                            setIsEditing(true);
+                                        }}
+                                    >
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        New Article
+                                    </Button>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="space-y-2">
+                                {news.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent cursor-pointer"
+                                        onClick={() => {
+                                            setSelectedNews(item);
+                                            setNewsFormData({
+                                                title: item.title,
+                                                excerpt: item.excerpt || "",
+                                                content: item.content,
+                                                image_url: item.image_url || "",
+                                                category: item.category || "Campus Life",
+                                                is_published: item.is_published,
+                                            });
+                                            setIsEditing(true);
+                                        }}
+                                    >
+                                        <div className="flex-1">
+                                            <p className="font-medium">{item.title}</p>
+                                            <p className="text-xs text-muted-foreground">{item.category}</p>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteNews(item.id);
+                                            }}
+                                        >
+                                            <Trash2 className="w-4 h-4 text-destructive" />
+                                        </Button>
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </Card>
+
+                        <Card className="lg:col-span-2">
+                            <CardHeader>
+                                <CardTitle>{selectedNews ? "Edit Article" : "Create News Article"}</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {isEditing ? (
+                                    <>
+                                        <div className="space-y-2">
+                                            <Label>Title</Label>
+                                            <Input
+                                                value={newsFormData.title}
+                                                onChange={(e) => setNewsFormData({ ...newsFormData, title: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Category</Label>
+                                            <Input
+                                                value={newsFormData.category}
+                                                onChange={(e) => setNewsFormData({ ...newsFormData, category: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Image URL</Label>
+                                            <Input
+                                                value={newsFormData.image_url}
+                                                onChange={(e) => setNewsFormData({ ...newsFormData, image_url: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Excerpt</Label>
+                                            <Textarea
+                                                value={newsFormData.excerpt}
+                                                onChange={(e) => setNewsFormData({ ...newsFormData, excerpt: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Content (Rich Text/HTML)</Label>
+                                            <Textarea
+                                                value={newsFormData.content}
+                                                onChange={(e) => setNewsFormData({ ...newsFormData, content: e.target.value })}
+                                                rows={10}
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Switch
+                                                checked={newsFormData.is_published}
+                                                onCheckedChange={(checked) => setNewsFormData({ ...newsFormData, is_published: checked })}
+                                            />
+                                            <Label>Published</Label>
+                                        </div>
+                                        <div className="flex gap-2 justify-end">
+                                            <Button variant="outline" onClick={resetNewsForm}>Cancel</Button>
+                                            <Button onClick={handleCreateOrUpdateNews}>Save Article</Button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="text-center py-12 text-muted-foreground">
+                                        Select an article or create a new one
                                     </div>
                                 )}
                             </CardContent>
