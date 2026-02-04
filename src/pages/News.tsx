@@ -7,11 +7,15 @@ import Footer from "@/components/layout/Footer";
 import { GlassCard } from "../components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const News = () => {
     const [news, setNews] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState("All");
+
+    const categories = ["All", "Campus Life", "Marketplace", "Events", "Technology", "Sports", "Well-being", "Career"];
 
     useEffect(() => {
         const fetchNews = async () => {
@@ -32,10 +36,12 @@ const News = () => {
         fetchNews();
     }, []);
 
-    const filteredNews = news.filter(item =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.category.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredNews = news.filter(item => {
+        const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.category.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
+        return matchesSearch && matchesCategory;
+    });
 
     return (
         <div className="min-h-screen bg-background flex flex-col">
@@ -56,14 +62,36 @@ const News = () => {
                     </div>
 
                     {/* Search Bar */}
-                    <div className="max-w-2xl mx-auto mb-20 relative">
-                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                        <Input
-                            placeholder="Search articles, categories, or tags..."
-                            className="h-14 pl-14 pr-6 rounded-full border-white/10 bg-white/5 focus-visible:ring-primary backdrop-blur-sm"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
+                    <div className="max-w-2xl mx-auto mb-10 relative group">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-orange-400/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition duration-1000 group-focus-within:opacity-100"></div>
+                        <div className="relative">
+                            <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.5)] z-10" />
+                            <Input
+                                placeholder="Search articles, categories, or tags..."
+                                className="h-16 pl-14 pr-32 rounded-full border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 focus-visible:ring-primary/50 focus-visible:ring-offset-0 focus-visible:ring-2 backdrop-blur-xl transition-all duration-300 text-lg text-foreground placeholder:opacity-50"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2 h-12 px-6 rounded-full bg-primary text-white font-bold flex items-center justify-center text-sm shadow-lg hover:bg-primary/90 transition-colors cursor-pointer select-none">
+                                Search
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Category Filters */}
+                    <div className="flex flex-wrap justify-center gap-3 mb-16">
+                        {categories.map(cat => (
+                            <button
+                                key={cat}
+                                onClick={() => setSelectedCategory(cat)}
+                                className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300 border ${selectedCategory === cat
+                                    ? "bg-primary border-primary text-white shadow-lg shadow-primary/20"
+                                    : "bg-white/5 border-white/10 text-muted-foreground hover:bg-white/10 hover:border-white/20"
+                                    }`}
+                            >
+                                {cat}
+                            </button>
+                        ))}
                     </div>
 
                     {isLoading ? (
@@ -119,13 +147,40 @@ const News = () => {
                                     ))}
                                 </div>
                             ) : (
-                                <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-sm">
-                                    <h3 className="text-2xl font-bold mb-2">No news articles found</h3>
-                                    <p className="text-muted-foreground">Try searching for something else or check back later.</p>
+                                <div className="text-center py-24 bg-white/[0.03] rounded-[2.5rem] border border-white/10 backdrop-blur-md">
+                                    <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <Search className="w-10 h-10 text-primary opacity-50" />
+                                    </div>
+                                    <h3 className="text-3xl font-black mb-3">No articles found</h3>
+                                    <p className="text-muted-foreground text-lg">We couldn't find any articles matching your search or category.</p>
                                 </div>
                             )}
                         </>
                     )}
+
+                    {/* Subscribe Section */}
+                    <div className="mt-32 p-10 md:p-16 rounded-[3rem] bg-[#2a2a35] border border-white/5 text-center relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-[120px] -mr-48 -mt-48 transition-all duration-700 group-hover:bg-primary/20" />
+                        <div className="absolute bottom-0 left-0 w-96 h-96 bg-orange-400/5 rounded-full blur-[120px] -ml-48 -mb-48" />
+
+                        <div className="relative z-10">
+                            <Badge className="mb-6 bg-primary/10 text-primary border-primary/20 px-4 py-1.5 uppercase tracking-widest text-[10px] font-bold">Newsletter</Badge>
+                            <h3 className="text-4xl md:text-5xl font-black mb-6 tracking-tight text-white">Stay ahead of the <span className="text-primary">Campus Curve</span></h3>
+                            <p className="text-xl text-white/70 mb-10 max-w-2xl mx-auto leading-relaxed">Join thousands of students who receive weekly updates on the best marketplace deals, upcoming events, and campus success stories.</p>
+
+                            <form className="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto" onSubmit={(e) => e.preventDefault()}>
+                                <input
+                                    type="email"
+                                    placeholder="your-email@university.edu"
+                                    className="flex-1 h-16 px-8 rounded-full bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-lg text-white placeholder:text-white/20"
+                                />
+                                <Button className="h-16 rounded-full px-12 font-black text-lg shadow-2xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                                    Subscribe Now
+                                </Button>
+                            </form>
+                            <p className="mt-6 text-xs text-white/40">We respect your privacy. Unsubscribe at any time.</p>
+                        </div>
+                    </div>
                 </div>
             </main>
 

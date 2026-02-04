@@ -67,14 +67,14 @@ const HowItWorksSection = () => {
       )}
 
       <div className="relative flex flex-col items-center text-center p-6 h-full z-10 transition-transform duration-300 hover:-translate-y-2">
-        {/* Step Number Badge */}
-        <div className="absolute top-0 right-10 w-8 h-8 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-sm font-bold rounded-full flex items-center justify-center shadow-lg ring-4 ring-background z-20">
-          {step.step}
-        </div>
-
         {/* Icon Container */}
-        <div className="w-32 h-32 rounded-[2rem] bg-white border border-border/50 flex items-center justify-center mb-8 shadow-xl shadow-primary/5 group-hover:shadow-primary/20 transition-all duration-500 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <div className="w-32 h-32 rounded-[2rem] bg-white border border-border/50 flex items-center justify-center mb-8 shadow-xl shadow-primary/5 group-hover:shadow-primary/20 transition-all duration-500 relative">
+          {/* Step Number Badge */}
+          <div className="absolute -top-1 -right-1 w-8 h-8 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-sm font-bold rounded-full flex items-center justify-center shadow-lg ring-4 ring-white z-20 transition-transform duration-500 group-hover:scale-110">
+            {step.step}
+          </div>
+
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[2rem] overflow-hidden" />
           <step.icon className="w-12 h-12 text-primary relative z-10 group-hover:scale-110 transition-transform duration-300" />
         </div>
 

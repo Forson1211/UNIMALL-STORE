@@ -51,4 +51,71 @@ VALUES
   'https://images.unsplash.com/photo-1514525253344-f814d8743585?q=80&w=1200&auto=format&fit=crop',
   'Events',
   true
+),
+(
+  'New Innovation Tech Hub Now Open',
+  'A state-of-the-art facility featuring 3D printers, VR labs, and collaborative coding spaces is now accessible to all students in the North Wing.',
+  '<p>The much-anticipated Innovation Tech Hub has finally opened its doors, providing students with access to cutting-edge technology and collaborative workspaces. Located in the renovated North Wing of the Science Center, the hub aims to bridge the gap between classroom theory and practical application.</p>
+   <h2>Key Features:</h2>
+   <ul>
+     <li><strong>3D Printing Station:</strong> Six high-resolution 3D printers available for rapid prototyping.</li>
+     <li><strong>VR/AR Lab:</strong> Dedicated space for virtual and augmented reality development and research.</li>
+     <li><strong>Coding Pods:</strong> Soundproof pods optimized for focused software development and group coding marathons.</li>
+     <li><strong>Mentorship Program:</strong> Weekly sessions with industry professionals and senior student mentors.</li>
+   </ul>
+   <p>Hub director, Dr. Alan Turing, emphasized the importance of such spaces: "This isn''t just about the hardware; it''s about creating a community where students from different disciplines can collaborate on the next big idea."</p>
+   <p>The hub is open from 8:00 AM to midnight daily. Students can book specific equipment through the campus portal.</p>',
+  'https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=1200&auto=format&fit=crop',
+  'Technology',
+  true
+),
+(
+  'Weekly Campus Sports Roundup',
+  'From a thrilling overtime victory in basketball to the cross-country team setting new records, here is your summary of this week in campus athletics.',
+  '<p>It was a landmark week for our campus athletics, with several teams achieving standout performances and maintaining their lead in the intercollegiate standings.</p>
+   <h2>Basketball: A Nail-Biting Finish</h2>
+   <p>The Men''s Basketball team pulled off a stunning 84-82 victory in double overtime against our long-time rivals. The winning three-pointer came in the final two seconds, sparking a celebration that flooded the court.</p>
+   <h2>Track & Field: Breaking Records</h2>
+   <p>The cross-country team set three individual course records during the Invitational Meet on Saturday. Sophomore athlete Maya Rodriguez shaved 15 seconds off her previous best, placing first in the 5K event.</p>
+   <h2>Upcoming Home Games:</h2>
+   <ul>
+     <li>Wednesday: Women''s Volleyball vs. State University (7:00 PM)</li>
+     <li>Saturday: Soccer Home Opener (3:30 PM)</li>
+     <li>Sunday: Tennis Finals (10:00 AM)</li>
+   </ul>
+   <p>Student tickets are free with a valid ID. Come out and support our athletes!</p>',
+  'https://images.unsplash.com/photo-1504450758481-7338eba7524a?q=80&w=1200&auto=format&fit=crop',
+  'Sports',
+  true
+),
+(
+  'Healthy Eating: A Student''s Guide to Low-Budget Nutrition',
+  'Think eating healthy means spending a fortune? Our Nutrition Department shares tips on how to fuel your body without breaking the bank.',
+  '<p>Maintaining a balanced diet is one of the biggest challenges for students living on a tight budget. However, with a bit of planning and these expert tips, you can eat well for less than $40 a week.</p>
+   <h2>1. Buy in Bulk</h2>
+   <p>Staples like brown rice, oats, lentils, and frozen vegetables are much cheaper when bought in larger quantities. They also have a long shelf life, making them perfect for meal prepping.</p>
+   <h2>2. Seasonal and Local</h2>
+   <p>Fruits and vegetables that are in season are not only more nutritious but also significantly cheaper. Check out the local farmer''s market on Saturdays for the best deals.</p>
+   <h2>3. Meal Prep Sundays</h2>
+   <p>Spending two hours on Sunday preparing your lunches for the week can save you over $50 in impulsive takeout spending. Try making large batches of chili or grain bowls.</p>
+   <p>Student Wellness Coordinator, Maria Lopez, adds: "Nutrition impacts your focus and energy levels. It''s an investment in your grades as much as your health."</p>',
+  'https://images.unsplash.com/photo-1490645935467-49f329c9ddd8?q=80&w=1200&auto=format&fit=crop',
+  'Well-being',
+  true
+),
+(
+  'Navigating the Upcoming Spring Career Fair',
+  'With over 50 companies attending, preparation is key. Here is your checklist for standing out to recruiters and landing that dream internship.',
+  '<p>The annual Spring Career Fair is just two weeks away. This is your primary opportunity to connect with recruiters from top-tier companies in finance, engineering, marketing, and more.</p>
+   <h2>How to Prepare:</h2>
+   <ul>
+     <li><strong>Refine Your Resume:</strong> Get your resume reviewed at the Career Center. Keep it to one page and highlight your quantifiable achievements.</li>
+     <li><strong>Elevator Pitch:</strong> Practice a 30-second summary of who you are, what you study, and what you are looking for.</li>
+     <li><strong>Research:</strong> Don''t just walk up blindly. Identify 5 companies you are most interested in and study their recent projects.</li>
+     <li><strong>Dress for Success:</strong> Business casual is the minimum standard. First impressions matter.</li>
+   </ul>
+   <p>The fair will be held in the Alumni Hall on March 15th from 9:00 AM to 4:00 PM. Don''t forget to bring at least 10 printed copies of your resume!</p>',
+  'https://images.unsplash.com/photo-1515187029135-18ee286d815b?q=80&w=1200&auto=format&fit=crop',
+  'Career',
+  true
 );
