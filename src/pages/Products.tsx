@@ -26,22 +26,22 @@ const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [localSearch, setLocalSearch] = useState(searchParams.get("search") || "");
-  
+
   const searchQuery = searchParams.get("search") || "";
   const categoryFilter = searchParams.get("category") || "All";
-  
+
   const { addItem } = useCart();
   const { toast } = useToast();
 
   const filteredProducts = useMemo(() => {
     return mockProducts.filter((product) => {
-      const matchesSearch = searchQuery === "" || 
+      const matchesSearch = searchQuery === "" ||
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.vendor.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.category.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       const matchesCategory = categoryFilter === "All" || product.category === categoryFilter;
-      
+
       return matchesSearch && matchesCategory;
     });
   }, [searchQuery, categoryFilter]);
@@ -87,18 +87,24 @@ const Products = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
-      <main className="pt-24 pb-16">
-        <div className="container mx-auto px-4">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-2">
-              {searchQuery ? `Results for "${searchQuery}"` : "All Products"}
+
+      <main className="pt-20 pb-20">
+        {/* Modern Header Section */}
+        <section className="relative py-16 lg:py-24 overflow-hidden mb-12">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/95 to-secondary" />
+          <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-white/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
+
+          <div className="container mx-auto px-4 relative z-10">
+            <h1 className="text-4xl lg:text-6xl font-extrabold text-white mb-4 tracking-tight animate-fade-in-up">
+              {searchQuery ? `Results for "${searchQuery}"` : "Explore All Products"}
             </h1>
-            <p className="text-muted-foreground">
-              {filteredProducts.length} products found
+            <p className="text-xl text-white/80 font-medium animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+              {filteredProducts.length} premium products found across your campus
             </p>
           </div>
+        </section>
+
+        <div className="container mx-auto px-4">
 
           {/* Filters Bar */}
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 mb-8 p-4 bg-card rounded-2xl border border-border">
@@ -180,7 +186,7 @@ const Products = () => {
                         {Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
                       </span>
                     )}
-                    <button 
+                    <button
                       className="absolute top-3 right-3 w-9 h-9 bg-background/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-background hover:text-destructive"
                       onClick={(e) => e.preventDefault()}
                     >

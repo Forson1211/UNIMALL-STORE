@@ -31,27 +31,36 @@ const Contact = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
-      <main className="pt-24 pb-16">
-        <div className="container mx-auto px-4">
-          {/* Header */}
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="inline-block px-4 py-1.5 bg-accent text-accent-foreground text-sm font-medium rounded-full mb-6">
-              Get in Touch
-            </span>
-            <h1 className="text-4xl lg:text-5xl font-bold text-foreground mb-4">
-              We'd Love to <span className="text-gradient-primary">Hear From You</span>
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              Have a question, suggestion, or just want to say hi? Reach out and we'll get back to you as soon as possible.
-            </p>
-          </div>
 
-          <div className="grid lg:grid-cols-5 gap-8 lg:gap-12">
+      <main className="pt-20 pb-20">
+        {/* Modern Header Section */}
+        <section className="relative py-24 lg:py-32 overflow-hidden mb-16">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/95 to-secondary" />
+          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-white/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
+
+          <div className="container mx-auto px-4 relative z-10 text-center">
+            <div className="max-w-2xl mx-auto">
+              <span className="inline-flex items-center px-4 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm font-semibold rounded-full mb-8 animate-fade-in shadow-xl">
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Get in Touch
+              </span>
+              <h1 className="text-5xl lg:text-7xl font-extrabold text-white mb-6 tracking-tight animate-fade-in-up">
+                We'd Love to <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-orange-50 to-white">Hear From You</span>
+              </h1>
+              <p className="text-xl text-white/90 font-medium animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+                Have a question, suggestion, or just want to say hi? Reach out and we'll get back to you as soon as possible.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-5 gap-8 lg:gap-16">
             {/* Contact Form */}
             <div className="lg:col-span-3 bg-card rounded-3xl p-8 border border-border">
               <h2 className="text-2xl font-bold text-foreground mb-6">Send us a Message</h2>
-              
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -76,11 +85,11 @@ const Contact = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="message">Message</Label>
-                  <Textarea 
-                    id="message" 
-                    placeholder="Tell us more about your inquiry..." 
-                    className="min-h-[150px] resize-none" 
-                    required 
+                  <Textarea
+                    id="message"
+                    placeholder="Tell us more about your inquiry..."
+                    className="min-h-[150px] resize-none"
+                    required
                   />
                 </div>
 

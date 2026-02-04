@@ -1,15 +1,15 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, ShoppingBag, Users, Shield, Sparkles } from "lucide-react";
+import { ArrowRight, ShoppingBag, Users, Shield, Sparkles, Store } from "lucide-react";
 import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 
 const HeroSection = () => {
   const { heroBackgroundUrl, heroOverlayOpacity } = useSiteSettingsContext();
 
   const stats = [
-    { value: "5,000+", label: "Active Students" },
-    { value: "1,200+", label: "Products Listed" },
-    { value: "50+", label: "Campus Vendors" },
+    { value: "5,000+", label: "Active Students", icon: Users },
+    { value: "1,200+", label: "Products Listed", icon: ShoppingBag },
+    { value: "50+", label: "Campus Vendors", icon: Store },
   ];
 
   return (
@@ -49,16 +49,16 @@ const HeroSection = () => {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 pt-24 pb-16 relative z-10">
+      <div className="container mx-auto px-4 pt-20 pb-10 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-foreground/10 backdrop-blur-sm rounded-full text-primary-foreground/90 text-sm font-medium mb-8 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-foreground/10 backdrop-blur-sm rounded-full text-primary-foreground/90 text-sm font-medium mb-2 animate-fade-in">
             <Shield className="w-4 h-4" />
             Trusted by students across 20+ campuses
           </div>
 
           {/* Headline */}
-          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-primary-foreground leading-tight mb-6 animate-fade-in-up">
+          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-primary-foreground leading-[1] mb-2 animate-fade-in-up">
             Your Campus
             <br />
             <span className="text-primary-foreground">
@@ -67,12 +67,12 @@ const HeroSection = () => {
           </h1>
 
           {/* Subtitle */}
-          <p className="text-lg sm:text-xl text-primary-foreground/80 max-w-2xl mx-auto mb-10 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+          <p className="text-lg sm:text-xl text-primary-foreground/80 max-w-2xl mx-auto mb-4 leading-tight animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
             Buy and sell products within your campus community. Safe, easy, and made for students like you.
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
             <Link to="/products">
               <Button variant="glass" size="xl" className="w-full sm:w-auto bg-primary-foreground text-primary hover:bg-primary-foreground/90">
                 Start Shopping
@@ -87,13 +87,18 @@ const HeroSection = () => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-8 max-w-lg mx-auto animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-primary-foreground mb-1">{stat.value}</div>
-                <div className="text-sm text-primary-foreground/60">{stat.label}</div>
-              </div>
-            ))}
+          <div className="mt-8 sm:mt-12 p-4 sm:p-6 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl max-w-3xl mx-auto animate-fade-in-up hover:bg-white/15 transition-colors duration-300" style={{ animationDelay: "0.3s" }}>
+            <div className="grid grid-cols-3 md:grid-cols-3 gap-2 sm:gap-8 md:gap-0 divide-x divide-white/10">
+              {stats.map((stat, index) => (
+                <div key={index} className="flex flex-col items-center justify-center px-1 sm:px-4 group select-none">
+                  <div className="w-8 h-8 sm:w-14 sm:h-14 mb-2 sm:mb-3 rounded-xl sm:rounded-2xl bg-gradient-to-br from-white/20 to-white/5 flex items-center justify-center backdrop-blur-sm shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 border border-white/10">
+                    <stat.icon className="w-4 h-4 sm:w-7 sm:h-7 text-white drop-shadow-md" />
+                  </div>
+                  <div className="text-sm sm:text-3xl md:text-4xl font-black text-white mb-0.5 sm:mb-1 tracking-tight drop-shadow-sm whitespace-nowrap">{stat.value}</div>
+                  <div className="text-[10px] sm:text-sm font-bold text-white/90 uppercase tracking-wider text-center leading-tight">{stat.label}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

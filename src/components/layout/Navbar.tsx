@@ -207,8 +207,28 @@ const Navbar = () => {
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="lg:hidden py-4 border-t border-border animate-fade-in">
-            <div className="flex flex-col gap-2">
+          <div className="lg:hidden h-[calc(100vh-4rem)] overflow-y-auto border-t border-border animate-fade-in custom-scrollbar">
+            <div className="flex flex-col gap-2 p-4 pb-20">
+              {user && (
+                <div className="px-4 py-3 mb-2 rounded-xl bg-muted/50 border border-border/50 flex items-center gap-3">
+                  <Avatar className="h-10 w-10 border border-border">
+                    <AvatarFallback className="bg-primary text-primary-foreground font-bold">
+                      {profile?.full_name
+                        ? profile.full_name.split(" ").map((n) => n[0]?.toUpperCase()).join("").slice(0, 2)
+                        : user?.email?.charAt(0).toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col overflow-hidden">
+                    <span className="font-semibold text-sm truncate">
+                      {profile?.full_name || user?.email?.split("@")[0] || "User"}
+                    </span>
+                    <span className="text-xs text-muted-foreground capitalize">
+                      {role === "admin" ? "Administrator" : role === "vendor" ? "Vendor" : "Buyer"}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {publicLinks.map((link) => (
                 <Link
                   key={link.path}
@@ -234,6 +254,13 @@ const Navbar = () => {
                     {getDashboardLabel()}
                   </Link>
                   <Link
+                    to="/account"
+                    onClick={() => setIsOpen(false)}
+                    className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted"
+                  >
+                    Profile
+                  </Link>
+                  <Link
                     to="/account/orders"
                     onClick={() => setIsOpen(false)}
                     className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted"
@@ -250,7 +277,7 @@ const Navbar = () => {
                 <ThemeToggle />
               </div>
 
-              <div className="flex gap-2 px-4 pt-2">
+              <div className="flex gap-2 px-4 pt-2 pb-8">
                 {user ? (
                   <Button
                     variant="destructive"
