@@ -153,11 +153,11 @@ const ProductDetail = () => {
               {/* Price */}
               <div className="flex items-center gap-4 mb-6">
                 <span className="text-4xl font-bold text-foreground">GH₵{product.price}</span>
-                {product.originalPrice && (
+                {product.original_price && (
                   <>
-                    <span className="text-xl text-muted-foreground line-through">GH₵{product.originalPrice}</span>
+                    <span className="text-xl text-muted-foreground line-through">GH₵{product.original_price}</span>
                     <Badge variant="destructive" className="text-sm">
-                      {Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
+                      {Math.round((1 - product.price / product.original_price) * 100)}% OFF
                     </Badge>
                   </>
                 )}

@@ -45,8 +45,10 @@ const VendorOrders = () => {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ orderId, newStatus }: { orderId: string; newStatus: string }) =>
-      supabase.from("orders").update({ status: newStatus }).eq("id", orderId),
+    mutationFn: async ({ orderId, newStatus }: { orderId: string; newStatus: string }) => {
+      const { error } = await supabase.from("orders").update({ status: newStatus }).eq("id", orderId);
+      if (error) throw error;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vendor-orders"] });
       toast.success("Order status updated successfully");
