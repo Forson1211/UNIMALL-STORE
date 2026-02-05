@@ -78,10 +78,17 @@ const Signup = () => {
         variant: "destructive",
       });
     } else {
-      toast({
-        title: "Account created!",
-        description: "Please check your email to verify your account, then log in.",
-      });
+      if (selectedRole === "vendor") {
+        toast({
+          title: "Vendor account created!",
+          description: "Please verify your email. Your account will be reviewed by an admin and you'll be notified once approved (usually within 24-48 hours).",
+        });
+      } else {
+        toast({
+          title: "Account created!",
+          description: "Please check your email to verify your account, then log in.",
+        });
+      }
       navigate("/login");
     }
 

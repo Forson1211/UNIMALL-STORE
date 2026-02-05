@@ -7,56 +7,46 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, Star, ShoppingCart, Minus, Plus, Truck, Shield, RotateCcw, Store, ChevronLeft } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
-
-// Mock product data
-const mockProducts: Record<string, {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  originalPrice?: number;
-  rating: number;
-  reviews: number;
-  vendor: string;
-  vendorId: string;
-  category: string;
-  image: string;
-  images: string[];
-  stock: number;
-  features: string[];
-}> = {
-  "1": { id: "1", name: "Wireless Earbuds Pro", description: "Experience premium sound quality with our Wireless Earbuds Pro. Featuring active noise cancellation, 30-hour battery life, and ergonomic design for all-day comfort. Perfect for students who want to focus on their studies or enjoy music between classes.", price: 85, originalPrice: 120, rating: 4.8, reviews: 124, vendor: "TechHub", vendorId: "v1", category: "Electronics", image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800", images: ["https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800", "https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?w=800"], stock: 25, features: ["Active Noise Cancellation", "30-hour Battery Life", "IPX5 Water Resistant", "Touch Controls"] },
-  "fs1": { id: "fs1", name: "Wireless Earbuds Pro", description: "Experience premium sound quality with our Wireless Earbuds Pro. Featuring active noise cancellation, 30-hour battery life, and ergonomic design for all-day comfort.", price: 65, originalPrice: 120, rating: 4.8, reviews: 124, vendor: "TechHub", vendorId: "v1", category: "Electronics", image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800", images: ["https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800"], stock: 15, features: ["Active Noise Cancellation", "30-hour Battery Life", "IPX5 Water Resistant"] },
-  "ts1": { id: "ts1", name: "Campus Hoodie - Navy", description: "Stay cozy and stylish with our premium Campus Hoodie. Made from soft, sustainable cotton blend that's perfect for those chilly lecture halls or late-night study sessions.", price: 45, rating: 4.9, reviews: 512, vendor: "StyleCo", vendorId: "v3", category: "Fashion", image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800", images: ["https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800"], stock: 50, features: ["100% Organic Cotton", "Pre-shrunk", "Machine Washable", "Unisex Fit"] },
-};
-
-// Default product for unknown IDs
-const defaultProduct = {
-  id: "default",
-  name: "Sample Product",
-  description: "This is a sample product description. The actual product details will be loaded from the database.",
-  price: 50,
-  originalPrice: undefined as number | undefined,
-  rating: 4.5,
-  reviews: 100,
-  vendor: "Unimall Store",
-  vendorId: "v0",
-  category: "General",
-  image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800",
-  images: ["https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800"],
-  stock: 10,
-  features: ["High Quality", "Fast Shipping", "Great Value"],
-};
+import { useQuery } from "@tanstack/react-query";
+import { productService } from "@/services/productService";
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const product = mockProducts[id || ""] || defaultProduct;
-  
+
+  const { data: product, isLoading, error } = useQuery({
+    queryKey: ["product", id],
+    queryFn: () => productService.getProductById(id!),
+    enabled: !!id,
+  });
+
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
-  
+
   const { addItem } = useCart();
   const { toast } = useToast();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-32 flex justify-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-32 text-center">
+          <h2 className="text-2xl font-bold">Product not found</h2>
+          <Button className="mt-4" onClick={() => window.history.back()}>Go Back</Button>
+        </div>
+      </div>
+    );
+  }
 
   const handleAddToCart = () => {
     for (let i = 0; i < quantity; i++) {
@@ -66,7 +56,7 @@ const ProductDetail = () => {
         price: product.price,
         image: product.image,
         vendor: product.vendor,
-        vendorId: product.vendorId,
+        vendorId: product.vendor_id,
       });
     }
     toast({
@@ -90,7 +80,7 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4">
           {/* Breadcrumb */}
@@ -121,9 +111,8 @@ const ProductDetail = () => {
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
-                      className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
-                        selectedImage === index ? "border-primary" : "border-transparent"
-                      }`}
+                      className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${selectedImage === index ? "border-primary" : "border-transparent"
+                        }`}
                     >
                       <img src={img} alt="" className="w-full h-full object-cover" />
                     </button>
@@ -134,8 +123,7 @@ const ProductDetail = () => {
 
             {/* Details */}
             <div>
-              {/* Vendor */}
-              <Link to={`/vendors/${product.vendorId}`} className="inline-flex items-center gap-2 text-sm text-primary hover:underline mb-2">
+              <Link to={`/vendors/${product.vendor_id}`} className="inline-flex items-center gap-2 text-sm text-primary hover:underline mb-2">
                 <Store className="w-4 h-4" />
                 {product.vendor}
               </Link>
@@ -151,11 +139,10 @@ const ProductDetail = () => {
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-5 h-5 ${
-                        i < Math.floor(product.rating)
-                          ? "fill-yellow-500 text-yellow-500"
-                          : "fill-muted text-muted"
-                      }`}
+                      className={`w-5 h-5 ${i < Math.floor(product.rating)
+                        ? "fill-yellow-500 text-yellow-500"
+                        : "fill-muted text-muted"
+                        }`}
                     />
                   ))}
                 </div>

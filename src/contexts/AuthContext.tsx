@@ -3,7 +3,8 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-type UserRole = "admin" | "vendor" | "buyer";
+type UserRole = "admin" | "moderator" | "vendor" | "buyer";
+type VendorStatus = "pending" | "approved" | "suspended" | null;
 
 interface Profile {
   id: string;
@@ -14,6 +15,7 @@ interface Profile {
   address: string | null;
   store_name: string | null;
   store_description: string | null;
+  campus?: string | null;
 }
 
 interface AuthContextType {
@@ -21,11 +23,13 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   role: UserRole | null;
+  vendorStatus: VendorStatus;
   isLoading: boolean;
   signUp: (email: string, password: string, fullName: string, role: UserRole, storeName?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: Error | null }>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
+  const [vendorStatus, setVendorStatus] = useState<VendorStatus>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -42,34 +47,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log("Fetching profile for:", userId);
 
-      // Fetch profile
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("user_id", userId)
         .single();
 
-      if (profileError) {
-        console.error("Error fetching profile:", profileError);
-      } else {
-        console.log("Profile data:", profileData);
-        setProfile(profileData);
+      if (profileData) {
+        setProfile(profileData as any);
       }
 
-      // Fetch role independently
-      console.log("Fetching role for:", userId);
       const { data: roleData, error: roleError } = await supabase
         .rpc("get_user_role", { _user_id: userId });
 
-      if (roleError) {
-        console.error("Error fetching role:", roleError);
-      } else {
-        console.log("Role data received:", roleData);
-        if (roleData) {
-          setRole(roleData as UserRole);
+      if (roleData) {
+        setRole(roleData as UserRole);
+
+        // ALWAYS check for vendor status if they have a vendor record, 
+        // regardless of whether 'vendor' is their primary (highest) role.
+        const { data: vendorData } = await (supabase
+          .from("user_roles")
+          .select("vendor_status")
+          .eq("user_id", userId)
+          .eq("role", "vendor")
+          .maybeSingle() as any);
+
+        if (vendorData) {
+          setVendorStatus(vendorData.vendor_status as VendorStatus);
         } else {
-          // If no role returned, default to buyer to be safe, but log it
-          console.warn("No role returned from get_user_role");
+          setVendorStatus(null);
         }
       }
     } catch (error) {
@@ -77,25 +83,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // 1. Auth State Listener
   useEffect(() => {
-    // Set up auth state listener BEFORE getting session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
 
         if (currentSession?.user) {
-          // Use setTimeout to avoid Supabase deadlock
           setTimeout(() => fetchProfile(currentSession.user.id), 0);
         } else {
           setProfile(null);
           setRole(null);
+          setVendorStatus(null);
         }
         setIsLoading(false);
       }
     );
 
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       setSession(initialSession);
       setUser(initialSession?.user ?? null);
@@ -107,6 +112,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // 2. Real-time Subscription for Vendor Status
+  useEffect(() => {
+    let roleSubscription: any = null;
+
+    if (user) {
+      console.log("Setting up real-time status tracker for:", user.id);
+      roleSubscription = supabase
+        .channel(`user-role-${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "user_roles",
+          },
+          (payload) => {
+            console.log("Real-time vendor status change detected:", payload);
+            const data = payload.new as any;
+            if (data && data.user_id === user.id && data.role === "vendor") {
+              const newStatus = data.vendor_status as VendorStatus;
+
+              if (newStatus === "approved") {
+                setVendorStatus(newStatus);
+                toast({
+                  title: "Store Approved! 🎉",
+                  description: "Your vendor account has been approved. Your dashboard is now unlocked.",
+                });
+              } else {
+                setVendorStatus(newStatus);
+              }
+            }
+          }
+        )
+        .subscribe();
+    }
+
+    return () => {
+      if (roleSubscription) {
+        supabase.removeChannel(roleSubscription);
+      }
+    };
+  }, [user]);
 
   const signUp = async (
     email: string,
@@ -168,6 +216,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setProfile(null);
     setRole(null);
+    setVendorStatus(null);
     toast({
       title: "Signed out",
       description: "You have been signed out successfully.",
@@ -184,14 +233,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) throw error;
 
-      // Update local state, creating a new profile object if one didn't exist
       setProfile((prev) => {
         if (prev) {
           return { ...prev, ...updates };
         }
-        // If profile was null, create a minimal one with the updates
         return {
-          id: "", // ID will be generated by DB, but we don't strictly need it for UI display immediately
+          id: "",
           user_id: user.id,
           full_name: null,
           avatar_url: null,
@@ -199,6 +246,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           address: null,
           store_name: null,
           store_description: null,
+          campus: null,
           ...updates
         };
       });
@@ -215,6 +263,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const refreshProfile = async () => {
+    if (user) {
+      await fetchProfile(user.id);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -222,11 +276,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         profile,
         role,
+        vendorStatus,
         isLoading,
         signUp,
         signIn,
         signOut,
         updateProfile,
+        refreshProfile,
       }}
     >
       {children}

@@ -4,8 +4,10 @@ import { DataTable } from "@/components/dashboard/DataTable";
 import { ProductForm } from "@/components/dashboard/ProductForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { mockProducts } from "@/data/mockDashboardData";
-import { Product } from "@/types/dashboard";
+import { useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
+import { vendorService } from "@/services/vendorService";
 import { MoreHorizontal, Package, Plus, Pencil, Trash2, Eye } from "lucide-react";
 import {
   DropdownMenu,
@@ -15,51 +17,74 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
-const statusStyles: Record<Product['status'], string> = {
+const statusStyles: Record<string, string> = {
   active: "bg-primary/10 text-primary border-primary/20",
   draft: "bg-muted text-muted-foreground",
   out_of_stock: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
 const VendorProducts = () => {
-  const [products, setProducts] = useState(mockProducts.filter(p => p.vendorId === '1'));
+  const { user, profile } = useAuth();
+  const queryClient = useQueryClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | undefined>();
+  const [editingProduct, setEditingProduct] = useState<any | undefined>();
+
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ["vendor-products", user?.id],
+    queryFn: () => vendorService.getProducts(user!.id),
+    enabled: !!user,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: any) => vendorService.createProduct({ ...data, vendor_id: user!.id }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vendor-products"] });
+      toast.success("Product created successfully");
+      setIsFormOpen(false);
+    },
+    onError: (error: any) => toast.error(error.message),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: any }) => vendorService.updateProduct(id, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vendor-products"] });
+      toast.success("Product updated successfully");
+      setIsFormOpen(false);
+    },
+    onError: (error: any) => toast.error(error.message),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => vendorService.deleteProduct(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vendor-products"] });
+      toast.success("Product deleted successfully");
+    },
+    onError: (error: any) => toast.error(error.message),
+  });
 
   const handleAddProduct = () => {
     setEditingProduct(undefined);
     setIsFormOpen(true);
   };
 
-  const handleEditProduct = (product: Product) => {
+  const handleEditProduct = (product: any) => {
     setEditingProduct(product);
     setIsFormOpen(true);
   };
 
   const handleDeleteProduct = (productId: string) => {
-    setProducts(products.filter(p => p.id !== productId));
-    toast.success("Product deleted successfully");
+    if (confirm("Are you sure you want to delete this product?")) {
+      deleteMutation.mutate(productId);
+    }
   };
 
-  const handleSaveProduct = (productData: Partial<Product>) => {
+  const handleSaveProduct = (productData: any) => {
     if (editingProduct) {
-      setProducts(products.map(p => 
-        p.id === editingProduct.id ? { ...p, ...productData } : p
-      ));
+      updateMutation.mutate({ id: editingProduct.id, updates: productData });
     } else {
-      const newProduct: Product = {
-        id: Date.now().toString(),
-        name: productData.name || '',
-        description: productData.description || '',
-        price: productData.price || 0,
-        category: productData.category || '',
-        stock: productData.stock || 0,
-        vendorId: '1',
-        vendorName: 'TechHub',
-        status: productData.status || 'draft',
-        createdAt: new Date(),
-      };
-      setProducts([newProduct, ...products]);
+      createMutation.mutate(productData);
     }
   };
 
@@ -67,7 +92,7 @@ const VendorProducts = () => {
     {
       key: "name",
       header: "Product",
-      render: (product: Product) => (
+      render: (product: any) => (
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
             <Package className="w-6 h-6 text-muted-foreground" />
@@ -83,13 +108,13 @@ const VendorProducts = () => {
       key: "price",
       header: "Price",
       sortable: true,
-      render: (product: Product) => `$${product.price.toFixed(2)}`,
+      render: (product: any) => `GH₵${product.price.toFixed(2)}`,
     },
     {
       key: "stock",
       header: "Stock",
       sortable: true,
-      render: (product: Product) => (
+      render: (product: any) => (
         <span className={product.stock < 10 ? "text-destructive font-medium" : ""}>
           {product.stock}
         </span>
@@ -98,7 +123,7 @@ const VendorProducts = () => {
     {
       key: "status",
       header: "Status",
-      render: (product: Product) => (
+      render: (product: any) => (
         <Badge variant="outline" className={statusStyles[product.status]}>
           {product.status.replace('_', ' ')}
         </Badge>
@@ -107,7 +132,7 @@ const VendorProducts = () => {
     {
       key: "actions",
       header: "",
-      render: (product: Product) => (
+      render: (product: any) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
@@ -123,7 +148,7 @@ const VendorProducts = () => {
               <Pencil className="w-4 h-4 mr-2" />
               Edit
             </DropdownMenuItem>
-            <DropdownMenuItem 
+            <DropdownMenuItem
               className="text-destructive"
               onClick={() => handleDeleteProduct(product.id)}
             >
@@ -136,8 +161,23 @@ const VendorProducts = () => {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <DashboardLayout type="vendor" title="Products">
+        <div className="flex items-center justify-center h-96">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
-    <DashboardLayout type="vendor" title="Products" userName="TechHub" userRole="Vendor">
+    <DashboardLayout
+      type="vendor"
+      title="Products"
+      userName={profile?.store_name || profile?.full_name || "Vendor"}
+      userRole="Vendor"
+    >
       <DataTable
         title="My Products"
         data={products}

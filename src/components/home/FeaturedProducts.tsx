@@ -4,39 +4,10 @@ import { Heart, Star, ShoppingCart, ArrowRight, Clock, TrendingUp, Zap } from "l
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 
-// Mock featured products data
-const flashSaleProducts = [
-  { id: "fs1", name: "Wireless Earbuds Pro", price: 65, originalPrice: 120, rating: 4.8, reviews: 124, vendor: "TechHub", vendorId: "v1", category: "Electronics", image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400", discount: 46 },
-  { id: "fs2", name: "Smart Watch Series X", price: 149, originalPrice: 299, rating: 4.7, reviews: 89, vendor: "TechHub", vendorId: "v1", category: "Electronics", image: "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400", discount: 50 },
-  { id: "fs3", name: "Bluetooth Speaker Mini", price: 35, originalPrice: 75, rating: 4.5, reviews: 156, vendor: "AudioMax", vendorId: "v7", category: "Electronics", image: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400", discount: 53 },
-  { id: "fs4", name: "USB-C Hub 7-in-1", price: 28, originalPrice: 55, rating: 4.6, reviews: 234, vendor: "TechHub", vendorId: "v1", category: "Electronics", image: "https://images.unsplash.com/photo-1625723044792-44de16ccb4e9?w=400", discount: 49 },
-];
+import { useQuery } from "@tanstack/react-query";
+import { productService, StorefrontProduct } from "@/services/productService";
 
-const topSellingProducts = [
-  { id: "ts1", name: "Campus Hoodie - Navy", price: 45, rating: 4.9, reviews: 512, vendor: "StyleCo", vendorId: "v3", category: "Fashion", image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400" },
-  { id: "ts2", name: "Laptop Stand Adjustable", price: 55, rating: 4.8, reviews: 398, vendor: "TechHub", vendorId: "v1", category: "Electronics", image: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400" },
-  { id: "ts3", name: "Canvas Tote Bag", price: 22, rating: 4.9, reviews: 623, vendor: "StyleCo", vendorId: "v3", category: "Fashion", image: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400" },
-  { id: "ts4", name: "Study Desk Lamp LED", price: 38, rating: 4.7, reviews: 287, vendor: "HomeLite", vendorId: "v8", category: "Electronics", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" },
-];
-
-const newArrivals = [
-  { id: "na1", name: "Organic Energy Bars (12pk)", price: 18, rating: 4.7, reviews: 67, vendor: "HealthyBites", vendorId: "v4", category: "Food", image: "https://images.unsplash.com/photo-1622484212850-eb596d769eab?w=400", isNew: true },
-  { id: "na2", name: "Yoga Mat Premium", price: 38, rating: 4.9, reviews: 89, vendor: "FitZone", vendorId: "v6", category: "Sports", image: "https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=400", isNew: true },
-  { id: "na3", name: "Water Bottle Insulated", price: 25, rating: 4.8, reviews: 145, vendor: "FitZone", vendorId: "v6", category: "Sports", image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400", isNew: true },
-  { id: "na4", name: "Desk Organizer Set", price: 32, rating: 4.6, reviews: 98, vendor: "StudyMart", vendorId: "v5", category: "Stationery", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400", isNew: true },
-];
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  originalPrice?: number;
-  rating: number;
-  reviews: number;
-  vendor: string;
-  vendorId: string;
-  category: string;
-  image: string;
+interface Product extends StorefrontProduct {
   discount?: number;
   isNew?: boolean;
 }
@@ -54,7 +25,7 @@ const ProductCard = ({ product, showDiscount = false }: { product: Product; show
       price: product.price,
       image: product.image,
       vendor: product.vendor,
-      vendorId: product.vendorId,
+      vendorId: product.vendor_id,
     });
     toast({
       title: "Added to cart",
@@ -106,14 +77,11 @@ const ProductCard = ({ product, showDiscount = false }: { product: Product; show
         </h3>
         <div className="flex items-center gap-1 mb-3">
           <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
-          <span className="text-sm font-medium">{product.rating}</span>
-          <span className="text-xs text-muted-foreground">({product.reviews})</span>
+          <span className="text-sm font-medium">{product.rating || 0}</span>
+          <span className="text-xs text-muted-foreground">({product.reviews || 0})</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-lg font-bold text-foreground">GH₵{product.price}</span>
-          {product.originalPrice && (
-            <span className="text-sm text-muted-foreground line-through">GH₵{product.originalPrice}</span>
-          )}
         </div>
       </div>
     </Link>
@@ -121,6 +89,24 @@ const ProductCard = ({ product, showDiscount = false }: { product: Product; show
 };
 
 const FeaturedProducts = () => {
+  const { data: allProducts = [], isLoading } = useQuery({
+    queryKey: ["featured-products"],
+    queryFn: () => productService.getProducts({ limit: 12 }),
+  });
+
+  // For demonstration, we split the products into the categories
+  // In a real app, these would come from specific queries or tags
+  const flashSaleProducts = allProducts.slice(0, 4).map(p => ({ ...p, discount: 15 }));
+  const topSellingProducts = allProducts.slice(4, 8);
+  const newArrivals = allProducts.slice(8, 12).map(p => ({ ...p, isNew: true }));
+
+  if (isLoading) {
+    return (
+      <div className="py-20 flex justify-center">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
   return (
     <section className="py-16 bg-background">
       <div className="container mx-auto px-4">

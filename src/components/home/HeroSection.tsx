@@ -2,9 +2,16 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ShoppingBag, Users, Shield, Sparkles, Store } from "lucide-react";
 import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const HeroSection = () => {
   const { heroBackgroundUrl, heroOverlayOpacity } = useSiteSettingsContext();
+  const { user, role } = useAuth();
+
+  const isVendor = role === "vendor";
+  const isAdmin = role === "admin";
+  const showDashboard = user && (isVendor || isAdmin);
+  const dashboardLink = isAdmin ? "/admin" : "/vendor";
 
   const stats = [
     { value: "5,000+", label: "Active Students", icon: Users },
@@ -79,9 +86,9 @@ const HeroSection = () => {
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
-            <Link to="/signup?role=vendor">
+            <Link to={showDashboard ? dashboardLink : "/signup?role=vendor"}>
               <Button variant="heroOutline" size="xl" className="w-full sm:w-auto border-primary-foreground/50 text-primary-foreground hover:bg-primary-foreground/10">
-                Become a Vendor
+                {showDashboard ? "Visit Dashboard" : "Become a Vendor"}
               </Button>
             </Link>
           </div>

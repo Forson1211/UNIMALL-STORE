@@ -13,12 +13,14 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
+import { orderService } from "@/services/orderService";
+
 const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("momo");
   const [formData, setFormData] = useState({
@@ -37,9 +39,9 @@ const Checkout = () => {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
     if (!user) {
       toast({
         title: "Please sign in",
@@ -61,17 +63,41 @@ const Checkout = () => {
 
     setIsProcessing(true);
 
-    // Simulate order processing
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      const orderItems = items.map(item => ({
+        id: item.id,
+        quantity: item.quantity,
+        price: item.price,
+        vendor_id: item.vendorId
+      }));
 
-    toast({
-      title: "Order placed successfully!",
-      description: "You will receive a confirmation email shortly.",
-    });
+      await orderService.placeOrder({
+        buyerId: user.id,
+        totalAmount: totalPrice,
+        items: orderItems,
+        paymentMethod: paymentMethod,
+        shippingDetails: {
+          address: `${formData.address}, ${formData.city}`,
+          notes: formData.notes
+        }
+      });
 
-    clearCart();
-    navigate("/account/orders");
-    setIsProcessing(false);
+      toast({
+        title: "Order placed successfully!",
+        description: "You will receive a confirmation email shortly.",
+      });
+
+      clearCart();
+      navigate("/account/orders");
+    } catch (error: any) {
+      toast({
+        title: "Error placing order",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (items.length === 0) {
@@ -100,7 +126,7 @@ const Checkout = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4">
           {/* Back Button */}
@@ -203,11 +229,10 @@ const Checkout = () => {
                   <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
                     <div className="space-y-3">
                       <label
-                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                          paymentMethod === "momo"
+                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === "momo"
                             ? "border-primary bg-accent"
                             : "border-border hover:border-primary/50"
-                        }`}
+                          }`}
                       >
                         <RadioGroupItem value="momo" />
                         <div className="flex-1">
@@ -218,11 +243,10 @@ const Checkout = () => {
                         </div>
                       </label>
                       <label
-                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                          paymentMethod === "card"
+                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === "card"
                             ? "border-primary bg-accent"
                             : "border-border hover:border-primary/50"
-                        }`}
+                          }`}
                       >
                         <RadioGroupItem value="card" />
                         <div className="flex-1">
@@ -233,11 +257,10 @@ const Checkout = () => {
                         </div>
                       </label>
                       <label
-                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                          paymentMethod === "cod"
+                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === "cod"
                             ? "border-primary bg-accent"
                             : "border-border hover:border-primary/50"
-                        }`}
+                          }`}
                       >
                         <RadioGroupItem value="cod" />
                         <div className="flex-1">
@@ -279,7 +302,7 @@ const Checkout = () => {
             <div className="lg:col-span-1">
               <div className="bg-card rounded-2xl border border-border p-6 sticky top-24">
                 <h2 className="text-xl font-semibold mb-6">Order Summary</h2>
-                
+
                 <div className="space-y-4 mb-6">
                   {items.map((item) => (
                     <div key={item.id} className="flex gap-3">

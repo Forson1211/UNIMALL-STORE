@@ -10,41 +10,24 @@ import { Package, ArrowLeft, Eye, Truck, Check, Clock, ShoppingBag, Search, MapP
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 
-// Mock orders data
-const mockOrders = [
-  {
-    id: "ORD-001",
-    date: "2025-02-01",
-    status: "delivered",
-    total: 127.00,
-    trackingNumber: "UM-782910-GH",
-    items: [
-      { name: "Wireless Earbuds Pro", quantity: 1, price: 85, image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=100" },
-      { name: "Laptop Stand", quantity: 1, price: 42, image: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=100" },
-    ],
-  },
-  {
-    id: "ORD-002",
-    date: "2025-01-28",
-    status: "shipped",
-    total: 45.00,
-    trackingNumber: "UM-883011-GH",
-    items: [
-      { name: "Campus Hoodie - Navy", quantity: 1, price: 45, image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=100" },
-    ],
-  },
-  {
-    id: "ORD-003",
-    date: "2025-01-25",
-    status: "processing",
-    total: 63.00,
-    trackingNumber: "UM-994122-GH",
-    items: [
-      { name: "Yoga Mat Premium", quantity: 1, price: 38, image: "https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=100" },
-      { name: "Canvas Tote Bag", quantity: 1, price: 22, image: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=100" },
-    ],
-  },
-];
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+interface OrderItem {
+  name: string;
+  quantity: number;
+  price: number;
+  image: string;
+}
+
+interface Order {
+  id: string;
+  date: string;
+  status: string;
+  total: number;
+  trackingNumber: string;
+  items: OrderItem[];
+}
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -65,6 +48,49 @@ const BuyerOrders = () => {
   const activeTab = searchParams.get("tab") || "all";
   const [trackingId, setTrackingId] = useState("");
 
+  const { data: orders = [], isLoading } = useQuery({
+    queryKey: ["buyer-orders", user?.id],
+    queryFn: async () => {
+      // We'll fetch from a view or join. For now, let's use a RPC or specialized view
+      // But let's keep it simple with a direct query if possible, or use the admin view if allowed
+      const { data, error } = await supabase
+        .from("orders")
+        .select(`
+          id,
+          created_at,
+          status,
+          total_amount,
+          order_items (
+            quantity,
+            unit_price,
+            products (
+              name,
+              image_url
+            )
+          )
+        `)
+        .eq("buyer_id", user?.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      return (data as any[]).map(order => ({
+        id: order.id.slice(0, 8).toUpperCase(),
+        date: order.created_at,
+        status: order.status,
+        total: order.total_amount,
+        trackingNumber: `UM-${order.id.slice(0, 6).toUpperCase()}-GH`,
+        items: order.order_items.map((item: any) => ({
+          name: item.products.name,
+          quantity: item.quantity,
+          price: item.unit_price,
+          image: item.products.image_url
+        }))
+      })) as Order[];
+    },
+    enabled: !!user,
+  });
+
   const handleTabChange = (value: string) => {
     setSearchParams({ tab: value });
   };
@@ -75,6 +101,17 @@ const BuyerOrders = () => {
     { label: "Shipped", date: "Feb 02, 09:15 AM", status: "current", icon: Truck },
     { label: "Delivered", date: "Estimated Feb 04", status: "upcoming", icon: Package },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-32 flex justify-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -136,7 +173,7 @@ const BuyerOrders = () => {
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsContent value="all" className="mt-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {mockOrders.length === 0 ? (
+              {orders.length === 0 ? (
                 <Card className="border-dashed py-16">
                   <CardContent className="flex flex-col items-center text-center">
                     <div className="w-20 h-20 rounded-full bg-muted/50 flex items-center justify-center mb-4">
@@ -153,7 +190,7 @@ const BuyerOrders = () => {
                 </Card>
               ) : (
                 <div className="space-y-6">
-                  {mockOrders.map((order) => (
+                  {orders.map((order) => (
                     <Card key={order.id} className="overflow-hidden border-border/60 hover:border-primary/50 transition-all duration-300 hover:shadow-md">
                       <CardContent className="p-0">
                         {/* Order Meta Header */}

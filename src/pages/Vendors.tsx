@@ -4,6 +4,7 @@ import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, MapPin, Star, Package, ExternalLink } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const mockVendors = [
   { id: 1, name: "TechHub", avatar: "T", description: "Your one-stop shop for all tech accessories and gadgets.", campus: "University of Ghana", rating: 4.9, products: 45, verified: true },
@@ -21,7 +22,7 @@ const VendorCard = ({ vendor }: { vendor: typeof mockVendors[0] }) => (
       <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center text-primary-foreground text-2xl font-bold shrink-0">
         {vendor.avatar}
       </div>
-      
+
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
@@ -50,11 +51,11 @@ const VendorCard = ({ vendor }: { vendor: typeof mockVendors[0] }) => (
         </div>
       </div>
     </div>
-    
+
     <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
       {vendor.description}
     </p>
-    
+
     <Link to={`/vendor/${vendor.id}`}>
       <Button variant="outline" className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
         Visit Store
@@ -65,10 +66,17 @@ const VendorCard = ({ vendor }: { vendor: typeof mockVendors[0] }) => (
 );
 
 const Vendors = () => {
+  const { user, role } = useAuth();
+
+  const isVendor = role === "vendor";
+  const isAdmin = role === "admin";
+  const showDashboard = user && (isVendor || isAdmin);
+  const dashboardLink = isAdmin ? "/admin" : "/vendor";
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4">
           {/* Header */}
@@ -104,8 +112,8 @@ const Vendors = () => {
           <div className="text-center mt-16 p-8 bg-accent rounded-3xl">
             <h2 className="text-2xl font-bold text-foreground mb-2">Want to become a vendor?</h2>
             <p className="text-muted-foreground mb-6">Start selling your products to thousands of students today.</p>
-            <Link to="/signup?role=vendor">
-              <Button size="lg">Apply to Become a Vendor</Button>
+            <Link to={showDashboard ? dashboardLink : "/signup?role=vendor"}>
+              <Button size="lg">{showDashboard ? "Visit Your Dashboard" : "Apply to Become a Vendor"}</Button>
             </Link>
           </div>
         </div>

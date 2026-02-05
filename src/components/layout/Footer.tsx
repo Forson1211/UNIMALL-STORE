@@ -4,6 +4,7 @@ import { ShoppingBag, Facebook, Twitter, Instagram, Youtube, ExternalLink, Shiel
 import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Accordion,
   AccordionContent,
@@ -13,7 +14,14 @@ import {
 
 const Footer = () => {
   const { siteName, logoUrl } = useSiteSettingsContext();
+  const { user, role } = useAuth();
   const [footerNews, setFooterNews] = useState<any[]>([]);
+
+  const isVendor = role === "vendor";
+  const isAdmin = role === "admin";
+  const showDashboard = user && (isVendor || isAdmin);
+  const dashboardLink = isAdmin ? "/admin" : "/vendor";
+  const dashboardLabel = isAdmin ? "Visit Admin Dashboard" : "Visit Vendor Dashboard";
 
   useEffect(() => {
     const fetchFooterNews = async () => {
@@ -39,62 +47,66 @@ const Footer = () => {
     {
       title: "Marketplace",
       links: [
-        { name: "Shop Products", path: "/products" },
-        { name: "Top Vendors", path: "/vendors" },
-        { name: "Campus Deals", path: "/products" },
-        { name: "Featured Stores", path: "/vendors" },
-        { name: "How it Works", path: "/how-it-works" },
+        { name: "Shop Products", path: "/products", aria: "Browse all products" },
+        { name: "Top Vendors", path: "/vendors", aria: "View top rated campus vendors" },
+        { name: "Campus Deals", path: "/products", aria: "View latest deals" },
+        { name: "Featured Stores", path: "/vendors", aria: "Explore featured campus stores" },
+        { name: "How it Works", path: "/how-it-works", aria: "Learn how to use the marketplace" },
       ]
     },
     {
       title: "Categories",
       links: [
-        { name: "Electronics", path: "/products?category=electronics" },
-        { name: "Books & Study", path: "/products?category=books" },
-        { name: "Fashion", path: "/products?category=fashion" },
-        { name: "Home & Dorm", path: "/products?category=home" },
-        { name: "Services", path: "/products?category=services" },
+        { name: "Electronics", path: "/products?category=Electronics", aria: "Shop electronics" },
+        { name: "Books & Study", path: "/products?category=Books", aria: "Shop books and study materials" },
+        { name: "Fashion", path: "/products?category=Fashion", aria: "Shop fashion items" },
+        { name: "Home & Dorm", path: "/products?category=Home", aria: "Shop home and dorm essentials" },
+        { name: "Services", path: "/products?category=Services", aria: "Browse campus services" },
       ]
     },
     {
       title: "My Account",
       links: [
-        { name: "Buyer Profile", path: "/account" },
-        { name: "Order History", path: "/account/orders" },
-        { name: "Wishlist", path: "/account/wishlist" },
-        { name: "Settings", path: "/account" },
-        { name: "Track Order", path: "/account/orders" },
+        { name: "Buyer Profile", path: "/account", aria: "Go to your buyer profile" },
+        { name: "Order History", path: "/account/orders", aria: "View your past orders" },
+        { name: "Wishlist", path: "/account/wishlist", aria: "View your saved items" },
+        { name: "Settings", path: "/account", aria: "Manage your account settings" },
+        { name: "Track Order", path: "/account/orders", aria: "Track your active orders" },
       ]
     },
     {
       title: "Vendor Hub",
       links: [
-        { name: "Become a Vendor", path: "/signup?role=vendor" },
-        { name: "Vendor Login", path: "/login" },
-        { name: "Seller Dashboard", path: "/vendor" },
-        { name: "Vendor Support", path: "/contact" },
-        { name: "Selling Tips", path: "/how-it-works" },
+        {
+          name: showDashboard ? dashboardLabel : "Become a Vendor",
+          path: showDashboard ? dashboardLink : "/signup?role=vendor",
+          aria: showDashboard ? "Go to your dashboard" : "Apply to become a campus vendor"
+        },
+        { name: "Vendor Login", path: "/login", aria: "Log in to your vendor account" },
+        { name: "Seller Dashboard", path: "/vendor", aria: "Access your seller tools" },
+        { name: "Vendor Support", path: "/contact", aria: "Get help with your vendor account" },
+        { name: "Selling Tips", path: "/how-it-works", aria: "Learn how to sell successfully" },
       ]
     },
     {
       title: "Company",
       links: [
-        { name: "About Us", path: "/about" },
-        { name: "Our Mission", path: "/about" },
-        { name: "Contact Us", path: "/contact" },
-        { name: "Privacy Policy", path: "/privacy" },
-        { name: "Terms of Service", path: "/terms" },
-        { name: "Campus News", path: "/news" },
+        { name: "About Us", path: "/about", aria: "Learn more about us" },
+        { name: "Our Mission", path: "/about", aria: "Read our mission statement" },
+        { name: "Contact Us", path: "/contact", aria: "Get in touch with us" },
+        { name: "Privacy Policy", path: "/about", aria: "Read our privacy policy" },
+        { name: "Terms of Service", path: "/about", aria: "Read our terms of service" },
+        { name: "Campus News", path: "/news", aria: "Read latest campus news" },
       ]
     },
     {
       title: "Support",
       links: [
-        { name: "Help Center", path: "/contact" },
-        { name: "FAQs", path: "/faqs" },
-        { name: "Accessibility", path: "/contact" },
-        { name: "Safety Center", path: "/how-it-works" },
-        { name: "Community Rules", path: "/terms" },
+        { name: "Help Center", path: "/contact", aria: "Visit our help center" },
+        { name: "FAQs", path: "/how-it-works", aria: "Read frequently asked questions" },
+        { name: "Accessibility", path: "/about", aria: "Read our accessibility statement" },
+        { name: "Safety Center", path: "/how-it-works", aria: "Learn about campus safety" },
+        { name: "Community Rules", path: "/about", aria: "Read our community guidelines" },
       ]
     }
   ];
@@ -126,8 +138,18 @@ const Footer = () => {
             <span className="text-xl md:text-2xl font-bold tracking-tight">{siteName.toLowerCase()}</span>
           </Link>
           <div className="flex items-center gap-4 md:gap-8">
-            {[Facebook, Instagram, Twitter, Youtube].map((Icon, idx) => (
-              <a key={idx} href="#" className="opacity-70 hover:opacity-100 transition-opacity">
+            {[
+              { Icon: Facebook, label: "Facebook" },
+              { Icon: Instagram, label: "Instagram" },
+              { Icon: Twitter, label: "Twitter" },
+              { Icon: Youtube, label: "Youtube" }
+            ].map(({ Icon, label }, idx) => (
+              <a
+                key={idx}
+                href="#"
+                className="opacity-70 hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary rounded-md p-1"
+                aria-label={`Follow us on ${label}`}
+              >
                 <Icon className="w-5 h-5" />
               </a>
             ))}
@@ -145,7 +167,8 @@ const Footer = () => {
                   <li key={link.name}>
                     <Link
                       to={link.path}
-                      className="text-[13px] opacity-70 hover:opacity-100 transition-opacity block leading-tight py-0.5"
+                      className="text-[13px] opacity-70 hover:opacity-100 transition-opacity block leading-tight py-0.5 focus:outline-none focus:text-white"
+                      aria-label={(link as any).aria}
                     >
                       {link.name}
                     </Link>
@@ -168,7 +191,11 @@ const Footer = () => {
                   <ul className="space-y-4 pb-4">
                     {section.links.map((link, lIdx) => (
                       <li key={lIdx}>
-                        <Link to={link.path} className="text-sm opacity-70 block">
+                        <Link
+                          to={link.path}
+                          className="text-sm opacity-70 block py-2 focus:text-white"
+                          aria-label={(link as any).aria}
+                        >
                           {link.name}
                         </Link>
                       </li>
@@ -286,9 +313,21 @@ const Footer = () => {
             {/* Center: Developers */}
             <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-[0.15em] uppercase text-white/40">
               <span className="whitespace-nowrap">Developed by</span>
-              <a href="#" className="text-primary/90 hover:text-primary transition-colors hover:underline decoration-primary/30 underline-offset-4">Forson</a>
+              <a
+                href="#"
+                className="text-primary/90 hover:text-primary transition-colors hover:underline decoration-primary/30 underline-offset-4 focus:outline-none focus:text-primary"
+                aria-label="Developer Forson's Profile"
+              >
+                Forson
+              </a>
               <span>and</span>
-              <a href="#" className="text-primary/90 hover:text-primary transition-colors hover:underline decoration-primary/30 underline-offset-4">Abraham</a>
+              <a
+                href="#"
+                className="text-primary/90 hover:text-primary transition-colors hover:underline decoration-primary/30 underline-offset-4 focus:outline-none focus:text-primary"
+                aria-label="Developer Abraham's Profile"
+              >
+                Abraham
+              </a>
             </div>
 
             {/* Right: Apps */}

@@ -24,6 +24,9 @@ import Contact from "./pages/Contact";
 import Checkout from "./pages/Checkout";
 import News from "./pages/News";
 import NewsDetail from "./pages/NewsDetail";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import Faqs from "./pages/Faqs";
 import NotFound from "./pages/NotFound";
 
 // Admin Pages
@@ -99,6 +102,9 @@ const App = () => (
                     <Route path="/checkout" element={<Checkout />} />
                     <Route path="/news" element={<News />} />
                     <Route path="/news/:id" element={<NewsDetail />} />
+                    <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/terms" element={<Terms />} />
+                    <Route path="/faqs" element={<Faqs />} />
 
                     {/* Buyer Account Routes - Protected for authenticated users */}
                     <Route path="/account" element={

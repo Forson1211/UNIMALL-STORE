@@ -12,13 +12,65 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { CheckCircle, Upload } from "lucide-react";
 
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+
 const VendorSettings = () => {
-  const handleSave = () => {
-    toast.success("Settings saved successfully");
+  const { user, profile, refreshProfile } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    storeName: "",
+    email: "",
+    description: "",
+    phone: "",
+    campus: ""
+  });
+
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        storeName: profile.store_name || "",
+        email: user?.email || "",
+        description: profile.store_description || "",
+        phone: profile.phone || "",
+        campus: profile.campus || ""
+      });
+    }
+  }, [profile, user]);
+
+  const handleSave = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          store_name: formData.storeName,
+          store_description: formData.description,
+          phone: formData.phone,
+          campus: formData.campus,
+          updated_at: new Date().toISOString()
+        } as any)
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      await refreshProfile();
+      toast.success("Settings saved successfully");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <DashboardLayout type="vendor" title="Settings" userName="TechHub" userRole="Vendor">
+    <DashboardLayout
+      type="vendor"
+      title="Settings"
+      userName={profile?.store_name || profile?.full_name || "Vendor"}
+      userRole="Vendor"
+    >
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList>
           <TabsTrigger value="profile">Store Profile</TabsTrigger>
@@ -37,7 +89,9 @@ const VendorSettings = () => {
               {/* Store Avatar */}
               <div className="flex items-center gap-6">
                 <Avatar className="h-20 w-20">
-                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl">T</AvatarFallback>
+                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                    {formData.storeName?.charAt(0) || "T"}
+                  </AvatarFallback>
                 </Avatar>
                 <div>
                   <Button variant="outline" className="mb-2">
@@ -60,11 +114,15 @@ const VendorSettings = () => {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="storeName">Store Name</Label>
-                  <Input id="storeName" defaultValue="TechHub" />
+                  <Input
+                    id="storeName"
+                    value={formData.storeName}
+                    onChange={(e) => setFormData({ ...formData, storeName: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Contact Email</Label>
-                  <Input id="email" type="email" defaultValue="tech@ug.edu.gh" />
+                  <Label htmlFor="email">Contact Email (Linked to account)</Label>
+                  <Input id="email" type="email" value={formData.email} disabled />
                 </div>
               </div>
 
@@ -72,7 +130,8 @@ const VendorSettings = () => {
                 <Label htmlFor="description">Store Description</Label>
                 <Textarea
                   id="description"
-                  defaultValue="Your one-stop shop for all tech accessories and gadgets."
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
                 />
               </div>
@@ -80,16 +139,26 @@ const VendorSettings = () => {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="campus">Campus</Label>
-                  <Input id="campus" defaultValue="University of Ghana" />
+                  <Input
+                    id="campus"
+                    value={formData.campus}
+                    onChange={(e) => setFormData({ ...formData, campus: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" defaultValue="+233 24 123 4567" />
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  />
                 </div>
               </div>
 
               <Separator />
-              <Button onClick={handleSave}>Save Changes</Button>
+              <Button onClick={handleSave} disabled={loading}>
+                {loading ? "Saving..." : "Save Changes"}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -154,9 +223,9 @@ const VendorSettings = () => {
               <div className="p-4 rounded-lg bg-muted/50">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-muted-foreground">Available Balance</span>
-                  <span className="text-2xl font-bold">$1,245.00</span>
+                  <span className="text-2xl font-bold">GH₵0.00</span>
                 </div>
-                <Button className="w-full">Request Payout</Button>
+                <Button className="w-full" disabled>Request Payout</Button>
               </div>
 
               <Separator />

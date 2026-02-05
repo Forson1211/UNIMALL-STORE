@@ -5,52 +5,80 @@ import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { RecentOrders } from "@/components/dashboard/RecentOrders";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { vendorStats, salesData, categoryData, mockOrders, mockProducts } from "@/data/mockDashboardData";
-import { DollarSign, ShoppingCart, Package, TrendingUp, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
+import { vendorService } from "@/services/vendorService";
+import { DollarSign, ShoppingCart, Package, TrendingUp, AlertTriangle } from "lucide-react";
 
 const VendorDashboard = () => {
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
-  const vendorOrders = mockOrders.filter(o => o.vendorId === '1');
-  const vendorProducts = mockProducts.filter(p => p.vendorId === '1');
-  const lowStockProducts = vendorProducts.filter(p => p.stock < 10);
+
+  const { data: statsData, isLoading: statsLoading } = useQuery({
+    queryKey: ["vendor-stats", user?.id],
+    queryFn: () => vendorService.getDashboardStats(user!.id),
+    enabled: !!user,
+  });
+
+  const stats = statsData as any;
+
+  const { data: products = [], isLoading: productsLoading } = useQuery({
+    queryKey: ["vendor-products", user?.id],
+    queryFn: () => vendorService.getProducts(user!.id),
+    enabled: !!user,
+  });
+
+  const { data: orders = [], isLoading: ordersLoading } = useQuery({
+    queryKey: ["vendor-orders", user?.id],
+    queryFn: () => vendorService.getOrders(user!.id),
+    enabled: !!user,
+  });
+
+  const lowStockProducts = products.filter((p: any) => p.stock < 10);
+
+  if (statsLoading || productsLoading || ordersLoading) {
+    return (
+      <DashboardLayout type="vendor" title="Dashboard">
+        <div className="flex items-center justify-center h-96">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
-    <DashboardLayout type="vendor" title="Dashboard" userName="TechHub" userRole="Vendor">
+    <DashboardLayout
+      type="vendor"
+      title="Dashboard"
+      userName={profile?.store_name || profile?.full_name || "Vendor"}
+      userRole="Vendor"
+    >
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatsCard
           title="Total Revenue"
-          value={`$${vendorStats.totalRevenue.toLocaleString()}`}
-          change={vendorStats.revenueChange}
+          value={`GH₵${(stats?.total_revenue || 0).toLocaleString()}`}
           icon={DollarSign}
           variant="primary"
         />
         <StatsCard
           title="Total Orders"
-          value={vendorStats.totalOrders.toLocaleString()}
-          change={vendorStats.ordersChange}
+          value={(stats?.total_orders || 0).toLocaleString()}
           icon={ShoppingCart}
           variant="secondary"
         />
         <StatsCard
           title="Products"
-          value={vendorStats.totalProducts}
+          value={stats?.total_products || 0}
           icon={Package}
         />
         <StatsCard
-          title="Conversion Rate"
-          value="4.8%"
-          change={2.1}
-          icon={TrendingUp}
+          title="Low Stock"
+          value={stats?.low_stock_count || 0}
+          icon={AlertTriangle}
           variant="warning"
         />
-      </div>
-
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <SalesChart data={salesData} title="Your Sales" />
-        <CategoryChart data={categoryData} title="Sales by Category" />
       </div>
 
       {/* Low Stock Alert & Recent Orders */}
@@ -65,12 +93,12 @@ const VendorDashboard = () => {
             {lowStockProducts.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">All products are well stocked!</p>
             ) : (
-              <div className="space-y-3">
-                {lowStockProducts.map((product) => (
+              <div className="space-y-3 scrollbar-hide max-h-[300px] overflow-y-auto">
+                {lowStockProducts.map((product: any) => (
                   <div key={product.id} className="flex items-center justify-between p-3 rounded-lg bg-gold/5 border border-gold/20">
                     <div>
-                      <p className="font-medium">{product.name}</p>
-                      <p className="text-sm text-muted-foreground">{product.category}</p>
+                      <p className="font-medium text-sm">{product.name}</p>
+                      <p className="text-xs text-muted-foreground">{product.category}</p>
                     </div>
                     <Badge variant="outline" className="bg-gold/10 text-gold border-gold/20">
                       {product.stock} left
@@ -83,8 +111,18 @@ const VendorDashboard = () => {
         </Card>
 
         {/* Recent Orders */}
-        <RecentOrders 
-          orders={vendorOrders} 
+        <RecentOrders
+          orders={orders.slice(0, 5).map((o: any) => ({
+            id: o.order_id.slice(0, 8),
+            customerName: o.buyer_name || o.buyer_email,
+            customerEmail: o.buyer_email || "",
+            date: new Date(o.created_at).toLocaleDateString(),
+            total: o.vendor_total,
+            status: o.order_status,
+            items: [],
+            paymentStatus: "paid",
+            createdAt: o.created_at
+          })) as any}
           title="Recent Orders"
           onViewAll={() => navigate('/vendor/orders')}
         />

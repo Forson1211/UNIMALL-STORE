@@ -1,8 +1,16 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Store, ShoppingBag, Sparkles } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const CTASection = () => {
+  const { user, role } = useAuth();
+
+  const isVendor = role === "vendor";
+  const isAdmin = role === "admin";
+  const showDashboard = user && (isVendor || isAdmin);
+  const dashboardLink = isAdmin ? "/admin" : "/vendor";
+
   return (
     <section className="py-24 relative overflow-hidden">
       {/* Dynamic Background with Mesh Gradient */}
@@ -71,9 +79,9 @@ const CTASection = () => {
                 </p>
 
                 <div className="mt-auto pt-4">
-                  <Link to="/signup?role=vendor">
+                  <Link to={showDashboard ? dashboardLink : "/signup?role=vendor"}>
                     <Button size="lg" className="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white border-0 font-semibold px-8 h-12 text-base shadow-xl">
-                      Become a Vendor
+                      {showDashboard ? "Visit Dashboard" : "Become a Vendor"}
                       <Sparkles className="w-5 h-5 ml-2 group-hover:rotate-12 transition-transform" />
                     </Button>
                   </Link>

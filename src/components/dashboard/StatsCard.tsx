@@ -6,6 +6,7 @@ interface StatsCardProps {
   title: string;
   value: string | number;
   change?: number;
+  description?: string;
   icon: LucideIcon;
   variant?: 'default' | 'primary' | 'secondary' | 'warning';
 }
@@ -24,7 +25,7 @@ const iconStyles = {
   warning: "bg-gold/10 text-gold",
 };
 
-export function StatsCard({ title, value, change, icon: Icon, variant = 'default' }: StatsCardProps) {
+export function StatsCard({ title, value, change, description, icon: Icon, variant = 'default' }: StatsCardProps) {
   const isPositive = change && change > 0;
   const isNegative = change && change < 0;
 
@@ -35,7 +36,7 @@ export function StatsCard({ title, value, change, icon: Icon, variant = 'default
           <div className="flex-1">
             <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
             <h3 className="text-2xl lg:text-3xl font-bold text-foreground">{value}</h3>
-            {change !== undefined && (
+            {change !== undefined ? (
               <div className={cn(
                 "flex items-center gap-1 mt-2 text-sm font-medium",
                 isPositive && "text-primary",
@@ -46,6 +47,8 @@ export function StatsCard({ title, value, change, icon: Icon, variant = 'default
                 <span>{isPositive ? '+' : ''}{change}%</span>
                 <span className="text-muted-foreground font-normal">vs last month</span>
               </div>
+            ) : description && (
+              <p className="text-sm text-muted-foreground mt-2">{description}</p>
             )}
           </div>
           <div className={cn("p-3 rounded-xl", iconStyles[variant])}>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -7,20 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Search, Grid3X3, LayoutList, Heart, Star, ShoppingCart } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { productService, StorefrontProduct } from "@/services/productService";
 
-// Mock product data
-const mockProducts = [
-  { id: "1", name: "Wireless Earbuds Pro", price: 85, originalPrice: 120, rating: 4.8, reviews: 124, vendor: "TechHub", vendorId: "v1", category: "Electronics", image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400" },
-  { id: "2", name: "Introduction to Psychology", price: 35, rating: 4.6, reviews: 89, vendor: "BookWorm", vendorId: "v2", category: "Books", image: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400" },
-  { id: "3", name: "Campus Hoodie - Navy", price: 45, rating: 4.9, reviews: 256, vendor: "StyleCo", vendorId: "v3", category: "Fashion", image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400" },
-  { id: "4", name: "Organic Energy Bars (12pk)", price: 18, rating: 4.7, reviews: 67, vendor: "HealthyBites", vendorId: "v4", category: "Food", image: "https://images.unsplash.com/photo-1622484212850-eb596d769eab?w=400" },
-  { id: "5", name: "Laptop Stand Adjustable", price: 55, rating: 4.5, reviews: 198, vendor: "TechHub", vendorId: "v1", category: "Electronics", image: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400" },
-  { id: "6", name: "Canvas Tote Bag", price: 22, rating: 4.8, reviews: 312, vendor: "StyleCo", vendorId: "v3", category: "Fashion", image: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400" },
-  { id: "7", name: "Scientific Calculator", price: 28, rating: 4.6, reviews: 145, vendor: "StudyMart", vendorId: "v5", category: "Electronics", image: "https://images.unsplash.com/photo-1564466809058-bf4114d55352?w=400" },
-  { id: "8", name: "Yoga Mat Premium", price: 38, rating: 4.9, reviews: 89, vendor: "FitZone", vendorId: "v6", category: "Sports", image: "https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=400" },
+const categories = [
+  "All",
+  "Birthday Flyers",
+  "Church Flyers",
+  "Business Flyers",
+  "Social Media Templates",
+  "Funeral Flyers",
+  "Festival Flyers",
+  "Tech Accessories",
+  "Stationery",
+  "Services",
+  "Others"
 ];
-
-const categories = ["All", "Electronics", "Books", "Fashion", "Food", "Sports"];
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -33,18 +35,13 @@ const Products = () => {
   const { addItem } = useCart();
   const { toast } = useToast();
 
-  const filteredProducts = useMemo(() => {
-    return mockProducts.filter((product) => {
-      const matchesSearch = searchQuery === "" ||
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.vendor.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.category.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesCategory = categoryFilter === "All" || product.category === categoryFilter;
-
-      return matchesSearch && matchesCategory;
-    });
-  }, [searchQuery, categoryFilter]);
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ["products", categoryFilter, searchQuery],
+    queryFn: () => productService.getProducts({
+      category: categoryFilter,
+      search: searchQuery
+    }),
+  });
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,14 +66,14 @@ const Products = () => {
     });
   };
 
-  const handleAddToCart = (product: typeof mockProducts[0]) => {
+  const handleAddToCart = (product: StorefrontProduct) => {
     addItem({
       id: product.id,
       name: product.name,
       price: product.price,
       image: product.image,
       vendor: product.vendor,
-      vendorId: product.vendorId,
+      vendorId: product.vendor_id,
     });
     toast({
       title: "Added to cart",
@@ -99,7 +96,7 @@ const Products = () => {
               {searchQuery ? `Results for "${searchQuery}"` : "Explore All Products"}
             </h1>
             <p className="text-xl text-white/80 font-medium animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-              {filteredProducts.length} premium products found across your campus
+              {products.length} premium products found across your campus
             </p>
           </div>
         </section>
@@ -155,7 +152,11 @@ const Products = () => {
           </div>
 
           {/* Products Grid */}
-          {filteredProducts.length === 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center items-center py-20">
+              <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : products.length === 0 ? (
             <div className="text-center py-16">
               <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
                 <Search className="w-10 h-10 text-muted-foreground" />
@@ -168,7 +169,7 @@ const Products = () => {
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-              {filteredProducts.map((product) => (
+              {products.map((product) => (
                 <Link
                   to={`/products/${product.id}`}
                   key={product.id}
@@ -181,11 +182,6 @@ const Products = () => {
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    {product.originalPrice && (
-                      <span className="absolute top-3 left-3 px-2 py-1 bg-destructive text-destructive-foreground text-xs font-semibold rounded-lg">
-                        {Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
-                      </span>
-                    )}
                     <button
                       className="absolute top-3 right-3 w-9 h-9 bg-background/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-background hover:text-destructive"
                       onClick={(e) => e.preventDefault()}
@@ -208,14 +204,11 @@ const Products = () => {
                     </h3>
                     <div className="flex items-center gap-1 mb-3">
                       <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
-                      <span className="text-sm font-medium">{product.rating}</span>
-                      <span className="text-xs text-muted-foreground">({product.reviews})</span>
+                      <span className="text-sm font-medium">{product.rating || 0}</span>
+                      <span className="text-xs text-muted-foreground">({product.reviews || 0})</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-lg font-bold text-foreground">GH₵{product.price}</span>
-                      {product.originalPrice && (
-                        <span className="text-sm text-muted-foreground line-through">GH₵{product.originalPrice}</span>
-                      )}
                     </div>
                   </div>
                 </Link>
@@ -224,7 +217,7 @@ const Products = () => {
           )}
 
           {/* Load More */}
-          {filteredProducts.length > 0 && (
+          {products.length > 0 && (
             <div className="text-center mt-12">
               <Button variant="outline" size="lg">
                 Load More Products

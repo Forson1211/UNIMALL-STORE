@@ -5,9 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, CheckCircle } from "lucide-react";
 import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const HowItWorks = () => {
   const { siteName } = useSiteSettingsContext();
+  const { user, role } = useAuth();
+
+  const isVendor = role === "vendor";
+  const isAdmin = role === "admin";
+  const showDashboard = user && (isVendor || isAdmin);
+  const dashboardLink = isAdmin ? "/admin" : "/vendor";
   const buyerBenefits = [
     "Access products from verified campus vendors",
     "Compare prices and read genuine reviews",
@@ -99,9 +106,9 @@ const HowItWorks = () => {
                     </li>
                   ))}
                 </ul>
-                <Link to="/signup?role=vendor">
+                <Link to={showDashboard ? dashboardLink : "/signup?role=vendor"}>
                   <Button size="lg" className="bg-white text-primary hover:bg-neutral-50 rounded-full px-8 h-14 text-base font-bold shadow-xl">
-                    Become a Vendor
+                    {showDashboard ? "Visit Your Dashboard" : "Become a Vendor"}
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
