@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      campus_news: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          category: string | null
+          content: string | null
+          created_at: string
+          excerpt: string | null
+          id: string
+          image_url: string | null
+          is_featured: boolean | null
+          is_published: boolean | null
+          publish_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string | null
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          image_url?: string | null
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          publish_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string | null
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          image_url?: string | null
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          publish_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
