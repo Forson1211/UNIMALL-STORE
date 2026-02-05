@@ -5,14 +5,15 @@ export interface StorefrontProduct {
     name: string;
     description: string;
     price: number;
+    original_price: number | null;
     category: string;
     image: string;
-    images: string[];
-    features: string[];
+    images?: string[];
+    features?: string[];
     created_at: string;
     vendor: string;
     vendor_id: string;
-    status: string;
+    status: string | boolean;
     stock: number;
     rating: number;
     reviews: number;
