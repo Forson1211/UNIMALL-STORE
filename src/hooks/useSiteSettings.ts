@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { withRetry } from "@/lib/dbUtils";
 import { toast } from "sonner";
 
-// Define a flexible JSON type
 export type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
 
 export interface SiteSetting {
@@ -14,56 +14,54 @@ export interface SiteSetting {
     updated_at: string;
 }
 
+const DEFAULT_SETTINGS: Record<string, Json> = {
+    site_name: "Unimall",
+    site_tagline: "Your Campus Marketplace",
+    primary_color: "#f97316",
+    secondary_color: "#ea580c",
+    accent_color: "#f59e0b",
+    font_family: "Plus Jakarta Sans",
+    dark_mode_enabled: false,
+    maintenance_mode: false,
+    allow_vendor_registration: true,
+    commission_rate: 10,
+};
+
 export function useSiteSettings() {
-    const [settings, setSettings] = useState<Record<string, Json>>({});
+    const [settings, setSettings] = useState<Record<string, Json>>(DEFAULT_SETTINGS);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
 
-    // Fetch all settings
     const fetchSettings = useCallback(async () => {
-        try {
-            setIsLoading(true);
+        setIsLoading(true);
+        const data = await withRetry(async () => {
             const { data, error } = await (supabase as any)
                 .from("site_settings")
                 .select("*");
+            if (error) throw error;
+            return data;
+        }, null, { retries: 2, baseDelay: 2000 });
 
-            if (error) {
-                console.error("❌ Error fetching site settings:", error);
-                // Keep defaults — don't crash
-                return;
-            }
-
-            // Convert array to key-value object
-            const settingsObj: Record<string, Json> = {};
-            data?.forEach((setting: any) => {
+        if (data) {
+            const settingsObj: Record<string, Json> = { ...DEFAULT_SETTINGS };
+            data.forEach((setting: any) => {
                 settingsObj[setting.setting_key] = setting.setting_value;
             });
-
             setSettings(settingsObj);
             setError(null);
-        } catch (err) {
-            setError(err as Error);
-            console.error("❌ Error fetching site settings:", err);
-            // Fall through to finally — keeps defaults
-        } finally {
-            setIsLoading(false);
+        } else {
+            // DB unavailable — keep defaults, don't crash
+            console.warn("⚠️ site_settings unavailable, using defaults");
         }
+        setIsLoading(false);
     }, []);
 
-    // Update a single setting
     const updateSetting = useCallback(async (key: string, value: Json, category: string) => {
         try {
             const { error } = await (supabase as any)
                 .from("site_settings")
-                .upsert({
-                    setting_key: key,
-                    setting_value: value,
-                    setting_category: category,
-                });
-
+                .upsert({ setting_key: key, setting_value: value, setting_category: category });
             if (error) throw error;
-
-            // Update local state
             setSettings((prev) => ({ ...prev, [key]: value }));
             toast.success("Setting updated successfully");
             return { success: true };
@@ -74,42 +72,21 @@ export function useSiteSettings() {
         }
     }, []);
 
-    // Update multiple settings at once
     const updateSettings = useCallback(async (updates: Record<string, { value: Json; category: string }>) => {
         try {
-            console.log("💾 Saving settings to DB:", updates);
+            const upsertData = Object.entries(updates).map(([key, { value, category }]) => ({
+                setting_key: key,
+                setting_value: value,
+                setting_category: category,
+            }));
 
-            // Supabase JSONB handles values automatically - NO encoding needed
-            const upsertData = Object.entries(updates).map(([key, { value, category }]) => {
-                console.log(`📝 Preparing ${key}:`, value, `(${typeof value})`);
-
-                return {
-                    setting_key: key,
-                    setting_value: value, // Raw value - Supabase handles JSONB
-                    setting_category: category,
-                };
-            });
-
-            console.log("📤 Sending to Supabase:", upsertData);
-
-            const { data, error } = await (supabase as any)
+            const { error } = await (supabase as any)
                 .from("site_settings")
-                .upsert(upsertData, {
-                    onConflict: 'setting_key',
-                    ignoreDuplicates: false
-                })
-                .select();
+                .upsert(upsertData, { onConflict: "setting_key", ignoreDuplicates: false });
 
-            if (error) {
-                console.error("❌ Supabase error:", error);
-                throw error;
-            }
+            if (error) throw error;
 
-            console.log("✅ Upsert success! Data:", data);
-
-            // Refetch all settings from DB to ensure local state is in sync
             await fetchSettings();
-
             return { success: true };
         } catch (err) {
             console.error("❌ Update failed:", err);
@@ -118,7 +95,6 @@ export function useSiteSettings() {
         }
     }, [fetchSettings]);
 
-    // Get a specific setting value
     const getSetting = useCallback((key: string, defaultValue: Json = null) => {
         return settings[key] ?? defaultValue;
     }, [settings]);
@@ -126,44 +102,25 @@ export function useSiteSettings() {
     useEffect(() => {
         fetchSettings();
 
-        // Subscribe to real-time changes
         const subscription = (supabase as any)
             .channel("site_settings_changes")
-            .on(
-                "postgres_changes",
-                { event: "*", schema: "public", table: "site_settings" },
-                (payload: any) => {
-                    console.log("🔄 Settings changed:", payload);
-                    if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
-                        const newRecord = payload.new as SiteSetting;
-                        setSettings((prev) => ({
-                            ...prev,
-                            [newRecord.setting_key]: newRecord.setting_value,
-                        }));
-                    } else if (payload.eventType === "DELETE") {
-                        const oldRecord = payload.old as SiteSetting;
-                        setSettings((prev) => {
-                            const newSettings = { ...prev };
-                            delete newSettings[oldRecord.setting_key];
-                            return newSettings;
-                        });
-                    }
+            .on("postgres_changes", { event: "*", schema: "public", table: "site_settings" }, (payload: any) => {
+                if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+                    const rec = payload.new as SiteSetting;
+                    setSettings((prev) => ({ ...prev, [rec.setting_key]: rec.setting_value }));
+                } else if (payload.eventType === "DELETE") {
+                    const rec = payload.old as SiteSetting;
+                    setSettings((prev) => {
+                        const next = { ...prev };
+                        delete next[rec.setting_key];
+                        return next;
+                    });
                 }
-            )
+            })
             .subscribe();
 
-        return () => {
-            subscription.unsubscribe();
-        };
+        return () => { subscription.unsubscribe(); };
     }, [fetchSettings]);
 
-    return {
-        settings,
-        isLoading,
-        error,
-        getSetting,
-        updateSetting,
-        updateSettings,
-        refetch: fetchSettings,
-    };
+    return { settings, isLoading, error, getSetting, updateSetting, updateSettings, refetch: fetchSettings };
 }

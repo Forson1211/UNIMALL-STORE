@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { withRetry } from "@/lib/dbUtils";
 import { useToast } from "@/hooks/use-toast";
 
 type UserRole = "admin" | "moderator" | "vendor" | "buyer";
@@ -47,36 +48,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log("Fetching profile for:", userId);
 
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
+      const profileData = await withRetry(async () => {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", userId)
+          .single();
+        if (error && error.code !== "PGRST116") throw error;
+        return data;
+      }, null, { retries: 2, baseDelay: 1500 });
 
-      if (profileData) {
-        setProfile(profileData as any);
-      }
+      if (profileData) setProfile(profileData as any);
 
-      const { data: roleData, error: roleError } = await supabase
-        .rpc("get_user_role", { _user_id: userId });
+      const roleData = await withRetry(async () => {
+        const { data, error } = await supabase.rpc("get_user_role", { _user_id: userId });
+        if (error) throw error;
+        return data;
+      }, null, { retries: 2, baseDelay: 1500 });
 
       if (roleData) {
         setRole(roleData as UserRole);
 
-        // ALWAYS check for vendor status if they have a vendor record, 
-        // regardless of whether 'vendor' is their primary (highest) role.
-        const { data: vendorData } = await (supabase
-          .from("user_roles")
-          .select("vendor_status")
-          .eq("user_id", userId)
-          .eq("role", "vendor")
-          .maybeSingle() as any);
+        const vendorData = await withRetry(async () => {
+          const { data } = await (supabase
+            .from("user_roles")
+            .select("vendor_status")
+            .eq("user_id", userId)
+            .eq("role", "vendor")
+            .maybeSingle() as any);
+          return data;
+        }, null, { retries: 2, baseDelay: 1500 });
 
-        if (vendorData) {
-          setVendorStatus(vendorData.vendor_status as VendorStatus);
-        } else {
-          setVendorStatus(null);
-        }
+        setVendorStatus(vendorData ? (vendorData.vendor_status as VendorStatus) : null);
       }
     } catch (error) {
       console.error("Unexpected error in fetchProfile:", error);
