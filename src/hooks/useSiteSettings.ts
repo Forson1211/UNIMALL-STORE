@@ -27,24 +27,24 @@ export function useSiteSettings() {
                 .from("site_settings")
                 .select("*");
 
-            if (error) throw error;
+            if (error) {
+                console.error("❌ Error fetching site settings:", error);
+                // Keep defaults — don't crash
+                return;
+            }
 
-            console.log("📥 Fetched settings from DB:", data);
-
-            // Convert array to key-value object - NO JSON parsing needed
-            // Supabase JSONB automatically returns the correct types
+            // Convert array to key-value object
             const settingsObj: Record<string, Json> = {};
             data?.forEach((setting: any) => {
                 settingsObj[setting.setting_key] = setting.setting_value;
             });
-
-            console.log("📋 Mapped settings:", settingsObj);
 
             setSettings(settingsObj);
             setError(null);
         } catch (err) {
             setError(err as Error);
             console.error("❌ Error fetching site settings:", err);
+            // Fall through to finally — keeps defaults
         } finally {
             setIsLoading(false);
         }
