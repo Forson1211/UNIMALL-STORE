@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { withRetry } from "@/lib/dbUtils";
 
 export interface StorefrontProduct {
     id: string;
@@ -21,7 +22,7 @@ export interface StorefrontProduct {
 
 export const productService = {
     async getProducts(filters?: { category?: string; search?: string; limit?: number }) {
-        try {
+        return withRetry(async () => {
             let query = supabase
                 .from("storefront_products_view" as any)
                 .select("*");
@@ -29,11 +30,9 @@ export const productService = {
             if (filters?.category && filters.category !== "All") {
                 query = query.eq("category", filters.category);
             }
-
             if (filters?.search) {
                 query = query.ilike("name", `%${filters.search}%`);
             }
-
             if (filters?.limit) {
                 query = query.limit(filters.limit);
             }
@@ -44,14 +43,11 @@ export const productService = {
                 return [] as StorefrontProduct[];
             }
             return (data ?? []) as unknown as StorefrontProduct[];
-        } catch (err) {
-            console.error("Network error fetching products:", err);
-            return [] as StorefrontProduct[];
-        }
+        }, [] as StorefrontProduct[]);
     },
 
     async getProductById(id: string) {
-        try {
+        return withRetry(async () => {
             const { data, error } = await supabase
                 .from("storefront_products_view" as any)
                 .select("*")
@@ -60,8 +56,6 @@ export const productService = {
 
             if (error) throw error;
             return data as unknown as StorefrontProduct;
-        } catch (err) {
-            throw err;
-        }
+        }, null as unknown as StorefrontProduct, { retries: 2 });
     }
 };
