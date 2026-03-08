@@ -107,6 +107,20 @@ const FeaturedProducts = () => {
       </div>
     );
   }
+
+  if (allProducts.length === 0) {
+    return (
+      <section className="py-16 bg-background">
+        <div className="container mx-auto px-4 text-center py-20">
+          <p className="text-muted-foreground text-lg">No products available yet. Check back soon!</p>
+          <Link to="/products" className="mt-4 inline-block">
+            <Button variant="outline">Browse Products</Button>
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-16 bg-background">
       <div className="container mx-auto px-4">
