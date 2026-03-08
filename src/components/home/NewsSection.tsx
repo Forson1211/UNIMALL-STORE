@@ -22,19 +22,22 @@ const NewsSection = () => {
 
     useEffect(() => {
         const fetchNews = async () => {
-            const { data, error } = await (supabase as any)
-                .from("campus_news")
-                .select("*")
-                .eq("is_published", true)
-                .order("publish_date", { ascending: false })
-                .limit(3);
+            try {
+                const { data, error } = await (supabase as any)
+                    .from("campus_news")
+                    .select("*")
+                    .eq("is_published", true)
+                    .order("publish_date", { ascending: false })
+                    .limit(3);
 
-            if (error) {
-                console.error("Error fetching homepage news:", error);
-            } else if (data) {
-                setNews(data as any[]);
+                if (!error && data) {
+                    setNews(data as any[]);
+                }
+            } catch (err) {
+                // Silently fail — section just won't show news
+            } finally {
+                setIsLoading(false);
             }
-            setIsLoading(false);
         };
 
         fetchNews();

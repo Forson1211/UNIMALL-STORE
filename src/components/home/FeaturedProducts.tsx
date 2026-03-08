@@ -76,7 +76,7 @@ const ProductCard = ({ product, showDiscount = false }: { product: Product; show
           {product.name}
         </h3>
         <div className="flex items-center gap-1 mb-3">
-          <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+          <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
           <span className="text-sm font-medium">{product.rating || 0}</span>
           <span className="text-xs text-muted-foreground">({product.reviews || 0})</span>
         </div>
@@ -107,6 +107,20 @@ const FeaturedProducts = () => {
       </div>
     );
   }
+
+  if (allProducts.length === 0) {
+    return (
+      <section className="py-16 bg-background">
+        <div className="container mx-auto px-4 text-center py-20">
+          <p className="text-muted-foreground text-lg">No products available yet. Check back soon!</p>
+          <Link to="/products" className="mt-4 inline-block">
+            <Button variant="outline">Browse Products</Button>
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-16 bg-background">
       <div className="container mx-auto px-4">
@@ -169,8 +183,8 @@ const FeaturedProducts = () => {
         <div>
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center">
-                <Star className="w-6 h-6 text-green-500" />
+              <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center">
+                <Star className="w-6 h-6 text-accent" />
               </div>
               <div>
                 <h2 className="text-2xl lg:text-3xl font-bold text-foreground">New Arrivals</h2>
