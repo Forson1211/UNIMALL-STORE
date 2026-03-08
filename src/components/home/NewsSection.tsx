@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, Calendar, User, Tag } from "lucide-react";
+import { withRetry } from "@/lib/dbUtils";
+import { ArrowRight, Calendar, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { GlassCard } from "../ui/glass-card";
@@ -22,32 +23,29 @@ const NewsSection = () => {
 
     useEffect(() => {
         const fetchNews = async () => {
-            try {
+            const data = await withRetry(async () => {
                 const { data, error } = await (supabase as any)
                     .from("campus_news")
                     .select("*")
                     .eq("is_published", true)
                     .order("publish_date", { ascending: false })
                     .limit(3);
+                if (error) throw error;
+                return data;
+            }, null, { retries: 2, baseDelay: 2000 });
 
-                if (!error && data) {
-                    setNews(data as any[]);
-                }
-            } catch (err) {
-                // Silently fail — section just won't show news
-            } finally {
-                setIsLoading(false);
-            }
+            if (data) setNews(data as NewsItem[]);
+            setIsLoading(false);
         };
 
         fetchNews();
     }, []);
 
+    // Don't render the section at all if no news or still loading
     if (isLoading || news.length === 0) return null;
 
     return (
         <section className="py-24 bg-background relative overflow-hidden">
-            {/* Background Decor */}
             <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]" />
             <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-secondary/5 rounded-full blur-[120px]" />
 
@@ -73,7 +71,7 @@ const NewsSection = () => {
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-8">
-                    {news.map((item, idx) => (
+                    {news.map((item) => (
                         <Link key={item.id} to={`/news/${item.id}`} className="group">
                             <GlassCard className="h-full flex flex-col p-0 overflow-hidden border-white/10 hover:border-primary/20 transition-all duration-500 hover:-translate-y-1 shadow-xl shadow-black/5">
                                 <div className="relative h-56 overflow-hidden">
@@ -97,7 +95,7 @@ const NewsSection = () => {
                                         </div>
                                         <div className="flex items-center gap-1.5">
                                             <User className="w-3.5 h-3.5" />
-                                            Admin
+                                            {item.author_name || "Admin"}
                                         </div>
                                     </div>
 
