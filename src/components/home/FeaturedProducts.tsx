@@ -183,8 +183,8 @@ const FeaturedProducts = () => {
         <div>
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center">
-                <Star className="w-6 h-6 text-green-500" />
+              <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center">
+                <Star className="w-6 h-6 text-accent" />
               </div>
               <div>
                 <h2 className="text-2xl lg:text-3xl font-bold text-foreground">New Arrivals</h2>
