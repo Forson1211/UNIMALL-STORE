@@ -87,34 +87,34 @@ const AdminVendors = () => {
       vendorId: string;
       newStatus: "pending" | "approved" | "suspended";
     }) => {
-      // For approval, use our secure RPC function
-      if (newStatus === 'approved') {
-        const { error } = await (supabase.rpc as any)("admin_approve_vendor", {
+      // Try the RPC first (SECURITY DEFINER bypass), fall back to direct update
+      try {
+        const rpcName = newStatus === 'approved' ? 'admin_approve_vendor' : 'admin_update_vendor_status';
+        const { error: rpcError } = await (supabase.rpc as any)(rpcName, {
           _vendor_id: vendorId,
+          ...(newStatus !== 'approved' ? { _new_status: newStatus } : {}),
         });
-        if (error) throw error;
-      } else {
-        // Use direct update for other statuses
+        if (rpcError) throw rpcError;
+      } catch {
+        // Fallback: direct update (works if admin RLS policy is set)
         const { error } = await (supabase
           .from("user_roles")
           .update({ vendor_status: newStatus } as any)
           .eq("user_id", vendorId)
-          .eq("role", "vendor"));
+          .eq("role", "vendor") as any);
         if (error) throw error;
       }
 
-      // Log the action (handled in RPC for approval)
-      if (newStatus !== 'approved') {
-        try {
-          await (supabase.from("system_logs" as any).insert({
-            type: "admin_action",
-            source: "vendor_management",
-            message: `Admin updated vendor status to ${newStatus}`,
-            metadata: { vendor_id: vendorId, new_status: newStatus },
-          }));
-        } catch (logError) {
-          console.log("Logging skipped");
-        }
+      // Log action silently
+      try {
+        await (supabase.from("system_logs" as any).insert({
+          type: "admin_action",
+          source: "vendor_management",
+          message: `Admin updated vendor status to ${newStatus}`,
+          metadata: { vendor_id: vendorId, new_status: newStatus },
+        }));
+      } catch {
+        // Logging is non-critical
       }
     },
     onSuccess: () => {

@@ -113,46 +113,78 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // 2. Real-time Subscription for Vendor Status
+  // 2. Real-time Subscription for Vendor Status + polling fallback
   useEffect(() => {
-    let roleSubscription: any = null;
+    if (!user) return;
 
-    if (user) {
-      console.log("Setting up real-time status tracker for:", user.id);
-      roleSubscription = supabase
-        .channel(`user-role-${user.id}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "user_roles",
-          },
-          (payload) => {
-            console.log("Real-time vendor status change detected:", payload);
-            const data = payload.new as any;
-            if (data && data.user_id === user.id && data.role === "vendor") {
-              const newStatus = data.vendor_status as VendorStatus;
+    console.log("Setting up real-time status tracker for:", user.id);
 
-              if (newStatus === "approved") {
-                setVendorStatus(newStatus);
-                toast({
-                  title: "Store Approved! 🎉",
-                  description: "Your vendor account has been approved. Your dashboard is now unlocked.",
-                });
-              } else {
-                setVendorStatus(newStatus);
-              }
+    const roleSubscription = supabase
+      .channel(`user-role-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "user_roles",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log("Real-time vendor status change detected:", payload);
+          const data = payload.new as any;
+          if (data && data.role === "vendor") {
+            const newStatus = data.vendor_status as VendorStatus;
+            setVendorStatus(newStatus);
+
+            if (newStatus === "approved") {
+              toast({
+                title: "Store Approved! 🎉",
+                description: "Your vendor account has been approved. Your dashboard is now unlocked.",
+              });
+            } else if (newStatus === "suspended") {
+              toast({
+                title: "Account Suspended",
+                description: "Your vendor account has been suspended. Contact support for details.",
+                variant: "destructive",
+              });
             }
           }
-        )
-        .subscribe();
-    }
+        }
+      )
+      .subscribe((status) => {
+        console.log("Realtime channel status:", status);
+      });
+
+    // Polling fallback: re-fetch vendor status every 10s while pending
+    // This handles cases where realtime is not yet enabled on user_roles
+    const pollInterval = setInterval(async () => {
+      const { data } = await (supabase
+        .from("user_roles")
+        .select("vendor_status, role")
+        .eq("user_id", user.id)
+        .eq("role", "vendor")
+        .maybeSingle() as any);
+
+      if (data) {
+        const polledStatus = data.vendor_status as VendorStatus;
+        setVendorStatus((prev) => {
+          if (prev !== polledStatus) {
+            if (polledStatus === "approved" && prev === "pending") {
+              toast({
+                title: "Store Approved! 🎉",
+                description: "Your vendor account has been approved. Your dashboard is now unlocked.",
+              });
+            }
+            return polledStatus;
+          }
+          return prev;
+        });
+      }
+    }, 10000);
 
     return () => {
-      if (roleSubscription) {
-        supabase.removeChannel(roleSubscription);
-      }
+      supabase.removeChannel(roleSubscription);
+      clearInterval(pollInterval);
     };
   }, [user]);
 
