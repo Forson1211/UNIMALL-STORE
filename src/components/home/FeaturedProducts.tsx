@@ -76,7 +76,7 @@ const ProductCard = ({ product, showDiscount = false }: { product: Product; show
           {product.name}
         </h3>
         <div className="flex items-center gap-1 mb-3">
-          <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+          <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
           <span className="text-sm font-medium">{product.rating || 0}</span>
           <span className="text-xs text-muted-foreground">({product.reviews || 0})</span>
         </div>
