@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { withRetry } from "@/lib/dbUtils";
 import { useToast } from "@/hooks/use-toast";
 
 type UserRole = "admin" | "moderator" | "vendor" | "buyer";
