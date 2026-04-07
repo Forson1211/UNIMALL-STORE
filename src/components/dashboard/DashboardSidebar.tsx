@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -53,7 +54,6 @@ const adminMenuItems = [
   { title: "Messages", url: "/admin/messages", icon: MessageSquare },
   { title: "Content Management", url: "/admin/content", icon: FileText },
   { title: "Site Customization", url: "/admin/site-customization", icon: Palette },
-  { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
   { title: "Notifications", url: "/admin/notifications", icon: Bell },
   { title: "Support Tickets", url: "/admin/support", icon: LifeBuoy },
   { title: "System Logs", url: "/admin/logs", icon: Scroll },
@@ -64,7 +64,6 @@ const vendorMenuItems = [
   { title: "Dashboard", url: "/vendor", icon: LayoutDashboard },
   { title: "Products", url: "/vendor/products", icon: Package },
   { title: "Orders", url: "/vendor/orders", icon: ShoppingCart },
-  { title: "Analytics", url: "/vendor/analytics", icon: BarChart3 },
   { title: "Settings", url: "/vendor/settings", icon: Settings },
 ];
 
@@ -77,10 +76,38 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
 
   const isActive = (path: string) => {
     if (path === `/${type}`) {
+      // Exact match only for dashboard home
       return location.pathname === path;
     }
-    return location.pathname.startsWith(path);
+    // For others, check for exact match OR sub-route match (if path ends in /)
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
+
+  // Scroll Restoration for Sidebar
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  
+  React.useEffect(() => {
+    const savedScrollPos = sessionStorage.getItem(`sidebar-scroll-${type}`);
+    if (savedScrollPos && contentRef.current) {
+      contentRef.current.scrollTop = parseInt(savedScrollPos, 10);
+    }
+
+    const handleScroll = () => {
+      if (contentRef.current) {
+        sessionStorage.setItem(`sidebar-scroll-${type}`, contentRef.current.scrollTop.toString());
+      }
+    };
+
+    const currentRef = contentRef.current;
+    if (currentRef) {
+      currentRef.addEventListener('scroll', handleScroll);
+    }
+    return () => {
+      if (currentRef) {
+        currentRef.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [type]);
 
   const handleMobileClick = () => {
     if (isMobile) {
@@ -89,7 +116,7 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
   };
 
   return (
-    <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
+    <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon" data-state={state}>
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <Link to="/" className="flex items-center gap-2" onClick={handleMobileClick}>
           {logoUrl ? (
@@ -108,7 +135,7 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="p-2">
+      <SidebarContent className="p-2" ref={contentRef}>
         <SidebarGroup>
           <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
             Menu

@@ -202,28 +202,31 @@ export default function SiteCustomization() {
         }
     };
 
-    // Sync local state to global preview settings instantly
+    // Sync local state to global preview settings with debounce to prevent jitter
     useEffect(() => {
-        updatePreviewSettings({
-            primaryColor,
-            secondaryColor,
-            accentColor,
-            backgroundColor,
-            headerBgColor,
-            footerBgColor,
-            footerTextColor,
-            borderRadius,
-            fontFamily,
-            fontSize,
-            containerMaxWidth,
-            darkModeEnabled,
-            siteName,
-            siteTagline,
-            logoUrl,
-            faviconUrl,
-            heroBackgroundUrl,
-            heroOverlayOpacity
-        });
+        const timer = setTimeout(() => {
+            updatePreviewSettings({
+                primaryColor,
+                secondaryColor,
+                accentColor,
+                backgroundColor,
+                headerBgColor,
+                footerBgColor,
+                footerTextColor,
+                borderRadius,
+                fontFamily,
+                fontSize,
+                containerMaxWidth,
+                darkModeEnabled,
+                siteName,
+                siteTagline,
+                logoUrl,
+                faviconUrl,
+                heroBackgroundUrl,
+                heroOverlayOpacity
+            });
+        }, 500); // 500ms debounce
+        return () => clearTimeout(timer);
     }, [
         primaryColor, secondaryColor, accentColor, backgroundColor, headerBgColor, footerBgColor,
         borderRadius, fontFamily, fontSize, containerMaxWidth, darkModeEnabled,
@@ -318,9 +321,19 @@ export default function SiteCustomization() {
         toast.info("Settings reset to defaults");
     };
 
+    if (isLoading) {
+        return (
+            <DashboardLayout type="admin" title="Site Customization">
+                <div className="flex items-center justify-center min-h-[60vh]">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                </div>
+            </DashboardLayout>
+        );
+    }
+
     return (
         <DashboardLayout type="admin" title="Site Customization">
-            <div className="space-y-6">
+            <div className="space-y-6 animate-fade-in min-h-[800px] will-change-transform">
                 {/* Header */}
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
@@ -384,7 +397,7 @@ export default function SiteCustomization() {
                     </TabsList>
 
                     {/* Branding Tab */}
-                    <TabsContent value="branding" className="space-y-4">
+                    <TabsContent value="branding" className="space-y-4 animate-in fade-in duration-300">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Brand Identity</CardTitle>
@@ -484,7 +497,7 @@ export default function SiteCustomization() {
                     </TabsContent>
 
                     {/* Colors Tab */}
-                    <TabsContent value="colors" className="space-y-4">
+                    <TabsContent value="colors" className="space-y-4 animate-in fade-in duration-300">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Color Scheme</CardTitle>
@@ -675,7 +688,7 @@ export default function SiteCustomization() {
                     </TabsContent>
 
                     {/* Media Tab */}
-                    <TabsContent value="media" className="space-y-4">
+                    <TabsContent value="media" className="space-y-4 animate-in fade-in duration-300">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Background & Media</CardTitle>
@@ -730,7 +743,7 @@ export default function SiteCustomization() {
                     </TabsContent>
 
                     {/* Typography Tab */}
-                    <TabsContent value="typography" className="space-y-4">
+                    <TabsContent value="typography" className="space-y-4 animate-in fade-in duration-300">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Typography Settings</CardTitle>
@@ -849,7 +862,7 @@ export default function SiteCustomization() {
                     </TabsContent>
 
                     {/* Layout Tab */}
-                    <TabsContent value="layout" className="space-y-4">
+                    <TabsContent value="layout" className="space-y-4 animate-in fade-in duration-300">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Layout Settings</CardTitle>
@@ -897,7 +910,7 @@ export default function SiteCustomization() {
                     </TabsContent>
 
                     {/* Pages Tab */}
-                    <TabsContent value="pages" className="space-y-4">
+                    <TabsContent value="pages" className="space-y-4 animate-in fade-in duration-300">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Page Management</CardTitle>

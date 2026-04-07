@@ -189,33 +189,17 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
 
             root.style.setProperty("--radius", borderRadius);
 
-            // AGGRESSIVE FONT APPLICATION - Nuclear option
+            // AGGRESSIVE FONT APPLICATION - Balanced option
             console.log("🔤 FORCING font family:", fontFamily);
 
-            // Method 1: CSS variable
+            // Method 1: CSS variable - The safest way for Tailwind
             root.style.setProperty("--font-family", fontFamily);
 
-            // Method 2: Direct on html
-            root.style.fontFamily = fontFamily;
+            // Method 2: Direct on root - Ensures default fallback
+            root.style.setProperty("font-family", fontFamily, "important");
 
-            // Method 3: Direct on body with !important via setAttribute
-            document.body.setAttribute('style', `font-family: ${fontFamily} !important;`);
-
-            // Method 4: Create global style override
-            let fontStyleTag = document.getElementById('custom-font-override');
-            if (!fontStyleTag) {
-                fontStyleTag = document.createElement('style');
-                fontStyleTag.id = 'custom-font-override';
-                document.head.appendChild(fontStyleTag);
-            }
-            fontStyleTag.textContent = `
-                * {
-                    font-family: ${fontFamily} !important;
-                }
-                body, html, div, p, span, h1, h2, h3, h4, h5, h6, a, button, input, textarea, select, label {
-                    font-family: ${fontFamily} !important;
-                }
-            `;
+            // Method 3 (Nuclear/Global) removed. Using important on the root property is sufficient 
+            // and avoids 'shaking' caused by overwriting body style attributes (conflicts with Radix UI).
 
             root.style.setProperty("--font-size", fontSize);
             root.style.setProperty("--container-max-width", containerMaxWidth);

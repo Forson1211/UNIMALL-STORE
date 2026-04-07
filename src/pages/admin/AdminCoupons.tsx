@@ -10,6 +10,7 @@ const AdminCoupons = () => {
     const { data: coupons, isLoading } = useQuery({
         queryKey: ['admin-coupons'],
         queryFn: adminService.getCoupons,
+        refetchInterval: 30000,
     });
 
     return (

@@ -70,6 +70,7 @@ const AdminOrders = () => {
       if (error) throw error;
       return data as Order[];
     },
+    refetchInterval: 10000,
   });
 
   // Update order status mutation
@@ -150,7 +151,7 @@ const AdminOrders = () => {
       header: "Total",
       sortable: true,
       render: (order: Order) => (
-        <span className="font-semibold">${order.total_amount.toFixed(2)}</span>
+        <span className="font-semibold">GH₵{order.total_amount.toFixed(2)}</span>
       ),
     },
     {

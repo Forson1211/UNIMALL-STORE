@@ -66,6 +66,7 @@ const AdminProducts = () => {
       if (error) throw error;
       return data as Product[];
     },
+    refetchInterval: 15000,
   });
 
   // Update product status mutation

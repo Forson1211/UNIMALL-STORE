@@ -12,6 +12,7 @@ const AdminSupport = () => {
     const { data: tickets, isLoading } = useQuery({
         queryKey: ['admin-support'],
         queryFn: adminService.getSupportTickets,
+        refetchInterval: 15000,
     });
 
     const openCount = tickets?.filter(t => t.status === 'open').length || 0;

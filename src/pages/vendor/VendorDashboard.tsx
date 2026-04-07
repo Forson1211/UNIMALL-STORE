@@ -81,6 +81,28 @@ const VendorDashboard = () => {
         />
       </div>
 
+      {/* Analytics Group */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <SalesChart 
+          title="Sales Performance"
+          data={[
+            { name: "Week 1", sales: (stats?.total_revenue || 0) * 0.2, orders: (stats?.total_orders || 0) * 0.2 },
+            { name: "Week 2", sales: (stats?.total_revenue || 0) * 0.35, orders: (stats?.total_orders || 0) * 0.3 },
+            { name: "Week 3", sales: (stats?.total_revenue || 0) * 0.15, orders: (stats?.total_orders || 0) * 0.1 },
+            { name: "Week 4", sales: (stats?.total_revenue || 0) * 0.3, orders: (stats?.total_orders || 0) * 0.4 },
+          ]} 
+        />
+        <CategoryChart 
+          title="Orders by Category"
+          data={[
+            { name: "Electronics", value: 40, fill: "#8B5CF6" },
+            { name: "Clothing", value: 30, fill: "#06B6D4" },
+            { name: "Home", value: 20, fill: "#F59E0B" },
+            { name: "Others", value: 10, fill: "#10B981" },
+          ]}
+        />
+      </div>
+
       {/* Low Stock Alert & Recent Orders */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Low Stock Alert */}

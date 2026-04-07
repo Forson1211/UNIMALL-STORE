@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { withRetry } from "@/lib/dbUtils";
 import { useToast } from "@/hooks/use-toast";
 
-type UserRole = "admin" | "moderator" | "vendor" | "buyer";
+type UserRole = "admin" | "moderator" | "vendor_manager" | "order_manager" | "content_manager" | "support_agent" | "vendor" | "buyer";
 type VendorStatus = "pending" | "approved" | "suspended" | null;
 
 interface Profile {

@@ -35,7 +35,6 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminVendors from "./pages/admin/AdminVendors";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminOrders from "./pages/admin/AdminOrders";
-import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminSettings from "./pages/admin/AdminSettings";
 import SiteCustomization from "./pages/admin/SiteCustomization";
 import ContentManagement from "./pages/admin/ContentManagement";
@@ -54,7 +53,6 @@ import AdminNotifications from "./pages/admin/AdminNotifications";
 import VendorDashboard from "./pages/vendor/VendorDashboard";
 import VendorProducts from "./pages/vendor/VendorProducts";
 import VendorOrders from "./pages/vendor/VendorOrders";
-import VendorAnalytics from "./pages/vendor/VendorAnalytics";
 import VendorSettings from "./pages/vendor/VendorSettings";
 
 // Buyer Account Pages
@@ -123,9 +121,9 @@ const App = () => (
                       </ProtectedRoute>
                     } />
 
-                    {/* Admin Routes - Protected for admin role only */}
+                    {/* Admin Routes - Protected for staff roles  */}
                     <Route path="/admin" element={
-                      <ProtectedRoute allowedRoles={["admin"]}>
+                      <ProtectedRoute allowedRoles={["admin", "moderator", "vendor_manager", "order_manager", "content_manager", "support_agent"]}>
                         <AdminDashboard />
                       </ProtectedRoute>
                     } />
@@ -135,23 +133,18 @@ const App = () => (
                       </ProtectedRoute>
                     } />
                     <Route path="/admin/vendors" element={
-                      <ProtectedRoute allowedRoles={["admin"]}>
+                      <ProtectedRoute allowedRoles={["admin", "vendor_manager", "moderator"]}>
                         <AdminVendors />
                       </ProtectedRoute>
                     } />
                     <Route path="/admin/products" element={
-                      <ProtectedRoute allowedRoles={["admin"]}>
+                      <ProtectedRoute allowedRoles={["admin", "vendor_manager", "moderator"]}>
                         <AdminProducts />
                       </ProtectedRoute>
                     } />
                     <Route path="/admin/orders" element={
-                      <ProtectedRoute allowedRoles={["admin"]}>
+                      <ProtectedRoute allowedRoles={["admin", "order_manager"]}>
                         <AdminOrders />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/admin/analytics" element={
-                      <ProtectedRoute allowedRoles={["admin"]}>
-                        <AdminAnalytics />
                       </ProtectedRoute>
                     } />
                     <Route path="/admin/settings" element={
@@ -160,42 +153,42 @@ const App = () => (
                       </ProtectedRoute>
                     } />
                     <Route path="/admin/site-customization" element={
-                      <ProtectedRoute allowedRoles={["admin"]}>
+                      <ProtectedRoute allowedRoles={["admin", "content_manager"]}>
                         <SiteCustomization />
                       </ProtectedRoute>
                     } />
                     <Route path="/admin/content" element={
-                      <ProtectedRoute allowedRoles={["admin"]}>
+                      <ProtectedRoute allowedRoles={["admin", "content_manager"]}>
                         <ContentManagement />
                       </ProtectedRoute>
                     } />
                     <Route path="/admin/notifications" element={
-                      <ProtectedRoute allowedRoles={["admin"]}>
+                      <ProtectedRoute allowedRoles={["admin", "support_agent", "content_manager"]}>
                         <AdminNotifications />
                       </ProtectedRoute>
                     } />
                     <Route path="/admin/transactions" element={
-                      <ProtectedRoute allowedRoles={["admin"]}>
+                      <ProtectedRoute allowedRoles={["admin", "order_manager"]}>
                         <AdminTransactions />
                       </ProtectedRoute>
                     } />
                     <Route path="/admin/reviews" element={
-                      <ProtectedRoute allowedRoles={["admin"]}>
+                      <ProtectedRoute allowedRoles={["admin", "moderator", "content_manager"]}>
                         <AdminReviews />
                       </ProtectedRoute>
                     } />
                     <Route path="/admin/coupons" element={
-                      <ProtectedRoute allowedRoles={["admin"]}>
+                      <ProtectedRoute allowedRoles={["admin", "content_manager"]}>
                         <AdminCoupons />
                       </ProtectedRoute>
                     } />
                     <Route path="/admin/messages" element={
-                      <ProtectedRoute allowedRoles={["admin"]}>
+                      <ProtectedRoute allowedRoles={["admin", "support_agent"]}>
                         <AdminMessages />
                       </ProtectedRoute>
                     } />
                     <Route path="/admin/support" element={
-                      <ProtectedRoute allowedRoles={["admin"]}>
+                      <ProtectedRoute allowedRoles={["admin", "support_agent"]}>
                         <AdminSupport />
                       </ProtectedRoute>
                     } />
@@ -219,11 +212,6 @@ const App = () => (
                     <Route path="/vendor/orders" element={
                       <ProtectedRoute allowedRoles={["vendor"]}>
                         <VendorOrders />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/vendor/analytics" element={
-                      <ProtectedRoute allowedRoles={["vendor"]}>
-                        <VendorAnalytics />
                       </ProtectedRoute>
                     } />
                     <Route path="/vendor/settings" element={

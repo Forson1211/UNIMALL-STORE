@@ -13,6 +13,7 @@ const AdminReviews = () => {
     const { data: reviews, isLoading } = useQuery({
         queryKey: ['admin-reviews'],
         queryFn: adminService.getReviews,
+        refetchInterval: 20000,
     });
 
     const getInitials = (name: string) => name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();

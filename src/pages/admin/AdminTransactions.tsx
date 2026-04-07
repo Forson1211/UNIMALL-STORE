@@ -13,6 +13,7 @@ const AdminTransactions = () => {
     const { data: transactions, isLoading } = useQuery({
         queryKey: ['admin-transactions'],
         queryFn: adminService.getTransactions,
+        refetchInterval: 15000,
     });
 
     const getStatusColor = (status: string) => {

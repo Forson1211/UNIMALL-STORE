@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  allowedRoles?: ("admin" | "moderator" | "vendor" | "buyer")[];
+  allowedRoles?: ("admin" | "moderator" | "vendor_manager" | "order_manager" | "content_manager" | "support_agent" | "vendor" | "buyer")[];
   requireAuth?: boolean;
 }
 
@@ -47,11 +47,6 @@ export function ProtectedRoute({
   if (allowedRoles && role) {
     // Admin (superuser) has access to everything
     if (role === "admin") {
-      return <>{children}</>;
-    }
-
-    // Moderator has access to admin routes
-    if (role === "moderator" && allowedRoles.includes("admin")) {
       return <>{children}</>;
     }
 

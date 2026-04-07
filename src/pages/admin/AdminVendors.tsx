@@ -76,6 +76,7 @@ const AdminVendors = () => {
       if (error) throw error;
       return data as VendorData[];
     },
+    refetchInterval: 15000,
   });
 
   // Update vendor status mutation

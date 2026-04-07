@@ -226,9 +226,17 @@
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+    /* Force persistent scrollbar to stop the horizontal layout shift (shaking) */
+    overflow-y: scroll !important;
+    scrollbar-gutter: stable;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: var(--font-family);
+    font-family: var(--font-family) !important;
+    overflow-x: hidden;
   }
 
   /* Force container to respect the custom max-width if set */
