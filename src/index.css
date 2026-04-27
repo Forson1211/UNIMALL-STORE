@@ -130,7 +130,7 @@
     --input: 210 20% 90%;
     --ring: var(--primary);
 
-    --radius: 0.75rem;
+    --radius: 0rem;
 
     /* Custom Unimall colors */
     --header-background: 0 0% 100%;
@@ -301,6 +301,22 @@
     animation: pulse-soft 3s ease-in-out infinite;
   }
 
+  .bg-mesh {
+    background-color: hsl(var(--background));
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(var(--primary) / 0.15) 0px, transparent 50%),
+      radial-gradient(at 50% 0%, hsla(var(--secondary) / 0.1) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(var(--primary) / 0.15) 0px, transparent 50%),
+      radial-gradient(at 50% 100%, hsla(var(--secondary) / 0.1) 0px, transparent 50%);
+  }
+
+  .bg-mesh-dark {
+    background-color: hsl(var(--background));
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(var(--primary) / 0.3) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(var(--secondary) / 0.3) 0px, transparent 50%);
+  }
+
   @keyframes float {
 
     0%,
@@ -326,11 +342,11 @@
   }
 
   .glass {
-    @apply bg-white/80 backdrop-blur-lg border border-white/20;
+    @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-xl;
   }
 
   .glass-dark {
-    @apply bg-black/20 backdrop-blur-lg border border-white/10;
+    @apply bg-black/30 backdrop-blur-xl border border-white/10 shadow-2xl;
   }
 
   .bg-header {

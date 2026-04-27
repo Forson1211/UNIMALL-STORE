@@ -1,60 +1,117 @@
 import { Link } from "react-router-dom";
-import { Laptop, BookOpen, Shirt, Utensils, Headphones, Dumbbell, Palette, Gift } from "lucide-react";
+import { Laptop, BookOpen, Shirt, Utensils, Headphones, Dumbbell, Palette, Gift, ArrowRight, Sparkles } from "lucide-react";
+
+const categories = [
+  {
+    icon: Laptop,
+    name: "Electronics",
+    count: "230+ items",
+    img: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&h=400&fit=crop",
+  },
+  {
+    icon: BookOpen,
+    name: "Books & Notes",
+    count: "450+ items",
+    img: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&h=400&fit=crop",
+  },
+  {
+    icon: Shirt,
+    name: "Fashion",
+    count: "380+ items",
+    img: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=600&h=400&fit=crop",
+  },
+  {
+    icon: Utensils,
+    name: "Food & Snacks",
+    count: "120+ items",
+    img: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop",
+  },
+  {
+    icon: Headphones,
+    name: "Accessories",
+    count: "290+ items",
+    img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=400&fit=crop",
+  },
+  {
+    icon: Dumbbell,
+    name: "Sports",
+    count: "85+ items",
+    img: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=400&fit=crop",
+  },
+  {
+    icon: Palette,
+    name: "Art & Crafts",
+    count: "95+ items",
+    img: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600&h=400&fit=crop",
+  },
+  {
+    icon: Gift,
+    name: "Gifts",
+    count: "150+ items",
+    img: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600&h=400&fit=crop",
+  },
+];
 
 const CategoriesSection = () => {
-  const categories = [
-    { icon: Laptop, name: "Electronics", count: "230+ items", color: "from-blue-500 to-cyan-500" },
-    { icon: BookOpen, name: "Books & Notes", count: "450+ items", color: "from-amber-500 to-orange-500" },
-    { icon: Shirt, name: "Fashion", count: "380+ items", color: "from-pink-500 to-rose-500" },
-    { icon: Utensils, name: "Food & Snacks", count: "120+ items", color: "from-green-500 to-emerald-500" },
-    { icon: Headphones, name: "Accessories", count: "290+ items", color: "from-purple-500 to-violet-500" },
-    { icon: Dumbbell, name: "Sports", count: "85+ items", color: "from-red-500 to-orange-500" },
-    { icon: Palette, name: "Art & Crafts", count: "95+ items", color: "from-teal-500 to-cyan-500" },
-    { icon: Gift, name: "Gifts", count: "150+ items", color: "from-indigo-500 to-purple-500" },
-  ];
-
   return (
-    <section className="py-20 lg:py-32 bg-background">
+    <section className="py-32 bg-secondary/5 overflow-hidden">
       <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-12">
-          <div>
-            <span className="inline-block px-4 py-1.5 bg-accent text-accent-foreground text-sm font-medium rounded-full mb-4">
-              Categories
-            </span>
-            <h2 className="text-3xl lg:text-5xl font-bold text-foreground">
-              Shop by <span className="text-gradient-primary">Category</span>
+        {/* Simplified Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+          <div className="max-w-xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest mb-4">
+              <Sparkles className="w-3 h-3" />
+              Departments
+            </div>
+            <h2 className="text-4xl lg:text-5xl font-black text-foreground tracking-tighter mb-4">
+              Shop by <span className="text-primary">Category</span>
             </h2>
+            <p className="text-muted-foreground text-lg font-medium">
+              Everything you need for your university journey, organized and ready to discover.
+            </p>
           </div>
           <Link
             to="/products"
-            className="text-primary font-medium hover:underline underline-offset-4"
+            className="group flex items-center gap-2 text-sm font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-all"
           >
-            View all categories →
+            Explore All
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
 
-        {/* Categories Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+        {/* Unified Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           {categories.map((category, index) => (
             <Link
               key={index}
-              to={`/products?category=${category.name.toLowerCase()}`}
-              className="group relative overflow-hidden rounded-2xl p-6 lg:p-8 bg-card border border-border hover:border-transparent hover:shadow-lg transition-all duration-300"
+              to={`/products?category=${encodeURIComponent(category.name.toLowerCase())}`}
+              className="group relative h-80 rounded-[2.5rem] overflow-hidden border border-border/40 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-700"
             >
-              {/* Gradient Background on Hover */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${category.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+              {/* Image with overlay */}
+              <img
+                src={category.img}
+                alt={category.name}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
 
-              {/* Icon */}
-              <div className={`w-14 h-14 lg:w-16 lg:h-16 rounded-2xl bg-gradient-to-br ${category.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                <category.icon className="w-7 h-7 lg:w-8 lg:h-8 text-white" />
+              {/* Content Overlay */}
+              <div className="absolute inset-0 p-8 flex flex-col justify-end">
+                <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center mb-4 transform -translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
+                  <category.icon className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-xl font-black text-white tracking-tight mb-1">
+                  {category.name}
+                </h3>
+                <p className="text-white/60 text-xs font-bold uppercase tracking-widest">
+                  {category.count}
+                </p>
               </div>
 
-              {/* Content */}
-              <h3 className="text-lg font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
-                {category.name}
-              </h3>
-              <p className="text-sm text-muted-foreground">{category.count}</p>
+              {/* Hover Indicator */}
+              <div className="absolute top-8 right-8 w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center scale-0 group-hover:scale-100 transition-transform duration-500 shadow-xl">
+                 <ArrowRight className="w-5 h-5" />
+              </div>
             </Link>
           ))}
         </div>

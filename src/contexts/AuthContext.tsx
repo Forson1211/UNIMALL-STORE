@@ -113,6 +113,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     });
 
+    // Health Check
+    const checkConnection = async () => {
+      try {
+        const { error } = await supabase.from('site_settings').select('count', { count: 'estimated', head: true });
+        if (error) {
+          console.error("Supabase Connection Check Failed:", error);
+        } else {
+          console.log("Supabase Connection: OK");
+        }
+      } catch (err) {
+        console.error("Supabase Connection Check Exception:", err);
+      }
+    };
+    checkConnection();
+
     return () => subscription.unsubscribe();
   }, []);
 
@@ -199,7 +214,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     storeName?: string
   ) => {
     try {
-      const { error } = await supabase.auth.signUp({
+      console.log("Attempting signUp for:", email, "with role:", userRole);
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -212,7 +228,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("signUp error:", error);
+        throw error;
+      }
+
+      console.log("signUp success:", data);
 
       toast({
         title: "Account created!",
@@ -227,12 +248,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log("Attempting signIn for:", email);
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("signIn error:", error);
+        throw error;
+      }
+
+      console.log("signIn success:", data);
 
       toast({
         title: "Welcome back!",

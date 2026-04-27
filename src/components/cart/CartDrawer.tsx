@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { X, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { X, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -23,7 +23,7 @@ export function CartDrawer() {
       <SheetContent className="flex flex-col w-full sm:max-w-lg">
         <SheetHeader className="space-y-2.5 pb-4">
           <SheetTitle className="flex items-center gap-2">
-            <ShoppingBag className="h-5 w-5" />
+            <ShoppingCart className="h-5 w-5" />
             Your Cart ({totalItems})
           </SheetTitle>
         </SheetHeader>
@@ -31,7 +31,7 @@ export function CartDrawer() {
         {items.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
-              <ShoppingBag className="w-10 h-10 text-muted-foreground" />
+              <ShoppingCart className="w-10 h-10 text-muted-foreground" />
             </div>
             <h3 className="text-lg font-semibold mb-2">Your cart is empty</h3>
             <p className="text-muted-foreground mb-6">

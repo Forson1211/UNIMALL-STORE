@@ -29,59 +29,70 @@ const ProductCard = ({ product, showDiscount = false }: { product: Product; show
     });
     toast({
       title: "Added to cart",
-      description: `${product.name} has been added to your cart.`,
+      description: `${product.name} added to your cart.`,
     });
   };
 
   return (
     <Link
       to={`/products/${product.id}`}
-      className="group bg-card rounded-2xl border border-border overflow-hidden hover:shadow-lg hover:border-primary/20 transition-all duration-300"
+      className="group relative flex flex-col bg-white rounded-none border border-border/40 overflow-hidden hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 hover:-translate-y-2"
     >
-      {/* Image */}
-      <div className="relative aspect-square overflow-hidden bg-muted">
+      {/* Premium Image Container */}
+      <div className="relative aspect-[1/1.1] overflow-hidden bg-muted/30">
         <img
           src={product.image}
           alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
         />
-        {showDiscount && product.discount && (
-          <span className="absolute top-3 left-3 px-2 py-1 bg-destructive text-destructive-foreground text-xs font-semibold rounded-lg">
-            {product.discount}% OFF
-          </span>
-        )}
-        {product.isNew && (
-          <span className="absolute top-3 left-3 px-2 py-1 bg-primary text-primary-foreground text-xs font-semibold rounded-lg">
-            NEW
-          </span>
-        )}
+        
+        {/* Badges */}
+        <div className="absolute top-4 left-4 flex flex-col gap-2">
+          {showDiscount && product.discount && (
+            <span className="px-3 py-1 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-none shadow-lg">
+              -{product.discount}%
+            </span>
+          )}
+          {product.isNew && (
+            <span className="px-3 py-1 bg-foreground text-white text-[10px] font-black uppercase tracking-widest rounded-none shadow-lg">
+              New
+            </span>
+          )}
+        </div>
+
+        {/* Quick Actions */}
         <button
-          className="absolute top-3 right-3 w-9 h-9 bg-background/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-background hover:text-destructive"
+          className="absolute top-4 right-4 w-10 h-10 bg-white/80 backdrop-blur-md rounded-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-primary hover:text-white"
           onClick={(e) => e.preventDefault()}
         >
           <Heart className="w-4 h-4" />
         </button>
-        <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <Button size="sm" className="w-full" onClick={handleAddToCart}>
+
+        <div className="absolute inset-x-4 bottom-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
+          <Button className="w-full h-12 rounded-none bg-foreground text-white font-bold text-xs uppercase tracking-widest hover:bg-primary border-none shadow-xl" onClick={handleAddToCart}>
             <ShoppingCart className="w-4 h-4 mr-2" />
             Add to Cart
           </Button>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="p-4">
-        <p className="text-xs text-primary font-medium mb-1">{product.vendor}</p>
-        <h3 className="font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+      {/* Simplified Content */}
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-2">
+           <p className="text-[10px] font-black uppercase tracking-widest text-primary/60">{product.vendor}</p>
+           <div className="flex items-center gap-1">
+              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+              <span className="text-[10px] font-bold">{product.rating || 4.5}</span>
+           </div>
+        </div>
+        <h3 className="font-bold text-foreground mb-3 line-clamp-1 group-hover:text-primary transition-colors tracking-tight">
           {product.name}
         </h3>
-        <div className="flex items-center gap-1 mb-3">
-          <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-          <span className="text-sm font-medium">{product.rating || 0}</span>
-          <span className="text-xs text-muted-foreground">({product.reviews || 0})</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold text-foreground">GH₵{product.price}</span>
+        <div className="flex items-center justify-between">
+          <span className="text-xl font-black text-foreground">GH₵{product.price}</span>
+          <div className="w-8 h-8 rounded-none border border-border flex items-center justify-center group-hover:bg-primary group-hover:border-primary group-hover:text-white transition-all">
+             <ArrowRight className="w-4 h-4" />
+          </div>
         </div>
       </div>
     </Link>
@@ -94,125 +105,86 @@ const FeaturedProducts = () => {
     queryFn: () => productService.getProducts({ limit: 12 }),
   });
 
-  // For demonstration, we split the products into the categories
-  // In a real app, these would come from specific queries or tags
   const flashSaleProducts = allProducts.slice(0, 4).map(p => ({ ...p, discount: 15 }));
   const topSellingProducts = allProducts.slice(4, 8);
-  const newArrivals = allProducts.slice(8, 12).map(p => ({ ...p, isNew: true }));
 
   if (isLoading) {
     return (
       <div className="py-20 flex justify-center">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-none animate-spin" />
       </div>
     );
   }
 
-  if (allProducts.length === 0) {
-    return (
-      <section className="py-16 bg-background">
-        <div className="container mx-auto px-4 text-center py-20">
-          <p className="text-muted-foreground text-lg">No products available yet. Check back soon!</p>
-          <Link to="/products" className="mt-4 inline-block">
-            <Button variant="outline">Browse Products</Button>
-          </Link>
-        </div>
-      </section>
-    );
-  }
-
   return (
-    <section className="py-16 bg-background">
+    <section className="py-32 bg-white">
       <div className="container mx-auto px-4">
-        {/* Flash Sales */}
-        <div className="mb-16">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-destructive/10 rounded-xl flex items-center justify-center">
-                <Zap className="w-6 h-6 text-destructive" />
+        
+        {/* Flash Sales Section */}
+        <div className="mb-32">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-none bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest mb-4">
+                <Zap className="w-3 h-3" />
+                Limited Time
               </div>
-              <div>
-                <h2 className="text-2xl lg:text-3xl font-bold text-foreground">Flash Sales</h2>
-                <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                  <Clock className="w-4 h-4" />
-                  <span>Ends in 23:45:12</span>
-                </div>
-              </div>
+              <h2 className="text-4xl lg:text-5xl font-black text-foreground tracking-tighter">Flash Deals</h2>
             </div>
-            <Link to="/products?sale=true">
-              <Button variant="outline" className="hidden sm:flex">
-                View All
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
+            
+            <div className="flex items-center gap-6">
+               <div className="flex items-center gap-2 bg-secondary/5 px-4 py-2 rounded-none border border-border/40">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-black tabular-nums">23:45:12</span>
+               </div>
+               <Link to="/products?sale=true" className="text-sm font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors flex items-center gap-2">
+                 View All <ArrowRight className="w-4 h-4" />
+               </Link>
+            </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {flashSaleProducts.map((product) => (
               <ProductCard key={product.id} product={product} showDiscount />
             ))}
           </div>
         </div>
 
-        {/* Top Selling */}
-        <div className="mb-16">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-primary" />
+        {/* Popular Section */}
+        <div className="mb-32">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-none bg-secondary/10 text-secondary text-[10px] font-black uppercase tracking-widest mb-4">
+                <TrendingUp className="w-3 h-3" />
+                Community Choice
               </div>
-              <div>
-                <h2 className="text-2xl lg:text-3xl font-bold text-foreground">Top Selling</h2>
-                <p className="text-muted-foreground text-sm">Most popular products this week</p>
-              </div>
+              <h2 className="text-4xl lg:text-5xl font-black text-foreground tracking-tighter">Top Selling</h2>
             </div>
-            <Link to="/products?sort=bestselling">
-              <Button variant="outline" className="hidden sm:flex">
-                View All
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+            
+            <Link to="/products?sort=bestselling" className="text-sm font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors flex items-center gap-2">
+              View All <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {topSellingProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
         </div>
 
-        {/* New Arrivals */}
-        <div>
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center">
-                <Star className="w-6 h-6 text-accent" />
-              </div>
-              <div>
-                <h2 className="text-2xl lg:text-3xl font-bold text-foreground">New Arrivals</h2>
-                <p className="text-muted-foreground text-sm">Fresh products just added</p>
-              </div>
-            </div>
-            <Link to="/products?sort=newest">
-              <Button variant="outline" className="hidden sm:flex">
-                View All
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-            {newArrivals.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </div>
-
-        {/* CTA */}
-        <div className="mt-12 text-center">
-          <Link to="/products">
-            <Button size="lg" className="px-8">
-              Browse All Products
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-          </Link>
+        {/* Global CTA */}
+        <div className="bg-mesh rounded-none p-12 lg:p-24 text-center overflow-hidden relative">
+           <div className="relative z-10">
+              <h2 className="text-4xl lg:text-6xl font-black text-foreground mb-8 tracking-tighter">
+                Find exactly what <br /> you need.
+              </h2>
+              <Link to="/products">
+                <Button size="lg" className="h-16 px-10 rounded-none bg-foreground text-white font-black text-sm uppercase tracking-widest hover:bg-primary shadow-2xl transition-all hover:scale-105 active:scale-95">
+                  Browse Full Catalog
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </Link>
+           </div>
         </div>
       </div>
     </section>

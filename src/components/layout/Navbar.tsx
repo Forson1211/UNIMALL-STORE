@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ShoppingBag, Search, User, Heart } from "lucide-react";
+import { Menu, X, ShoppingCart, Store, Search, Heart, ChevronDown, User } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -15,298 +15,144 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-
 import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
   const { user, profile, role, signOut, isLoading } = useAuth();
   const { totalItems, openCart } = useCart();
   const { openSearch } = useSearch();
   const { siteName, logoUrl } = useSiteSettingsContext();
 
-  // Public navigation links (for buyers/guests)
-  const publicLinks = [
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const navLinks = [
     { name: "Home", path: "/" },
     { name: "Shop", path: "/products" },
     { name: "Vendors", path: "/vendors" },
-    { name: "How It Works", path: "/how-it-works" },
-    { name: "About", path: "/about" },
     { name: "News", path: "/news" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
 
-  const getDashboardPath = () => {
-    if (role === "admin") return "/admin";
-    if (role === "vendor") return "/vendor";
-    return "/account";
-  };
-
-  const getDashboardLabel = () => {
-    if (role === "admin") return "Admin Dashboard";
-    if (role === "vendor") return "Vendor Portal";
-    return "My Account";
-  };
-
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-header backdrop-blur-lg border-b border-border">
+    <nav className={`sticky top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-white/95 shadow-sm backdrop-blur-md" : "bg-white border-b border-gray-100"}`}>
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16 lg:h-20">
+        <div className="flex items-center justify-between h-20 gap-8">
+          
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            {logoUrl ? (
-              <img src={logoUrl} alt={siteName} className="w-10 h-10 object-contain" />
-            ) : (
-              <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-md">
-                <ShoppingBag className="w-5 h-5 text-primary-foreground" />
-              </div>
-            )}
-            <span className="text-xl font-bold text-foreground hover:text-primary transition-colors">{siteName}</span>
+          <Link to="/" className="flex items-center gap-2 shrink-0">
+            <img src="/LOGO.png" alt={siteName || "Unimall"} className="h-10 md:h-14 w-auto object-contain" />
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* Centered Navigation Links */}
           <div className="hidden lg:flex items-center gap-1">
-            {publicLinks.map((link) => (
+            {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${isActive(link.path)
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
+                className={`px-4 py-2 rounded-none text-sm font-bold transition-all ${isActive(link.path) ? "text-[#FF5500] bg-orange-50" : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"}`}
               >
                 {link.name}
               </Link>
             ))}
           </div>
 
-          {/* Desktop Actions */}
-          <div className="hidden lg:flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground"
-              onClick={openSearch}
-            >
-              <Search className="w-5 h-5" />
-            </Button>
-            <ThemeToggle />
-            {user && (
-              <Button variant="ghost" size="icon" className="text-muted-foreground">
-                <Heart className="w-5 h-5" />
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground relative"
-              onClick={openCart}
-            >
-              <ShoppingBag className="w-5 h-5" />
+          {/* Right Section: Search & Actions */}
+          <div className="flex items-center gap-3">
+            {/* Minimal Search */}
+            <div className="hidden md:flex items-center relative group">
+              <Search className="absolute left-3 w-4 h-4 text-gray-400 group-focus-within:text-[#FF5500] transition-colors" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search..."
+                className="w-40 lg:w-60 h-10 pl-10 pr-4 bg-gray-50 border border-transparent rounded-none text-sm outline-none focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/5 transition-all"
+              />
+            </div>
+
+            {/* Cart */}
+            <button onClick={openCart} className="relative p-2.5 text-gray-500 hover:text-gray-900 transition-colors">
+              <ShoppingCart className="w-5 h-5" />
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-[10px] text-primary-foreground rounded-full flex items-center justify-center font-bold">
-                  {totalItems > 9 ? "9+" : totalItems}
+                <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-[#FF5500] text-[10px] text-white rounded-none flex items-center justify-center font-bold">
+                  {totalItems}
                 </span>
               )}
-            </Button>
+            </button>
 
-            <div className="w-px h-6 bg-border mx-2" />
-
-            {isLoading ? (
-              <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
-            ) : user ? (
+            {/* User / Auth */}
+            <div className="h-8 w-px bg-gray-100 mx-1 hidden sm:block" />
+            
+            {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="rounded-full p-0 w-8 h-8">
+                  <button className="flex items-center gap-2 p-1 pl-1 pr-3 rounded-none hover:bg-gray-50 transition-all border border-transparent hover:border-gray-100">
                     <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
-                        {profile?.full_name
-                          ? profile.full_name.split(" ").map((n) => n[0]?.toUpperCase()).join("").slice(0, 2)
-                          : user?.email?.charAt(0).toUpperCase() || "U"}
+                      <AvatarFallback className="bg-orange-500 text-white text-xs font-bold">
+                        {profile?.full_name?.charAt(0) || user.email?.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                  </Button>
+                    <span className="text-sm font-bold text-gray-700 hidden lg:block">{profile?.full_name?.split(" ")[0] || "User"}</span>
+                  </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col">
-                      <span>{profile?.full_name || user?.email?.split("@")[0] || "User"}</span>
-                      <span className="text-xs text-muted-foreground capitalize font-semibold">
-                        {role === "admin" ? "Administrator" : role === "vendor" ? "Vendor" : "Buyer"}
-                      </span>
-                    </div>
-                  </DropdownMenuLabel>
+                <DropdownMenuContent align="end" className="w-56 rounded-none shadow-xl border-gray-100">
+                  <DropdownMenuLabel className="font-bold">My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to={getDashboardPath()}>{getDashboardLabel()}</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/account">Profile</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/account/orders">My Orders</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/account/wishlist">Wishlist</Link>
-                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link to="/account">Profile</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link to="/account/orders">Orders</Link></DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onClick={signOut}
-                  >
-                    Sign out
-                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-red-500 font-bold" onClick={signOut}>Sign out</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <>
-                <Link to="/login">
-                  <Button variant="ghost" className="text-muted-foreground">
-                    Log in
-                  </Button>
-                </Link>
-                <Link to="/signup">
-                  <Button variant="default">Get Started</Button>
-                </Link>
-              </>
+              <Link to="/login" className="hidden sm:block">
+                <Button variant="ghost" className="text-sm font-bold text-gray-600 hover:text-[#FF5500]">Login</Button>
+              </Link>
             )}
-          </div>
 
-          {/* Mobile Actions */}
-          <div className="flex lg:hidden items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground"
-              onClick={openSearch}
-            >
-              <Search className="w-5 h-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground relative"
-              onClick={openCart}
-            >
-              <ShoppingBag className="w-5 h-5" />
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-[10px] text-primary-foreground rounded-full flex items-center justify-center font-bold">
-                  {totalItems > 9 ? "9+" : totalItems}
-                </span>
-              )}
-            </Button>
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="p-2 rounded-lg hover:bg-muted transition-colors"
-            >
+            <Link to="/vendor">
+              <Button className="bg-[#FF5500] hover:bg-[#e54a00] text-white font-bold rounded-none px-6 shadow-lg shadow-orange-500/20">
+                SELL
+              </Button>
+            </Link>
+
+            {/* Mobile Menu Toggle */}
+            <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden p-2 text-gray-500">
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
-
-        {/* Mobile Menu */}
-        {isOpen && (
-          <div className="lg:hidden h-[calc(100vh-4rem)] overflow-y-auto border-t border-border animate-fade-in custom-scrollbar">
-            <div className="flex flex-col gap-2 p-4 pb-20">
-              {user && (
-                <div className="px-4 py-3 mb-2 rounded-xl bg-muted/50 border border-border/50 flex items-center gap-3">
-                  <Avatar className="h-10 w-10 border border-border">
-                    <AvatarFallback className="bg-primary text-primary-foreground font-bold">
-                      {profile?.full_name
-                        ? profile.full_name.split(" ").map((n) => n[0]?.toUpperCase()).join("").slice(0, 2)
-                        : user?.email?.charAt(0).toUpperCase() || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col overflow-hidden">
-                    <span className="font-semibold text-sm truncate">
-                      {profile?.full_name || user?.email?.split("@")[0] || "User"}
-                    </span>
-                    <span className="text-xs text-muted-foreground capitalize">
-                      {role === "admin" ? "Administrator" : role === "vendor" ? "Vendor" : "Buyer"}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {publicLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setIsOpen(false)}
-                  className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${isActive(link.path)
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-muted"
-                    }`}
-                >
-                  {link.name}
-                </Link>
-              ))}
-
-              {user && (
-                <>
-                  <div className="h-px bg-border my-2" />
-                  <Link
-                    to={getDashboardPath()}
-                    onClick={() => setIsOpen(false)}
-                    className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted"
-                  >
-                    {getDashboardLabel()}
-                  </Link>
-                  <Link
-                    to="/account"
-                    onClick={() => setIsOpen(false)}
-                    className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted"
-                  >
-                    Profile
-                  </Link>
-                  <Link
-                    to="/account/orders"
-                    onClick={() => setIsOpen(false)}
-                    className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted"
-                  >
-                    My Orders
-                  </Link>
-                </>
-              )}
-
-              <div className="h-px bg-border my-2" />
-
-              <div className="flex items-center justify-between px-4 py-2">
-                <span className="text-sm text-muted-foreground">Theme</span>
-                <ThemeToggle />
-              </div>
-
-              <div className="flex gap-2 px-4 pt-2 pb-8">
-                {user ? (
-                  <Button
-                    variant="destructive"
-                    className="w-full"
-                    onClick={() => {
-                      signOut();
-                      setIsOpen(false);
-                    }}
-                  >
-                    Sign out
-                  </Button>
-                ) : (
-                  <>
-                    <Link to="/login" className="flex-1">
-                      <Button variant="outline" className="w-full">
-                        Log in
-                      </Button>
-                    </Link>
-                    <Link to="/signup" className="flex-1">
-                      <Button className="w-full">Get Started</Button>
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
+
+      {isOpen && (
+        <div className="lg:hidden bg-white border-t border-gray-100 p-4 space-y-2 animate-fade-in shadow-xl">
+          {navLinks.map((link) => (
+            <Link key={link.path} to={link.path} onClick={() => setIsOpen(false)} className="block px-4 py-3 rounded-none text-base font-bold text-gray-600 hover:bg-gray-50 hover:text-[#FF5500]">
+              {link.name}
+            </Link>
+          ))}
+          
+          <div className="pt-4 border-t border-gray-50 space-y-3">
+            {!user && (
+              <Link to="/login" onClick={() => setIsOpen(false)} className="block w-full text-center py-4 rounded-none font-bold text-gray-700 border border-gray-200">
+                LOG IN / REGISTER
+              </Link>
+            )}
+            <Link to="/vendor" onClick={() => setIsOpen(false)} className="block w-full bg-[#FF5500] text-white text-center py-4 rounded-none font-black shadow-lg shadow-orange-500/20">
+              START SELLING
+            </Link>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

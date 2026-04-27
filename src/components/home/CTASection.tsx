@@ -12,98 +12,68 @@ const CTASection = () => {
   const dashboardLink = isAdmin ? "/admin" : "/vendor";
 
   return (
-    <section className="py-24 relative overflow-hidden">
-      {/* Dynamic Background with Mesh Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-orange-500 to-rose-500">
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-20 mix-blend-soft-light"></div>
-        <div className="absolute -top-24 -left-24 w-96 h-96 bg-yellow-300/30 rounded-full blur-3xl" />
-        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-rose-600/30 rounded-full blur-3xl" />
-      </div>
-
+    <section className="py-32 relative overflow-hidden bg-mesh">
       <div className="container mx-auto px-4 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 max-w-6xl mx-auto">
-          {/* Buyer CTA Card */}
-          <div className="group relative rounded-[2rem] p-1 transition-all duration-300 hover:scale-[1.01]">
-            {/* Card Border Gradient */}
-            <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-b from-white/30 to-white/5 opacity-50 group-hover:opacity-100 transition-opacity" />
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-8 items-stretch">
 
-            {/* Card Content */}
-            <div className="relative h-full bg-white/10 backdrop-blur-xl rounded-[1.9rem] p-8 lg:p-12 border border-white/10 overflow-hidden">
-              {/* Hover Glow */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            {/* Buyer CTA */}
+            <div className="group relative bg-white rounded-none p-12 border border-border/40 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-700 hover:-translate-y-2 flex flex-col items-start overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-none blur-[80px] translate-x-1/2 -translate-y-1/2" />
 
-              <div className="relative z-10 flex flex-col h-full items-start">
-                <div className="w-16 h-16 rounded-2xl bg-white text-orange-600 flex items-center justify-center mb-8 shadow-lg shadow-orange-900/10 group-hover:scale-110 transition-transform duration-300">
-                  <ShoppingBag className="w-8 h-8" />
-                </div>
+              <div className="w-16 h-16 rounded-none bg-secondary/5 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500">
+                <ShoppingBag className="w-8 h-8 text-primary" />
+              </div>
 
-                <h3 className="text-3xl lg:text-4xl font-bold text-white mb-4 tracking-tight">
-                  Ready to Shop?
-                </h3>
-                <p className="text-orange-50 mb-8 text-lg leading-relaxed max-w-md">
-                  Join thousands of students finding exclusive deals. Compare prices, chat with vendors, and get campus delivery.
-                </p>
+              <h3 className="text-4xl font-black text-foreground mb-6 tracking-tighter">
+                Join the student <br /> shopping revolution.
+              </h3>
+              <p className="text-muted-foreground text-lg font-medium leading-relaxed mb-10 max-w-sm">
+                Discover verified vendors, exclusive campus deals, and secure payment options.
+              </p>
 
-                <div className="mt-auto pt-4">
-                  <Link to="/products">
-                    <Button size="lg" className="bg-white text-orange-600 hover:bg-orange-50 border-0 font-semibold px-8 h-12 text-base shadow-xl shadow-orange-900/10">
-                      Start Shopping
-                      <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </Link>
-                </div>
+              <div className="mt-auto">
+                <Link to="/products">
+                  <Button size="lg" className="h-14 px-8 rounded-none bg-foreground text-white font-black text-xs uppercase tracking-widest hover:bg-primary shadow-xl transition-all hover:scale-105">
+                    Start Shopping
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </Link>
               </div>
             </div>
-          </div>
 
-          {/* Vendor CTA Card */}
-          <div className="group relative rounded-[2rem] p-1 transition-all duration-300 hover:scale-[1.01]">
-            {/* Card Border Gradient */}
-            <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-b from-white/30 to-white/5 opacity-50 group-hover:opacity-100 transition-opacity" />
+            {/* Vendor CTA */}
+            <div className="group relative bg-foreground rounded-none p-12 hover:shadow-2xl hover:shadow-black/20 transition-all duration-700 hover:-translate-y-2 flex flex-col items-start overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-none blur-[80px] translate-x-1/2 -translate-y-1/2" />
 
-            {/* Card Content */}
-            <div className="relative h-full bg-gradient-to-br from-gray-900/60 to-gray-900/40 backdrop-blur-xl rounded-[1.9rem] p-8 lg:p-12 border border-white/10 overflow-hidden">
-              {/* Hover Glow */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="w-16 h-16 rounded-none bg-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500">
+                <Store className="w-8 h-8 text-white" />
+              </div>
 
-              <div className="relative z-10 flex flex-col h-full items-start">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center mb-8 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <Store className="w-8 h-8" />
-                </div>
+              <h3 className="text-4xl font-black text-white mb-6 tracking-tighter">
+                Turn your hustle <br /> into a campus business.
+              </h3>
+              <p className="text-white/60 text-lg font-medium leading-relaxed mb-10 max-w-sm">
+                Set up your store in minutes and reach thousands of students across Ghana.
+              </p>
 
-                <h3 className="text-3xl lg:text-4xl font-bold text-white mb-4 tracking-tight">
-                  Want to Sell?
-                </h3>
-                <p className="text-gray-200 mb-8 text-lg leading-relaxed max-w-md">
-                  Turn your side hustle into a business. Set up your store in minutes, reach peers, and manage orders effortlessly.
-                </p>
-
-                <div className="mt-auto pt-4">
-                  <Link to={showDashboard ? dashboardLink : "/signup?role=vendor"}>
-                    <Button size="lg" className="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white border-0 font-semibold px-8 h-12 text-base shadow-xl">
-                      {showDashboard ? "Visit Dashboard" : "Become a Vendor"}
-                      <Sparkles className="w-5 h-5 ml-2 group-hover:rotate-12 transition-transform" />
-                    </Button>
-                  </Link>
-                </div>
+              <div className="mt-auto">
+                <Link to={showDashboard ? dashboardLink : "/signup?role=vendor"}>
+                  <Button size="lg" className="h-14 px-8 rounded-none bg-white text-foreground font-black text-xs uppercase tracking-widest hover:bg-primary hover:text-white shadow-xl transition-all hover:scale-105">
+                    {showDashboard ? "Go to Dashboard" : "Become a Vendor"}
+                    <Sparkles className="w-5 h-5 ml-2" />
+                  </Button>
+                </Link>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Improved Trust Section */}
-        <div className="mt-20 text-center">
-          <p className="text-white/70 text-sm font-medium uppercase tracking-widest mb-6">Trusted by students at</p>
-          <div className="flex flex-wrap justify-center items-center gap-x-8 gap-y-4 text-white/90 text-lg font-semibold opacity-90">
-            <span className="hover:opacity-100 transition-opacity cursor-default">University of Ghana</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <span className="hover:opacity-100 transition-opacity cursor-default">KNUST</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <span className="hover:opacity-100 transition-opacity cursor-default">Ashesi</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <span className="hover:opacity-100 transition-opacity cursor-default">UCC</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <span className="bg-white/20 px-3 py-1 rounded-full text-sm backdrop-blur-sm">15+ more campuses</span>
+          </div>
+
+          {/* Trust strip */}
+          <div className="mt-20 flex flex-wrap justify-center items-center gap-x-12 gap-y-6 opacity-40">
+            {["University of Ghana", "KNUST", "Ashesi", "UCC", "GIMPA"].map(uni => (
+              <span key={uni} className="text-sm font-black uppercase tracking-widest text-foreground">{uni}</span>
+            ))}
           </div>
         </div>
       </div>

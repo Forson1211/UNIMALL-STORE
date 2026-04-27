@@ -120,9 +120,9 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <Link to="/" className="flex items-center gap-2" onClick={handleMobileClick}>
           {logoUrl ? (
-            <img src={logoUrl} alt={siteName} className="w-10 h-10 rounded-xl object-contain bg-background" />
+            <img src={logoUrl} alt={siteName} className="w-10 h-10 rounded-full object-contain bg-background" />
           ) : (
-            <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-md shrink-0">
+            <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center shadow-md shrink-0">
               <ShoppingBag className="w-5 h-5 text-primary-foreground" />
             </div>
           )}

@@ -96,7 +96,7 @@ const BuyerAccount = () => {
             <Link to="/account/orders">
               <Card className="hover:border-primary transition-all duration-300 cursor-pointer h-full group hover:shadow-lg hover:-translate-y-1">
                 <CardContent className="p-4 sm:p-6 flex flex-col items-center text-center gap-2 sm:gap-4">
-                  <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-primary/10 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 flex items-center justify-center mb-1 sm:mb-2">
+                  <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 flex items-center justify-center mb-1 sm:mb-2">
                     <Package className="w-5 h-5 sm:w-8 sm:h-8 text-primary group-hover:text-primary-foreground transition-colors" />
                   </div>
                   <div className="space-y-0.5 sm:space-y-1">
@@ -110,7 +110,7 @@ const BuyerAccount = () => {
             <Link to="/account/orders?tab=tracking">
               <Card className="hover:border-blue-500 transition-all duration-300 cursor-pointer h-full group hover:shadow-lg hover:-translate-y-1">
                 <CardContent className="p-4 sm:p-6 flex flex-col items-center text-center gap-2 sm:gap-4">
-                  <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-blue-500/10 group-hover:bg-blue-500 group-hover:text-white transition-all duration-300 flex items-center justify-center mb-1 sm:mb-2">
+                  <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-blue-500/10 group-hover:bg-blue-500 group-hover:text-white transition-all duration-300 flex items-center justify-center mb-1 sm:mb-2">
                     <Truck className="w-5 h-5 sm:w-8 sm:h-8 text-blue-500 group-hover:text-white transition-colors" />
                   </div>
                   <div className="space-y-0.5 sm:space-y-1">
@@ -124,7 +124,7 @@ const BuyerAccount = () => {
             <Link to="/account/wishlist">
               <Card className="hover:border-pink-500 transition-all duration-300 cursor-pointer h-full group hover:shadow-lg hover:-translate-y-1">
                 <CardContent className="p-4 sm:p-6 flex flex-col items-center text-center gap-2 sm:gap-4">
-                  <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-pink-500/10 group-hover:bg-pink-500 group-hover:text-white transition-all duration-300 flex items-center justify-center mb-1 sm:mb-2">
+                  <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-pink-500/10 group-hover:bg-pink-500 group-hover:text-white transition-all duration-300 flex items-center justify-center mb-1 sm:mb-2">
                     <Heart className="w-5 h-5 sm:w-8 sm:h-8 text-pink-500 group-hover:text-white transition-colors" />
                   </div>
                   <div className="space-y-0.5 sm:space-y-1">
@@ -139,7 +139,7 @@ const BuyerAccount = () => {
               <Link to="/admin">
                 <Card className="border-amber-500/50 hover:border-amber-500 transition-all duration-300 cursor-pointer h-full bg-amber-500/5 group hover:shadow-lg hover:-translate-y-1">
                   <CardContent className="p-4 sm:p-6 flex flex-col items-center text-center gap-2 sm:gap-4">
-                    <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-amber-500/20 group-hover:bg-amber-500 group-hover:text-white transition-all duration-300 flex items-center justify-center mb-1 sm:mb-2">
+                    <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-amber-500/20 group-hover:bg-amber-500 group-hover:text-white transition-all duration-300 flex items-center justify-center mb-1 sm:mb-2">
                       <LayoutDashboard className="w-5 h-5 sm:w-8 sm:h-8 text-amber-600 group-hover:text-white transition-colors" />
                     </div>
                     <div className="space-y-0.5 sm:space-y-1">
@@ -155,7 +155,7 @@ const BuyerAccount = () => {
               <Link to="/vendor">
                 <Card className="border-purple-500/50 hover:border-purple-500 transition-all duration-300 cursor-pointer h-full bg-purple-500/5 group hover:shadow-lg hover:-translate-y-1">
                   <CardContent className="p-4 sm:p-6 flex flex-col items-center text-center gap-2 sm:gap-4">
-                    <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-purple-500/20 group-hover:bg-purple-500 group-hover:text-white transition-all duration-300 flex items-center justify-center mb-1 sm:mb-2">
+                    <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-purple-500/20 group-hover:bg-purple-500 group-hover:text-white transition-all duration-300 flex items-center justify-center mb-1 sm:mb-2">
                       <Store className="w-5 h-5 sm:w-8 sm:h-8 text-purple-600 group-hover:text-white transition-colors" />
                     </div>
                     <div className="space-y-0.5 sm:space-y-1">
@@ -172,7 +172,7 @@ const BuyerAccount = () => {
               onClick={signOut}
             >
               <CardContent className="p-4 sm:p-6 flex flex-col items-center text-center gap-2 sm:gap-4">
-                <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-destructive/10 group-hover:bg-destructive group-hover:text-white transition-all duration-300 flex items-center justify-center mb-1 sm:mb-2">
+                <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-destructive/10 group-hover:bg-destructive group-hover:text-white transition-all duration-300 flex items-center justify-center mb-1 sm:mb-2">
                   <LogOut className="w-5 h-5 sm:w-8 sm:h-8 text-destructive group-hover:text-white transition-colors" />
                 </div>
                 <div className="space-y-0.5 sm:space-y-1">

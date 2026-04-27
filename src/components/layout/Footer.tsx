@@ -128,14 +128,7 @@ const Footer = () => {
         {/* Top Bar: Brand & Socials */}
         <div className="flex flex-row items-center justify-between mb-6 md:mb-8 gap-4">
           <Link to="/" className="flex items-center gap-3">
-            {logoUrl ? (
-              <img src={logoUrl} alt={siteName} className="h-8 md:h-10 w-auto object-contain" />
-            ) : (
-              <div className="w-8 h-8 md:w-10 md:h-10 bg-primary rounded-lg flex items-center justify-center">
-                <ShoppingBag className="w-4 h-4 md:w-5 md:h-5 text-white" />
-              </div>
-            )}
-            <span className="text-xl md:text-2xl font-bold tracking-tight">{siteName.toLowerCase()}</span>
+            <img src="/FOOTER LOGO.png" alt={siteName} className="h-10 md:h-14 w-auto object-contain" />
           </Link>
           <div className="flex items-center gap-4 md:gap-8">
             {[
@@ -184,16 +177,16 @@ const Footer = () => {
           <Accordion type="single" collapsible className="w-full border-t border-white/10">
             {sections.map((section, idx) => (
               <AccordionItem key={idx} value={`item-${idx}`} className="border-b border-white/10">
-                <AccordionTrigger className="text-base font-bold py-5 hover:no-underline">
+                <AccordionTrigger className="text-base font-bold py-4 hover:no-underline">
                   {section.title}
                 </AccordionTrigger>
                 <AccordionContent>
-                  <ul className="space-y-4 pb-4">
+                  <ul className="space-y-2 pb-4">
                     {section.links.map((link, lIdx) => (
                       <li key={lIdx}>
                         <Link
                           to={link.path}
-                          className="text-sm opacity-70 block py-2 focus:text-white"
+                          className="text-sm opacity-70 block py-1.5 focus:text-white"
                           aria-label={(link as any).aria}
                         >
                           {link.name}
