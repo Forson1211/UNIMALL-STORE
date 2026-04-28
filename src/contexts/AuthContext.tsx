@@ -60,26 +60,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (profileData) setProfile(profileData as any);
 
+      // Use TEXT-returning RPC so ALL roles (including staff) are returned correctly
       const roleData = await withRetry(async () => {
-        const { data, error } = await supabase.rpc("get_user_role", { _user_id: userId });
-        if (error) throw error;
+        // First try the text-based RPC that supports all roles
+        const { data, error } = await (supabase.rpc as any)("get_user_role_text", { _user_id: userId });
+        if (error) {
+          // Fallback to original RPC (only returns admin/vendor/buyer)
+          const { data: d2, error: e2 } = await supabase.rpc("get_user_role", { _user_id: userId });
+          if (e2) throw e2;
+          return d2;
+        }
         return data;
       }, null, { retries: 2, baseDelay: 1500 });
 
       if (roleData) {
         setRole(roleData as UserRole);
 
-        const vendorData = await withRetry(async () => {
-          const { data } = await (supabase
-            .from("user_roles")
-            .select("vendor_status")
-            .eq("user_id", userId)
-            .eq("role", "vendor")
-            .maybeSingle() as any);
+        // Use SECURITY DEFINER RPC to bypass RLS on user_roles
+        const vendorStatus = await withRetry(async () => {
+          const { data, error } = await (supabase.rpc as any)("get_vendor_status", { _user_id: userId });
+          if (error) throw error;
           return data;
         }, null, { retries: 2, baseDelay: 1500 });
 
-        setVendorStatus(vendorData ? (vendorData.vendor_status as VendorStatus) : null);
+        setVendorStatus((vendorStatus as VendorStatus) ?? null);
       }
     } catch (error) {
       console.error("Unexpected error in fetchProfile:", error);
@@ -131,78 +135,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // 2. Real-time Subscription for Vendor Status + polling fallback
+  // 2. Real-time Subscription for User Roles
   useEffect(() => {
     if (!user) return;
 
-    console.log("Setting up real-time status tracker for:", user.id);
-
-    const roleSubscription = supabase
+    const channel = supabase
       .channel(`user-role-${user.id}`)
       .on(
         "postgres_changes",
         {
-          event: "UPDATE",
+          event: "*",
           schema: "public",
           table: "user_roles",
           filter: `user_id=eq.${user.id}`,
         },
-        (payload) => {
-          console.log("Real-time vendor status change detected:", payload);
-          const data = payload.new as any;
-          if (data && data.role === "vendor") {
-            const newStatus = data.vendor_status as VendorStatus;
-            setVendorStatus(newStatus);
-
-            if (newStatus === "approved") {
-              toast({
-                title: "Store Approved! 🎉",
-                description: "Your vendor account has been approved. Your dashboard is now unlocked.",
-              });
-            } else if (newStatus === "suspended") {
-              toast({
-                title: "Account Suspended",
-                description: "Your vendor account has been suspended. Contact support for details.",
-                variant: "destructive",
-              });
-            }
-          }
+        async (payload) => {
+          console.log("User roles updated, refreshing profile:", payload);
+          await fetchProfile(user.id);
         }
       )
-      .subscribe((status) => {
-        console.log("Realtime channel status:", status);
-      });
-
-    // Polling fallback: re-fetch vendor status every 10s while pending
-    // This handles cases where realtime is not yet enabled on user_roles
-    const pollInterval = setInterval(async () => {
-      const { data } = await (supabase
-        .from("user_roles")
-        .select("vendor_status, role")
-        .eq("user_id", user.id)
-        .eq("role", "vendor")
-        .maybeSingle() as any);
-
-      if (data) {
-        const polledStatus = data.vendor_status as VendorStatus;
-        setVendorStatus((prev) => {
-          if (prev !== polledStatus) {
-            if (polledStatus === "approved" && prev === "pending") {
-              toast({
-                title: "Store Approved! 🎉",
-                description: "Your vendor account has been approved. Your dashboard is now unlocked.",
-              });
-            }
-            return polledStatus;
-          }
-          return prev;
-        });
-      }
-    }, 10000);
+      .subscribe();
 
     return () => {
-      supabase.removeChannel(roleSubscription);
-      clearInterval(pollInterval);
+      supabase.removeChannel(channel);
     };
   }, [user]);
 

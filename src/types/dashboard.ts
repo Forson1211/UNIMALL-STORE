@@ -32,7 +32,7 @@ export interface Product {
   price: number;
   category: string;
   stock: number;
-  image?: string;
+  image_url?: string;
   vendorId: string;
   vendorName?: string;
   status: 'active' | 'draft' | 'out_of_stock';

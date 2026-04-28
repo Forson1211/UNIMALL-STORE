@@ -135,7 +135,7 @@ const BuyerAccount = () => {
               </Card>
             </Link>
 
-            {role === "admin" && (
+            {(role === "admin" || role === "moderator" || role === "vendor_manager" || role === "order_manager" || role === "content_manager" || role === "support_agent") && (
               <Link to="/admin">
                 <Card className="border-amber-500/50 hover:border-amber-500 transition-all duration-300 cursor-pointer h-full bg-amber-500/5 group hover:shadow-lg hover:-translate-y-1">
                   <CardContent className="p-4 sm:p-6 flex flex-col items-center text-center gap-2 sm:gap-4">
@@ -143,8 +143,10 @@ const BuyerAccount = () => {
                       <LayoutDashboard className="w-5 h-5 sm:w-8 sm:h-8 text-amber-600 group-hover:text-white transition-colors" />
                     </div>
                     <div className="space-y-0.5 sm:space-y-1">
-                      <p className="font-bold text-base sm:text-lg text-amber-700 group-hover:text-amber-600 transition-colors">Admin Dashboard</p>
-                      <p className="text-xs sm:text-sm text-muted-foreground">Manage platform</p>
+                      <p className="font-bold text-base sm:text-lg text-amber-700 group-hover:text-amber-600 transition-colors">
+                        {role === "admin" ? "Admin Dashboard" : "Staff Panel"}
+                      </p>
+                      <p className="text-xs sm:text-sm text-muted-foreground capitalize">{role?.replace("_", " ")}</p>
                     </div>
                   </CardContent>
                 </Card>

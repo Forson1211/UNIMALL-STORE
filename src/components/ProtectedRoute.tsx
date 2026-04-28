@@ -70,7 +70,11 @@ export function ProtectedRoute({
             <Link to="/">
               <Button variant="outline">Go Home</Button>
             </Link>
-            <Link to={role === "vendor" ? "/vendor" : "/account"}>
+            <Link to={
+              role === "vendor" ? "/vendor" :
+              (role === "moderator" || role === "vendor_manager" || role === "order_manager" || role === "content_manager" || role === "support_agent") ? "/admin" :
+              "/account"
+            }>
               <Button>Go to Dashboard</Button>
             </Link>
           </div>

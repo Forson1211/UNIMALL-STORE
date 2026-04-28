@@ -41,6 +41,7 @@ import ContentManagement from "./pages/admin/ContentManagement";
 import AdminTransactions from "./pages/admin/AdminTransactions";
 import AdminReviews from "./pages/admin/AdminReviews";
 import AdminCoupons from "./pages/admin/AdminCoupons";
+import AdminDeals from "./pages/admin/AdminDeals";
 import AdminMessages from "./pages/admin/AdminMessages";
 import AdminSupport from "./pages/admin/AdminSupport";
 import AdminLogs from "./pages/admin/AdminLogs";
@@ -54,6 +55,9 @@ import VendorDashboard from "./pages/vendor/VendorDashboard";
 import VendorProducts from "./pages/vendor/VendorProducts";
 import VendorOrders from "./pages/vendor/VendorOrders";
 import VendorSettings from "./pages/vendor/VendorSettings";
+import VendorCoupons from "./pages/vendor/VendorCoupons";
+import VendorReviews from "./pages/vendor/VendorReviews";
+import VendorNotifications from "./pages/vendor/VendorNotifications";
 
 // Buyer Account Pages
 import BuyerAccount from "./pages/account/BuyerAccount";
@@ -128,17 +132,17 @@ const App = () => (
                       </ProtectedRoute>
                     } />
                     <Route path="/admin/users" element={
-                      <ProtectedRoute allowedRoles={["admin"]}>
+                      <ProtectedRoute allowedRoles={["admin", "support_agent", "moderator"]}>
                         <AdminUsers />
                       </ProtectedRoute>
                     } />
                     <Route path="/admin/vendors" element={
-                      <ProtectedRoute allowedRoles={["admin", "vendor_manager", "moderator"]}>
+                      <ProtectedRoute allowedRoles={["admin", "vendor_manager", "moderator", "support_agent"]}>
                         <AdminVendors />
                       </ProtectedRoute>
                     } />
                     <Route path="/admin/products" element={
-                      <ProtectedRoute allowedRoles={["admin", "vendor_manager", "moderator"]}>
+                      <ProtectedRoute allowedRoles={["admin", "vendor_manager", "moderator", "support_agent"]}>
                         <AdminProducts />
                       </ProtectedRoute>
                     } />
@@ -182,6 +186,11 @@ const App = () => (
                         <AdminCoupons />
                       </ProtectedRoute>
                     } />
+                    <Route path="/admin/deals" element={
+                      <ProtectedRoute allowedRoles={["admin", "vendor_manager", "content_manager"]}>
+                        <AdminDeals />
+                      </ProtectedRoute>
+                    } />
                     <Route path="/admin/messages" element={
                       <ProtectedRoute allowedRoles={["admin", "support_agent"]}>
                         <AdminMessages />
@@ -212,6 +221,21 @@ const App = () => (
                     <Route path="/vendor/orders" element={
                       <ProtectedRoute allowedRoles={["vendor"]}>
                         <VendorOrders />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/vendor/coupons" element={
+                      <ProtectedRoute allowedRoles={["vendor"]}>
+                        <VendorCoupons />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/vendor/reviews" element={
+                      <ProtectedRoute allowedRoles={["vendor"]}>
+                        <VendorReviews />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/vendor/notifications" element={
+                      <ProtectedRoute allowedRoles={["vendor"]}>
+                        <VendorNotifications />
                       </ProtectedRoute>
                     } />
                     <Route path="/vendor/settings" element={

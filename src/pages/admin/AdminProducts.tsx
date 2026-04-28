@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { MoreHorizontal, Package, RefreshCw, Eye, Edit, Trash2, CheckCircle, XCircle } from "lucide-react";
+import { MoreHorizontal, Package, RefreshCw, Eye, Star, Trash2, CheckCircle, XCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +39,8 @@ interface Product {
   vendor_store: string;
   total_sales: number;
   created_at: string;
+  image_url?: string;
+  is_featured: boolean;
 }
 
 const statusStyles: Record<string, string> = {
@@ -71,11 +73,10 @@ const AdminProducts = () => {
 
   // Update product status mutation
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ productId, newStatus }: { productId: string; newStatus: string }) => {
-      // Use direct table update since the RPC function may not be in types yet
+    mutationFn: async ({ productId, isActive }: { productId: string; isActive: boolean }) => {
       const { error } = await supabase
         .from("products")
-        .update({ status: newStatus } as any)
+        .update({ is_active: isActive } as any)
         .eq("id", productId);
 
       if (error) throw error;
@@ -85,10 +86,10 @@ const AdminProducts = () => {
         await (supabase.from("system_logs" as any).insert({
           type: "admin_action",
           source: "product_management",
-          message: "Admin updated product status",
+          message: `Admin ${isActive ? 'activated' : 'deactivated'} product`,
           metadata: {
             product_id: productId,
-            new_status: newStatus,
+            is_active: isActive,
           },
         }));
       } catch (logError) {
@@ -110,6 +111,44 @@ const AdminProducts = () => {
       });
     },
   });
+
+  // Toggle featured mutation
+  const toggleFeaturedMutation = useMutation({
+    mutationFn: async ({ productId, isFeatured }: { productId: string; isFeatured: boolean }) => {
+      const { error } = await supabase
+        .from("products")
+        .update({ is_featured: isFeatured } as any)
+        .eq("id", productId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      toast({
+        title: "Success",
+        description: "Product featured status updated.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleActivate = (productId: string) => {
+    updateStatusMutation.mutate({ productId, isActive: true });
+  };
+
+  const handleDeactivate = (productId: string) => {
+    updateStatusMutation.mutate({ productId, isActive: false });
+  };
+
+  const handleToggleFeatured = (productId: string, currentStatus: boolean) => {
+    toggleFeaturedMutation.mutate({ productId, isFeatured: !currentStatus });
+  };
 
   // Delete product mutation
   const deleteProductMutation = useMutation({
@@ -150,14 +189,6 @@ const AdminProducts = () => {
     },
   });
 
-  const handleActivate = (productId: string) => {
-    updateStatusMutation.mutate({ productId, newStatus: "active" });
-  };
-
-  const handleDeactivate = (productId: string) => {
-    updateStatusMutation.mutate({ productId, newStatus: "inactive" });
-  };
-
   const handleDeleteClick = (productId: string) => {
     setProductToDelete(productId);
     setDeleteDialogOpen(true);
@@ -175,11 +206,24 @@ const AdminProducts = () => {
       header: "Product",
       render: (product: Product) => (
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
-            <Package className="w-6 h-6 text-muted-foreground" />
+          <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center overflow-hidden border">
+            {product.image_url ? (
+              <img 
+                src={product.image_url} 
+                alt={product.product_name} 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Package className="w-6 h-6 text-muted-foreground" />
+            )}
           </div>
           <div>
-            <p className="font-medium">{product.product_name}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-medium">{product.product_name}</p>
+              {product.is_featured && (
+                <Badge variant="secondary" className="h-4 px-1 text-[8px] bg-amber-100 text-amber-700 border-amber-200">Featured</Badge>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground">{product.category}</p>
           </div>
         </div>
@@ -235,10 +279,20 @@ const AdminProducts = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => window.open(`/product/${product.product_id}`, "_blank")}>
+            <DropdownMenuItem onClick={() => window.open(`/products/${product.product_id}`, "_blank")}>
               <Eye className="w-4 h-4 mr-2" />
               View Product
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            
+            {/* Featured Toggle */}
+            <DropdownMenuItem
+              onClick={() => handleToggleFeatured(product.product_id, product.is_featured)}
+            >
+              <Star className={`w-4 h-4 mr-2 ${product.is_featured ? 'fill-amber-400 text-amber-400' : ''}`} />
+              {product.is_featured ? 'Remove from Featured' : 'Mark as Featured'}
+            </DropdownMenuItem>
+
             <DropdownMenuSeparator />
             {product.status !== "active" && (
               <DropdownMenuItem
@@ -252,7 +306,7 @@ const AdminProducts = () => {
             {product.status === "active" && (
               <DropdownMenuItem
                 onClick={() => handleDeactivate(product.product_id)}
-                className="text-gold"
+                className="text-amber-600"
               >
                 <XCircle className="w-4 h-4 mr-2" />
                 Deactivate Product

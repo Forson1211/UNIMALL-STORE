@@ -80,7 +80,7 @@ const Navbar = () => {
             </div>
 
             {/* Cart */}
-            <button onClick={openCart} className="relative p-2.5 text-gray-500 hover:text-gray-900 transition-colors">
+            <button onClick={openCart} className="relative p-2.5 text-gray-500 hover:text-gray-900 transition-colors rounded-none">
               <ShoppingCart className="w-5 h-5" />
               {totalItems > 0 && (
                 <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-[#FF5500] text-[10px] text-white rounded-none flex items-center justify-center font-bold">
@@ -96,8 +96,8 @@ const Navbar = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 p-1 pl-1 pr-3 rounded-none hover:bg-gray-50 transition-all border border-transparent hover:border-gray-100">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-orange-500 text-white text-xs font-bold">
+                    <Avatar className="h-8 w-8 rounded-none">
+                      <AvatarFallback className="bg-orange-500 text-white text-xs font-bold rounded-none">
                         {profile?.full_name?.charAt(0) || user.email?.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -107,10 +107,10 @@ const Navbar = () => {
                 <DropdownMenuContent align="end" className="w-56 rounded-none shadow-xl border-gray-100">
                   <DropdownMenuLabel className="font-bold">My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild><Link to="/account">Profile</Link></DropdownMenuItem>
-                  <DropdownMenuItem asChild><Link to="/account/orders">Orders</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild className="rounded-none"><Link to="/account">Profile</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild className="rounded-none"><Link to="/account/orders">Orders</Link></DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-500 font-bold" onClick={signOut}>Sign out</DropdownMenuItem>
+                  <DropdownMenuItem className="text-red-500 font-bold rounded-none" onClick={signOut}>Sign out</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
@@ -126,7 +126,7 @@ const Navbar = () => {
             </Link>
 
             {/* Mobile Menu Toggle */}
-            <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden p-2 text-gray-500">
+            <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden p-2 text-gray-500 rounded-none">
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>

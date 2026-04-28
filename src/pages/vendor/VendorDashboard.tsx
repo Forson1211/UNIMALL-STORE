@@ -5,11 +5,12 @@ import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { RecentOrders } from "@/components/dashboard/RecentOrders";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { vendorService } from "@/services/vendorService";
-import { DollarSign, ShoppingCart, Package, TrendingUp, AlertTriangle } from "lucide-react";
+import { DollarSign, ShoppingCart, Package, TrendingUp, AlertTriangle, Plus, Ticket, Eye } from "lucide-react";
 
 const VendorDashboard = () => {
   const { user, profile } = useAuth();
@@ -93,17 +94,65 @@ const VendorDashboard = () => {
           ]} 
         />
         <CategoryChart 
-          title="Orders by Category"
-          data={[
-            { name: "Electronics", value: 40, fill: "#8B5CF6" },
-            { name: "Clothing", value: 30, fill: "#06B6D4" },
-            { name: "Home", value: 20, fill: "#F59E0B" },
-            { name: "Others", value: 10, fill: "#10B981" },
-          ]}
+          title="Product Distribution"
+          data={(() => {
+            const counts: Record<string, number> = {};
+            products.forEach((p: any) => {
+              counts[p.category] = (counts[p.category] || 0) + 1;
+            });
+            const colors = ["#8B5CF6", "#06B6D4", "#F59E0B", "#10B981", "#EC4899", "#3B82F6"];
+            return Object.entries(counts).map(([name, value], i) => ({
+              name,
+              value,
+              fill: colors[i % colors.length]
+            }));
+          })()}
         />
       </div>
 
-      {/* Low Stock Alert & Recent Orders */}
+      {/* Quick Actions & Low Stock Alert */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Quick Actions */}
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-primary" />
+              Quick Actions
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3">
+            <Button className="w-full justify-start gap-3 h-12" onClick={() => navigate('/vendor/products')}>
+              <Plus className="w-4 h-4" /> Add New Product
+            </Button>
+            <Button variant="outline" className="w-full justify-start gap-3 h-12" onClick={() => navigate('/vendor/coupons')}>
+              <Ticket className="w-4 h-4" /> Create Coupon
+            </Button>
+            <Button variant="secondary" className="w-full justify-start gap-3 h-12" onClick={() => window.open(`/vendors/${user?.id}`, '_blank')}>
+              <Eye className="w-4 h-4" /> View My Public Store
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Recent Orders */}
+        <div className="lg:col-span-2">
+          <RecentOrders
+            orders={orders.slice(0, 5).map((o: any) => ({
+              id: o.order_id.slice(0, 8),
+              customerName: o.buyer_name || o.buyer_email,
+              customerEmail: o.buyer_email || "",
+              date: new Date(o.created_at).toLocaleDateString(),
+              total: o.vendor_total,
+              status: o.order_status,
+              items: [],
+              paymentStatus: "paid",
+              createdAt: o.created_at
+            })) as any}
+            title="Recent Orders"
+            onViewAll={() => navigate('/vendor/orders')}
+          />
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Low Stock Alert */}
         <Card>
@@ -131,23 +180,6 @@ const VendorDashboard = () => {
             )}
           </CardContent>
         </Card>
-
-        {/* Recent Orders */}
-        <RecentOrders
-          orders={orders.slice(0, 5).map((o: any) => ({
-            id: o.order_id.slice(0, 8),
-            customerName: o.buyer_name || o.buyer_email,
-            customerEmail: o.buyer_email || "",
-            date: new Date(o.created_at).toLocaleDateString(),
-            total: o.vendor_total,
-            status: o.order_status,
-            items: [],
-            paymentStatus: "paid",
-            createdAt: o.created_at
-          })) as any}
-          title="Recent Orders"
-          onViewAll={() => navigate('/vendor/orders')}
-        />
       </div>
     </DashboardLayout>
   );

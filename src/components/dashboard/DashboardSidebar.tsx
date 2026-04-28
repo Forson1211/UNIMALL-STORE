@@ -32,38 +32,125 @@ import {
   CreditCard,
   Star,
   Ticket,
+  Zap,
   MessageSquare,
   LifeBuoy,
   Scroll,
+  Lock,
 } from "lucide-react";
 import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DashboardSidebarProps {
   type: 'admin' | 'vendor';
 }
 
 const adminMenuItems = [
-  { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
-  { title: "Users", url: "/admin/users", icon: Users },
-  { title: "Vendors", url: "/admin/vendors", icon: Store },
-  { title: "Products", url: "/admin/products", icon: Package },
-  { title: "Orders", url: "/admin/orders", icon: ShoppingCart },
-  { title: "Transactions", url: "/admin/transactions", icon: CreditCard },
-  { title: "Reviews", url: "/admin/reviews", icon: Star },
-  { title: "Coupons", url: "/admin/coupons", icon: Ticket },
-  { title: "Messages", url: "/admin/messages", icon: MessageSquare },
-  { title: "Content Management", url: "/admin/content", icon: FileText },
-  { title: "Site Customization", url: "/admin/site-customization", icon: Palette },
-  { title: "Notifications", url: "/admin/notifications", icon: Bell },
-  { title: "Support Tickets", url: "/admin/support", icon: LifeBuoy },
-  { title: "System Logs", url: "/admin/logs", icon: Scroll },
-  { title: "Settings", url: "/admin/settings", icon: Settings },
+  { 
+    title: "Dashboard", 
+    url: "/admin", 
+    icon: LayoutDashboard,
+    allowedRoles: ["admin", "moderator", "vendor_manager", "order_manager", "content_manager", "support_agent"] 
+  },
+  { 
+    title: "Users", 
+    url: "/admin/users", 
+    icon: Users,
+    allowedRoles: ["admin", "support_agent", "moderator"] 
+  },
+  { 
+    title: "Vendors", 
+    url: "/admin/vendors", 
+    icon: Store,
+    allowedRoles: ["admin", "vendor_manager", "moderator", "support_agent"] 
+  },
+  { 
+    title: "Products", 
+    url: "/admin/products", 
+    icon: Package,
+    allowedRoles: ["admin", "vendor_manager", "moderator", "support_agent"] 
+  },
+  { 
+    title: "Orders", 
+    url: "/admin/orders", 
+    icon: ShoppingCart,
+    allowedRoles: ["admin", "order_manager"] 
+  },
+  { 
+    title: "Transactions", 
+    url: "/admin/transactions", 
+    icon: CreditCard,
+    allowedRoles: ["admin", "order_manager"] 
+  },
+  { 
+    title: "Reviews", 
+    url: "/admin/reviews", 
+    icon: Star,
+    allowedRoles: ["admin", "moderator", "content_manager"] 
+  },
+  { 
+    title: "Coupons", 
+    url: "/admin/coupons", 
+    icon: Ticket,
+    allowedRoles: ["admin", "content_manager"] 
+  },
+  { 
+    title: "Flash Deals", 
+    url: "/admin/deals", 
+    icon: Zap,
+    allowedRoles: ["admin", "vendor_manager", "content_manager"] 
+  },
+  { 
+    title: "Messages", 
+    url: "/admin/messages", 
+    icon: MessageSquare,
+    allowedRoles: ["admin", "support_agent"] 
+  },
+  { 
+    title: "Content Management", 
+    url: "/admin/content", 
+    icon: FileText,
+    allowedRoles: ["admin", "content_manager"] 
+  },
+  { 
+    title: "Site Customization", 
+    url: "/admin/site-customization", 
+    icon: Palette,
+    allowedRoles: ["admin", "content_manager"] 
+  },
+  { 
+    title: "Notifications", 
+    url: "/admin/notifications", 
+    icon: Bell,
+    allowedRoles: ["admin", "support_agent", "content_manager"] 
+  },
+  { 
+    title: "Support Tickets", 
+    url: "/admin/support", 
+    icon: LifeBuoy,
+    allowedRoles: ["admin", "support_agent"] 
+  },
+  { 
+    title: "System Logs", 
+    url: "/admin/logs", 
+    icon: Scroll,
+    allowedRoles: ["admin"] 
+  },
+  { 
+    title: "Settings", 
+    url: "/admin/settings", 
+    icon: Settings,
+    allowedRoles: ["admin"] 
+  },
 ];
 
 const vendorMenuItems = [
   { title: "Dashboard", url: "/vendor", icon: LayoutDashboard },
   { title: "Products", url: "/vendor/products", icon: Package },
   { title: "Orders", url: "/vendor/orders", icon: ShoppingCart },
+  { title: "Coupons", url: "/vendor/coupons", icon: Ticket },
+  { title: "Reviews", url: "/vendor/reviews", icon: Star },
+  { title: "Notifications", url: "/vendor/notifications", icon: Bell },
   { title: "Settings", url: "/vendor/settings", icon: Settings },
 ];
 
@@ -71,6 +158,7 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
   const location = useLocation();
   const { state, toggleSidebar, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
+  const { role } = useAuth();
   const menuItems = type === 'admin' ? adminMenuItems : vendorMenuItems;
   const { siteName, logoUrl } = useSiteSettingsContext();
 
@@ -81,6 +169,12 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
     }
     // For others, check for exact match OR sub-route match (if path ends in /)
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
+
+  const hasAccess = (item: any) => {
+    if (!item.allowedRoles) return true;
+    if (role === 'admin') return true;
+    return item.allowedRoles.includes(role);
   };
 
   // Scroll Restoration for Sidebar
@@ -142,21 +236,34 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(item.url)}
-                    tooltip={collapsed ? item.title : undefined}
-                    onClick={handleMobileClick}
-                  >
-                    <Link to={item.url} className="flex items-center gap-3">
-                      <item.icon className="w-5 h-5 shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {menuItems.map((item) => {
+                const access = hasAccess(item);
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild={access}
+                      isActive={isActive(item.url)}
+                      tooltip={collapsed ? (access ? item.title : `${item.title} (Locked)`) : undefined}
+                      onClick={access ? handleMobileClick : undefined}
+                      className={!access ? "opacity-50 cursor-not-allowed" : ""}
+                      disabled={!access}
+                    >
+                      {access ? (
+                        <Link to={item.url} className="flex items-center gap-3 w-full">
+                          <item.icon className="w-5 h-5 shrink-0" />
+                          {!collapsed && <span className="flex-1">{item.title}</span>}
+                        </Link>
+                      ) : (
+                        <div className="flex items-center gap-3 w-full text-muted-foreground">
+                          <item.icon className="w-5 h-5 shrink-0" />
+                          {!collapsed && <span className="flex-1">{item.title}</span>}
+                          {!collapsed && <Lock className="w-3.5 h-3.5 text-muted-foreground/60" />}
+                        </div>
+                      )}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

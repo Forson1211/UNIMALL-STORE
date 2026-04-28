@@ -88,17 +88,94 @@ const VendorSettings = () => {
             <CardContent className="space-y-6">
               {/* Store Avatar */}
               <div className="flex items-center gap-6">
-                <Avatar className="h-20 w-20">
-                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                    {formData.storeName?.charAt(0) || "T"}
-                  </AvatarFallback>
+                <Avatar className="h-20 w-20 border-2 border-primary/20">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="Logo" className="w-full h-full object-cover" />
+                  ) : (
+                    <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
+                      {formData.storeName?.charAt(0) || "V"}
+                    </AvatarFallback>
+                  )}
                 </Avatar>
-                <div>
-                  <Button variant="outline" className="mb-2">
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload Logo
-                  </Button>
-                  <p className="text-sm text-muted-foreground">Recommended: 200x200px, PNG or JPG</p>
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    <Button 
+                      variant="outline" 
+                      className="h-9"
+                      onClick={() => document.getElementById('logo-upload')?.click()}
+                      disabled={loading}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      {loading ? "Uploading..." : "Upload Logo"}
+                    </Button>
+                    <input 
+                      id="logo-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file || !user) return;
+                        
+                        setLoading(true);
+                        try {
+                          const fileExt = file.name.split('.').pop();
+                          const fileName = `${user.id}_logo_${Math.random()}.${fileExt}`;
+                          const filePath = `vendors/${fileName}`;
+
+                          const { error: uploadError } = await supabase.storage
+                            .from('site-assets')
+                            .upload(filePath, file);
+
+                          if (uploadError) throw uploadError;
+
+                          const { data: { publicUrl } } = supabase.storage
+                            .from('site-assets')
+                            .getPublicUrl(filePath);
+
+                          const { error: updateError } = await supabase
+                            .from('profiles')
+                            .update({ avatar_url: publicUrl } as any)
+                            .eq('user_id', user.id);
+
+                          if (updateError) throw updateError;
+                          
+                          await refreshProfile();
+                          toast.success("Logo updated successfully!");
+                        } catch (error: any) {
+                          toast.error(`Upload failed: ${error.message}`);
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                    />
+                    {profile?.avatar_url && (
+                      <Button 
+                        variant="ghost" 
+                        className="h-9 text-destructive hover:text-destructive"
+                        onClick={async () => {
+                          if (!user) return;
+                          setLoading(true);
+                          try {
+                            const { error } = await supabase
+                              .from('profiles')
+                              .update({ avatar_url: null } as any)
+                              .eq('user_id', user.id);
+                            if (error) throw error;
+                            await refreshProfile();
+                            toast.success("Logo removed");
+                          } catch (error: any) {
+                            toast.error(error.message);
+                          } finally {
+                            setLoading(false);
+                          }
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Recommended: 200x200px, PNG or JPG (Max 1MB)</p>
                 </div>
               </div>
 
