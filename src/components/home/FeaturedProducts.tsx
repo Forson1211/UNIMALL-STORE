@@ -55,23 +55,23 @@ const ProductCard = ({ product, badge, badgeColor = "bg-primary" }: { product: a
   };
 
   return (
-    <Link to={`/products/${product.id || product.product_id}`} className="group flex flex-col bg-white rounded-none overflow-hidden hover:shadow-xl transition-all duration-500 border border-transparent hover:border-border/50 h-full">
+    <Link to={`/products/${product.id || product.product_id}`} className="group flex flex-col bg-white rounded-none overflow-hidden hover:shadow-xl transition-all duration-500 border border-orange-100 hover:border-primary/50 h-full">
       <div className="relative aspect-square overflow-hidden bg-muted/10 m-1 rounded-none">
         <img src={product.image || product.image_url} alt="" className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105" />
         {badge && (
           <div className="absolute top-1.5 left-1.5 md:top-2 md:left-2">
-            <Badge className={`${badgeColor} text-white font-bold rounded-none px-1.5 py-0.5 md:px-2 md:py-0.5 border-none shadow-sm text-[8px] md:text-[9px] uppercase tracking-tighter`}>
+            <Badge className={`${badgeColor} text-white font-bold rounded-none px-1.5 py-0.5 md:px-2 md:py-0.5 border-none shadow-sm text-xs md:text-sm uppercase tracking-tighter`}>
               {badge}
             </Badge>
           </div>
         )}
       </div>
       <div className="p-2 md:p-3 space-y-1 md:space-y-2 flex-1 flex flex-col">
-        <h3 className="text-[11px] md:text-sm font-medium text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors h-8 md:h-10">
+        <h3 className="text-sm md:text-base font-black text-primary line-clamp-2 leading-snug transition-colors h-10 md:h-12">
           {product.name || product.product_name}
         </h3>
         <div className="mt-auto">
-          <span className="text-sm md:text-lg font-black text-foreground whitespace-nowrap">GH₵ {product.price.toLocaleString()}</span>
+          <span className="text-base md:text-xl font-black text-foreground whitespace-nowrap">GH₵ {product.price.toLocaleString()}</span>
         </div>
       </div>
     </Link>
@@ -116,13 +116,7 @@ const FeaturedProducts = () => {
     queryFn: () => dealService.getTopSellingProducts(6),
   });
 
-  if (loadingDeals || loadingSellers) {
-    return (
-      <div className="py-20 flex flex-col items-center justify-center gap-4">
-        <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-none animate-spin" />
-      </div>
-    );
-  }
+
 
   return (
     <section className="py-4 md:py-8 bg-[#f1f1f2]">
@@ -139,11 +133,11 @@ const FeaturedProducts = () => {
                   <h2 className="text-xs md:text-lg font-black uppercase tracking-tight">Flash Sales</h2>
                 </div>
                 <div className="flex items-center gap-2 md:gap-3 border-l border-white/20 pl-2 md:pl-6">
-                  <span className="text-[9px] md:text-[13px] font-medium opacity-90 hidden xs:inline">Time Left:</span>
+                  <span className="text-xs md:text-sm font-medium opacity-90 hidden xs:inline">Time Left:</span>
                   <CountdownTimer endTime={flashDeals[0].end_time} dark />
                 </div>
               </div>
-              <Link to="/products" className="text-[10px] md:text-sm font-bold flex items-center hover:underline group whitespace-nowrap">
+              <Link to="/products" className="text-xs md:text-sm font-bold flex items-center hover:underline group whitespace-nowrap">
                 See All <ChevronRight className="w-3 h-3 md:w-4 md:h-4 ml-0.5 transition-transform group-hover:translate-x-0.5" />
               </Link>
             </div>
@@ -151,17 +145,17 @@ const FeaturedProducts = () => {
             {/* Products Grid - 2 columns on mobile */}
             <div className="p-2 md:p-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
               {flashDeals.map((deal) => (
-                <Link key={deal.id} to={`/products/${deal.product_id}`} className="group flex flex-col bg-white p-2 rounded-none hover:shadow-xl transition-all duration-300 border border-transparent hover:border-border/20">
+                <Link key={deal.id} to={`/products/${deal.product_id}`} className="group flex flex-col bg-white p-2 rounded-none hover:shadow-xl transition-all duration-300 border border-orange-100 hover:border-border/20">
                   <div className="relative aspect-square mb-2">
                     <img src={deal.image} alt="" className="w-full h-full object-contain" />
-                    <div className="absolute top-0 right-0 bg-orange-100 text-orange-600 font-bold text-[9px] md:text-[10px] px-1 md:px-1.5 py-0.5 rounded-none">
+                    <div className="absolute top-0 right-0 bg-orange-100 text-orange-600 font-bold text-xs md:text-sm px-1 md:px-1.5 py-0.5 rounded-none">
                       -{Math.round((1 - deal.discount_price / deal.original_price) * 100)}%
                     </div>
                   </div>
-                  <h3 className="text-[10px] md:text-[12px] font-medium line-clamp-1 mb-1 text-foreground/80">{deal.name}</h3>
+                  <h3 className="text-xs md:text-sm font-black line-clamp-1 mb-1 text-primary uppercase leading-tight">{deal.name}</h3>
                   <div className="mt-auto">
-                    <p className="font-bold text-xs md:text-sm tracking-tight text-foreground">GH₵ {deal.discount_price.toLocaleString()}</p>
-                    <p className="text-[9px] md:text-[10px] text-muted-foreground line-through">GH₵ {deal.original_price.toLocaleString()}</p>
+                    <p className="font-black text-sm md:text-base tracking-tighter text-foreground">GH₵ {deal.discount_price.toLocaleString()}</p>
+                    <p className="text-[10px] md:text-xs text-muted-foreground line-through font-bold">GH₵ {deal.original_price.toLocaleString()}</p>
                   </div>
                 </Link>
               ))}
@@ -179,8 +173,8 @@ const FeaturedProducts = () => {
             />
             <div className="absolute inset-0 bg-gradient-to-r from-blue-600/80 to-transparent flex items-center px-6 md:px-12">
               <div className="space-y-1 md:space-y-2">
-                <h3 className="text-white text-lg md:text-3xl font-black tracking-tight leading-none uppercase">Electronics <br className="hidden md:block" /> Showcase</h3>
-                <p className="text-white/80 text-[9px] md:text-sm font-bold uppercase tracking-widest">Starting GH₵ 1,200</p>
+                <h3 className="text-white text-lg md:text-3xl font-black tracking-tight leading-none uppercase">Electronics <br /> Showcase</h3>
+                <p className="text-yellow-400 text-xs md:text-sm font-bold uppercase tracking-widest">Starting GH₵ 1,200</p>
               </div>
             </div>
           </div>
@@ -192,8 +186,8 @@ const FeaturedProducts = () => {
             />
             <div className="absolute inset-0 bg-gradient-to-r from-orange-600/80 to-transparent flex items-center px-6 md:px-12">
               <div className="space-y-1 md:space-y-2">
-                <h3 className="text-white text-lg md:text-3xl font-black tracking-tight leading-none uppercase">Fashion <br className="hidden md:block" /> Week Sale</h3>
-                <p className="text-white/80 text-[9px] md:text-sm font-bold uppercase tracking-widest">Up to 60% OFF</p>
+                <h3 className="text-white text-lg md:text-3xl font-black tracking-tight leading-none uppercase">Fashion <br /> Week Sale</h3>
+                <p className="text-yellow-400 text-xs md:text-sm font-bold uppercase tracking-widest">Up to 60% OFF</p>
               </div>
             </div>
           </div>
@@ -232,7 +226,7 @@ const FeaturedProducts = () => {
                 alt="Promo"
               />
               <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                <div className="bg-white/90 px-2 py-0.5 md:px-3 md:py-1 text-[8px] md:text-[10px] font-black uppercase tracking-widest shadow-xl rounded-none">
+                <div className="bg-white/90 px-2 py-0.5 md:px-3 md:py-1 text-xs md:text-sm font-black uppercase tracking-widest shadow-xl rounded-none">
                   Offer
                 </div>
               </div>

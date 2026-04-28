@@ -45,19 +45,19 @@ const NewsSection = () => {
         <section className="py-16 md:py-32 bg-white relative overflow-hidden border-t border-border/40">
             <div className="container mx-auto px-4 relative z-10">
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 md:mb-20 gap-6 md:gap-8">
-                    <div className="max-w-2xl">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 md:px-4 md:py-1.5 rounded-none bg-foreground text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest mb-4 md:mb-6">
+                    <div className="max-w-none">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 md:px-4 md:py-1.5 rounded-none bg-foreground text-white text-xs md:text-sm font-black uppercase tracking-widest mb-4 md:mb-6">
                             <Sparkles className="w-3 md:w-3.5 h-3 md:h-3.5" />
                             Campus Pulse
                         </div>
-                        <h2 className="text-3xl md:text-5xl lg:text-7xl font-black text-foreground tracking-tighter mb-4 leading-tight uppercase">
-                            Connect <br /> & <span className="text-primary">Discover</span>
+                        <h2 className="text-2xl md:text-5xl lg:text-7xl font-black text-foreground tracking-tighter mb-4 leading-tight uppercase">
+                            Connect & <span className="text-primary">Discover</span>
                         </h2>
                         <p className="text-base md:text-lg lg:text-xl text-muted-foreground font-semibold leading-relaxed max-w-md">
                             Success stories, marketplace trends, and the latest university updates.
                         </p>
                     </div>
-                    <Link to="/news" className="group flex items-center gap-3 text-[11px] md:text-sm font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-all pb-2 border-b-2 border-transparent hover:border-primary w-fit">
+                    <Link to="/news" className="group flex items-center gap-3 text-xs md:text-sm font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-all pb-2 border-b-2 border-transparent hover:border-primary w-fit">
                         All Stories
                         <ArrowRight className="w-4 md:w-5 h-4 md:h-5 group-hover:translate-x-1 transition-transform" />
                     </Link>
@@ -70,17 +70,17 @@ const NewsSection = () => {
                                 <img
                                     src={item.image_url || "https://images.unsplash.com/photo-1523240695612-9a054b0db644?w=800&q=80"}
                                     alt={item.title}
-                                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 grayscale group-hover:grayscale-0"
+                                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                                 />
                                 <div className="absolute top-0 left-0">
-                                    <span className="px-3 py-1.5 md:px-4 md:py-2 bg-foreground text-white text-[8px] md:text-[9px] font-black uppercase tracking-widest rounded-none shadow-2xl">
+                                    <span className="px-3 py-1.5 md:px-4 md:py-2 bg-foreground text-white text-xs md:text-sm font-black uppercase tracking-widest rounded-none shadow-2xl">
                                         {item.category}
                                     </span>
                                 </div>
                             </div>
 
                             <div className="p-6 md:p-10 flex flex-col flex-1 space-y-4 md:space-y-6">
-                                <div className="flex items-center gap-4 md:gap-6 text-[9px] md:text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                                <div className="flex items-center gap-4 md:gap-6 text-xs md:text-sm font-black uppercase tracking-widest text-muted-foreground/60">
                                     <div className="flex items-center gap-1.5 md:gap-2">
                                         <Calendar className="w-3 md:w-3.5 h-3 md:h-3.5" />
                                         {new Date(item.publish_date).toLocaleDateString()}
@@ -98,11 +98,11 @@ const NewsSection = () => {
                                     <div className="h-1 w-10 md:w-12 bg-primary/20 group-hover:w-24 transition-all duration-500" />
                                 </div>
 
-                                <p className="text-muted-foreground text-[12px] md:text-[13px] font-bold line-clamp-3 mb-6 md:mb-8 flex-1 leading-relaxed">
+                                <p className="text-muted-foreground text-sm font-bold line-clamp-3 mb-6 md:mb-8 flex-1 leading-relaxed">
                                     {item.excerpt}
                                 </p>
 
-                                <div className="flex items-center text-[10px] md:text-xs font-black uppercase tracking-widest text-primary group-hover:translate-x-2 transition-transform duration-300">
+                                <div className="flex items-center text-xs md:text-sm font-black uppercase tracking-widest text-primary group-hover:translate-x-2 transition-transform duration-300">
                                     Read Article
                                     <ArrowRight className="ml-2 md:ml-3 w-3.5 md:w-4 h-3.5 md:h-4" />
                                 </div>

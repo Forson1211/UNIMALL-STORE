@@ -140,7 +140,7 @@ const Products = () => {
               <div className="space-y-1 md:space-y-3">
                 <p className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.4em] text-white/70">Unimall Marketplace Event</p>
                 <h2 className="text-3xl md:text-6xl font-black text-white tracking-tighter leading-none uppercase">
-                  Tech <br className="hidden md:block" /> Showcase
+                  Tech <br /> Showcase
                 </h2>
                 <div className="flex items-center gap-4 md:gap-6 mt-4">
                   <div className="bg-white text-primary px-3 py-1 md:px-6 md:py-2 text-[10px] md:text-sm font-black uppercase tracking-widest shadow-xl">
@@ -173,8 +173,8 @@ const Products = () => {
 
                   {/* Categories Card */}
                   <div className="bg-white rounded-none border border-border/40 shadow-sm overflow-hidden">
-                    <div className="px-5 py-4 border-b border-gray-50">
-                      <h3 className="text-[11px] font-black uppercase tracking-[0.15em] text-gray-400">Browse Categories</h3>
+                    <div className="px-5 py-4 border-b border-gray-100">
+                      <h3 className="text-xs font-black uppercase tracking-[0.15em] text-gray-400">Browse Categories</h3>
                     </div>
                     <div className="py-2">
                       {categories.map((cat) => {
@@ -189,9 +189,9 @@ const Products = () => {
                                 : "text-gray-600 hover:bg-gray-50 hover:text-primary"
                               }`}
                           >
-                            <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-white" : "text-gray-400 group-hover:text-primary"}`} />
-                            <span className="text-[13px] font-bold flex-1">{cat.label}</span>
-                            <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? "translate-x-0" : "translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-50"}`} />
+                            <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? "text-white" : "text-gray-400 group-hover:text-primary"}`} />
+                            <span className="text-base font-black flex-1">{cat.label}</span>
+                            <ChevronRight className={`w-4 h-4 transition-transform ${isActive ? "translate-x-0" : "translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-50"}`} />
                           </button>
                         );
                       })}
@@ -200,7 +200,7 @@ const Products = () => {
 
                   {/* Price Filter Card */}
                   <div className="bg-white rounded-none border border-border/40 shadow-sm p-5">
-                    <h3 className="text-[11px] font-black uppercase tracking-[0.15em] text-gray-400 mb-5">Price Range</h3>
+                    <h3 className="text-xs font-black uppercase tracking-[0.15em] text-gray-400 mb-5">Price Range</h3>
                     <div className="flex items-center gap-2 mb-4">
                       <div className="relative flex-1">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">Min</span>
@@ -212,7 +212,7 @@ const Products = () => {
                         <input type="number" className="w-full h-10 pl-10 pr-2 border border-gray-200 rounded-none text-sm outline-none focus:border-primary" />
                       </div>
                     </div>
-                    <button className="w-full h-11 bg-primary text-white text-[11px] font-black uppercase tracking-widest rounded-none hover:bg-black transition-colors shadow-lg shadow-primary/20">
+                    <button className="w-full h-12 bg-primary text-white text-xs font-black uppercase tracking-widest rounded-none hover:bg-black transition-colors shadow-lg shadow-primary/20">
                       Apply Filters
                     </button>
                   </div>
@@ -263,34 +263,34 @@ const Products = () => {
                     <Link
                       key={product.id}
                       to={`/products/${product.id}`}
-                      className="group bg-white rounded-none border border-transparent hover:border-primary/20 hover:shadow-2xl transition-all duration-300 flex flex-col"
+                      className="group bg-white rounded-none border border-orange-100 hover:border-primary/40 hover:shadow-2xl transition-all duration-300 flex flex-col"
                     >
-                      <div className="relative aspect-square overflow-hidden bg-[#fafafa] m-1">
+                      <div className="relative aspect-[4/3] overflow-hidden bg-[#fafafa]">
                         <img
                           src={product.image}
                           alt={product.name}
                           className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
                         />
                         <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
-                          <button className="w-9 h-9 bg-white shadow-xl flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
+                          <button className="w-8 h-8 bg-white shadow-xl flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
                             <Heart className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
-                      <div className="p-4 flex flex-col flex-1">
-                        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-primary mb-1">{product.vendor}</p>
-                        <h3 className="text-[13px] font-bold text-gray-800 line-clamp-2 mb-3 leading-snug group-hover:text-primary transition-colors min-h-[40px]">
+                      <div className="p-2.5 flex flex-col flex-1">
+                        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-primary mb-0">{product.vendor}</p>
+                        <h3 className="text-xs md:text-sm font-black text-primary line-clamp-2 mb-1.5 leading-tight transition-colors">
                           {product.name}
                         </h3>
                         <div className="mt-auto">
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-lg font-black text-gray-900 tracking-tighter">GH₵ {product.price.toLocaleString()}</span>
+                          <div className="mb-2">
+                            <span className="text-base md:text-lg font-black text-gray-900 tracking-tighter">GH₵ {product.price.toLocaleString()}</span>
                           </div>
                           <button
                             onClick={(e) => handleAddToCart(product, e)}
-                            className="w-full h-10 bg-white border border-gray-200 text-gray-900 text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 flex items-center justify-center gap-2"
+                            className="w-full h-9 bg-white border border-gray-200 text-gray-900 text-[9px] font-black uppercase tracking-widest hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 flex items-center justify-center gap-1.5"
                           >
-                            <ShoppingCart className="w-3.5 h-3.5" /> Buy Now
+                            <ShoppingCart className="w-3 h-3" /> Buy Now
                           </button>
                         </div>
                       </div>
@@ -301,8 +301,8 @@ const Products = () => {
 
               {/* Bottom Load More */}
               {products.length > 0 && (
-                <div className="mt-12 flex justify-center">
-                  <button className="h-14 px-12 bg-white border-2 border-gray-200 text-gray-800 font-black text-[11px] uppercase tracking-[0.2em] hover:border-primary hover:text-primary transition-all rounded-none">
+                <div className="mt-8 flex justify-center">
+                  <button className="h-16 px-16 bg-white border-2 border-gray-200 text-gray-800 font-black text-sm uppercase tracking-[0.2em] hover:border-primary hover:text-primary transition-all rounded-none">
                     Load More Products
                   </button>
                 </div>

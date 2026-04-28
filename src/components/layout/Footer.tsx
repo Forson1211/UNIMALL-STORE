@@ -160,7 +160,7 @@ const Footer = () => {
                   <li key={link.name}>
                     <Link
                       to={link.path}
-                      className="text-[13px] opacity-70 hover:opacity-100 transition-opacity block leading-tight py-0.5 focus:outline-none focus:text-white"
+                      className="text-sm opacity-70 hover:opacity-100 transition-opacity block leading-tight py-0.5 focus:outline-none focus:text-white"
                       aria-label={(link as any).aria}
                     >
                       {link.name}
@@ -203,7 +203,7 @@ const Footer = () => {
         {/* Feature Row: Updates & Badges */}
         <div className="grid lg:grid-cols-12 gap-6 items-center border-t border-white/10 pt-4 mb-6">
           <div className="lg:col-span-8 flex flex-col">
-            <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40 mb-2">Latest Updates</h4>
+            <h4 className="text-xs font-bold tracking-[0.2em] uppercase text-white/40 mb-2">Latest Updates</h4>
             <div className="flex flex-col md:flex-row gap-6">
               {footerNews.length >= 2 ? (
                 <>
@@ -228,7 +228,7 @@ const Footer = () => {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-semibold text-white/90 line-clamp-2 leading-snug group-hover:text-white transition-colors">
+                        <p className="text-sm font-semibold text-white/90 line-clamp-2 leading-snug group-hover:text-white transition-colors">
                           {news.title}
                         </p>
                       </div>
@@ -246,7 +246,7 @@ const Footer = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold mb-1">Latest Community Hub Update</p>
-                      <p className="text-[11px] opacity-60 line-clamp-1">How students are saving 40% on textbooks this semester...</p>
+                      <p className="text-xs opacity-60 line-clamp-1">How students are saving 40% on textbooks this semester...</p>
                     </div>
                     <ExternalLink className="w-4 h-4 opacity-50 md:opacity-0 md:group-hover:opacity-40 transition-opacity" />
                   </Link>
@@ -256,7 +256,7 @@ const Footer = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold mb-1">New Vendor Features</p>
-                      <p className="text-[11px] opacity-60 line-clamp-1">Optimizing your campus store for mobile users...</p>
+                      <p className="text-xs opacity-60 line-clamp-1">Optimizing your campus store for mobile users...</p>
                     </div>
                     <ExternalLink className="w-4 h-4 opacity-50 md:opacity-0 md:group-hover:opacity-40 transition-opacity" />
                   </Link>
@@ -272,7 +272,7 @@ const Footer = () => {
                   <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
                     <ShieldCheck className="w-3.5 h-3.5 text-green-400" />
                   </div>
-                  <span className="text-[10px] font-bold tracking-[0.1em] uppercase text-white/90">Verified Merchant</span>
+                  <span className="text-xs font-bold tracking-[0.1em] uppercase text-white/90">Verified Merchant</span>
                 </div>
               </div>
               <div className="flex items-center gap-6 opacity-80 hover:opacity-100 transition-all duration-500">
@@ -295,7 +295,7 @@ const Footer = () => {
         <div className="flex flex-col gap-10 pt-4 border-t border-white/10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8 py-2">
             {/* Left: Copyright & Language */}
-            <div className="flex flex-col md:flex-row items-center gap-6 text-[13px] opacity-60">
+            <div className="flex flex-col md:flex-row items-center gap-6 text-sm opacity-60">
               <p>© 2010-{new Date().getFullYear()} {siteName} LLC. All rights reserved.</p>
               <button className="flex items-center gap-2 hover:opacity-100 transition-opacity">
                 <Globe className="w-4 h-4" />
@@ -304,7 +304,7 @@ const Footer = () => {
             </div>
 
             {/* Center: Developers */}
-            <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-[0.15em] uppercase text-white/40">
+            <div className="flex items-center gap-1.5 text-xs font-bold tracking-[0.15em] uppercase text-white/40">
               <span className="whitespace-nowrap">Developed by</span>
               <a
                 href="#"
@@ -328,14 +328,14 @@ const Footer = () => {
               <a href="#" className="flex-1 md:flex-none h-10 bg-black border border-white/20 rounded-xl px-4 flex items-center justify-center gap-2 hover:bg-white/5 transition-colors">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/3/31/Apple_logo_white.svg" alt="Apple" className="w-3.5" />
                 <div className="text-left text-white">
-                  <p className="text-[8px] leading-none opacity-60 uppercase">Download on the</p>
+                  <p className="text-[10px] leading-none opacity-60 uppercase">Download on the</p>
                   <p className="text-[14px] font-bold leading-none">App Store</p>
                 </div>
               </a>
               <a href="#" className="flex-1 md:flex-none h-10 bg-black border border-white/20 rounded-xl px-4 flex items-center justify-center gap-2 hover:bg-white/5 transition-colors">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/Google_Play_Arrow_logo.svg" alt="Google Play" className="w-4" />
                 <div className="text-left text-white">
-                  <p className="text-[8px] leading-none opacity-60 uppercase">Get it on</p>
+                  <p className="text-[10px] leading-none opacity-60 uppercase">Get it on</p>
                   <p className="text-[14px] font-bold leading-none">Google Play</p>
                 </div>
               </a>

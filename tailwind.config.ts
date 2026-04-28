@@ -77,6 +77,13 @@ export default {
         gold: "hsl(var(--gold))",
         navy: "hsl(var(--navy))",
       },
+      fontSize: {
+        xs: ["0.8rem", { lineHeight: "1.25rem" }],
+        sm: ["0.925rem", { lineHeight: "1.5rem" }],
+        base: ["1.05rem", { lineHeight: "1.6rem" }],
+        lg: ["1.175rem", { lineHeight: "1.75rem" }],
+        xl: ["1.3rem", { lineHeight: "1.85rem" }],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
