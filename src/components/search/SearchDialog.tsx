@@ -54,7 +54,7 @@ export function SearchDialog() {
 
   return (
     <Dialog open={isSearchOpen} onOpenChange={closeSearch}>
-      <DialogContent className="sm:max-w-xl max-sm:fixed max-sm:inset-x-0 max-sm:top-0 max-sm:bottom-auto max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:w-full max-sm:max-w-none max-sm:rounded-b-2xl max-sm:rounded-t-none max-sm:border-x-0 max-sm:border-t-0 max-sm:p-4 max-sm:gap-3 max-sm:h-auto max-sm:max-h-[85vh] max-sm:overflow-y-auto max-sm:data-[state=open]:slide-in-from-top max-sm:data-[state=open]:slide-in-from-left-0 max-sm:data-[state=open]:zoom-in-100 max-sm:data-[state=closed]:slide-out-to-top max-sm:data-[state=closed]:slide-out-to-left-0 max-sm:data-[state=closed]:zoom-out-100">
+      <DialogContent className="sm:max-w-xl max-sm:fixed max-sm:inset-x-0 max-sm:top-0 max-sm:bottom-auto max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:w-full max-sm:max-w-none max-sm:rounded-b-2xl max-sm:rounded-t-none max-sm:border-x-0 max-sm:border-t-0 max-sm:p-4 max-sm:gap-3 max-sm:h-auto max-sm:max-h-[85vh] max-sm:overflow-y-auto max-sm:data-[state=open]:slide-in-from-top max-sm:data-[state=open]:slide-in-from-left-0 max-sm:data-[state=open]:zoom-in-100 max-sm:data-[state=closed]:slide-out-to-top max-sm:data-[state=closed]:slide-out-to-left-0 max-sm:data-[state=closed]:zoom-out-100 max-sm:duration-350 max-sm:ease-premium-slide">
         <DialogHeader>
           <DialogTitle className="text-left max-sm:text-sm max-sm:text-muted-foreground">Search Products</DialogTitle>
         </DialogHeader>
