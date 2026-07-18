@@ -45,6 +45,29 @@ export const adminService = {
         return data as Coupon[];
     },
 
+    // --- Payouts ---
+    async getPayoutRequests() {
+        const { data, error } = await (supabase as any)
+            .from('payout_requests')
+            .select(`
+                *,
+                vendor:profiles!payout_requests_vendor_id_fkey(store_name, full_name)
+            `)
+            .order('requested_at', { ascending: false });
+
+        if (error) throw error;
+        return data;
+    },
+
+    async processPayoutRequest(payoutId: string, newStatus: 'approved' | 'paid' | 'rejected') {
+        const { error } = await (supabase as any).rpc('approve_payout_request', {
+            _payout_id: payoutId,
+            _new_status: newStatus,
+        });
+
+        if (error) throw error;
+    },
+
     // --- Support ---
     async getSupportTickets(): Promise<SupportTicket[]> {
         const { data, error } = await (supabase as any)
