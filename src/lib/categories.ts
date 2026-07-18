@@ -1,6 +1,6 @@
 import {
-  Monitor, Smartphone, Laptop, Shirt, Home, Utensils, BookOpen,
-  Stethoscope, Dumbbell, Gamepad2, Gift, ShoppingBag, type LucideIcon,
+  Apple, Smartphone, Sparkles, Home, Coffee, Tv, Monitor,
+  Shirt, Dumbbell, Baby, Gamepad2, MoreHorizontal, type LucideIcon,
 } from "lucide-react";
 
 export interface ProductCategory {
@@ -8,20 +8,18 @@ export interface ProductCategory {
   icon: LucideIcon;
 }
 
-// Single source of truth for product categories — used by the vendor product
-// form (what gets stored) and every category link/filter across the site
-// (nav dropdown, hero sidebar, shop filters, search) so they stay in sync.
+// Single source of truth for product categories — Jumia category taxonomy
 export const PRODUCT_CATEGORIES: ProductCategory[] = [
-  { label: "Electronics", icon: Monitor },
-  { label: "Phones & Accessories", icon: Smartphone },
-  { label: "Computers", icon: Laptop },
-  { label: "Fashion", icon: Shirt },
+  { label: "Supermarket", icon: Apple },
+  { label: "Phones & Tablets", icon: Smartphone },
+  { label: "Health & Beauty", icon: Sparkles },
   { label: "Home & Office", icon: Home },
-  { label: "Food & Snacks", icon: Utensils },
-  { label: "Books & Notes", icon: BookOpen },
-  { label: "Health & Beauty", icon: Stethoscope },
-  { label: "Sports", icon: Dumbbell },
+  { label: "Appliances", icon: Coffee },
+  { label: "Electronics", icon: Tv },
+  { label: "Computing", icon: Monitor },
+  { label: "Fashion", icon: Shirt },
+  { label: "Sporting Goods", icon: Dumbbell },
+  { label: "Baby Products", icon: Baby },
   { label: "Gaming", icon: Gamepad2 },
-  { label: "Gifts", icon: Gift },
-  { label: "Others", icon: ShoppingBag },
+  { label: "Other categories", icon: MoreHorizontal },
 ];

@@ -4,10 +4,6 @@ import { ChevronRight, ChevronLeft, Menu, Phone, Store, Truck } from "lucide-rea
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 
 const categories = PRODUCT_CATEGORIES.map((cat) => ({ name: cat.label, icon: cat.icon }));
-// Only ~7 rows fit inside the sidebar's fixed height — the rest live behind the "Categories" flyout.
-const SIDEBAR_VISIBLE_COUNT = 7;
-const visibleCategories = categories.slice(0, SIDEBAR_VISIBLE_COUNT);
-const moreCategories = categories.slice(SIDEBAR_VISIBLE_COUNT);
 
 const slides = [
   {
@@ -44,7 +40,6 @@ const HeroSection = () => {
   const dragDeltaX = useRef(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [showMoreCategories, setShowMoreCategories] = useState(false);
 
   const goTo = (i: number) => setIndex((i + slides.length) % slides.length);
   const next = () => goTo(index + 1);
@@ -83,58 +78,19 @@ const HeroSection = () => {
         <div className="flex gap-2 h-[380px]">
 
           {/* ── LEFT: Category Sidebar ── */}
-          <div
-            className="hidden lg:block relative w-[230px] shrink-0"
-            onMouseEnter={() => setShowMoreCategories(true)}
-            onMouseLeave={() => setShowMoreCategories(false)}
-          >
-            <div className="flex flex-col w-full h-full bg-white shadow-sm overflow-hidden">
-              {visibleCategories.map((cat, i) => (
+          <div className="hidden lg:block w-[230px] shrink-0">
+            <div className="flex flex-col w-full h-full bg-white shadow-sm overflow-hidden py-1">
+              {categories.map((cat) => (
                 <Link
                   key={cat.name}
                   to={`/products?category=${encodeURIComponent(cat.name)}`}
-                  className="flex items-center gap-3.5 px-4 py-[11px] transition-colors group border-b border-gray-100 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                  className="flex items-center gap-3 px-4 py-[7.5px] transition-colors group text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                 >
-                  <cat.icon className="w-6 h-6 shrink-0 transition-colors text-gray-500 group-hover:text-gray-700" strokeWidth={1.5} />
-                  <span className="text-[13.5px] leading-tight flex-1 font-medium">{cat.name}</span>
-                  <ChevronRight className="w-4 h-4 shrink-0 transition-all opacity-0 group-hover:opacity-100 text-gray-400" />
+                  <cat.icon className="w-[18px] h-[18px] shrink-0 transition-colors text-gray-500 group-hover:text-gray-900" strokeWidth={1.5} />
+                  <span className="text-[12px] leading-tight flex-1 font-medium">{cat.name}</span>
                 </Link>
               ))}
-
-              {/* Non-navigating trigger — reveals the remaining categories in a flyout */}
-              {moreCategories.length > 0 && (
-                <div
-                  className={`flex items-center gap-3.5 px-4 py-[11px] cursor-default select-none transition-colors ${
-                    showMoreCategories ? "bg-orange-50 text-[#FF5500]" : "text-[#FF5500] hover:bg-orange-50"
-                  }`}
-                >
-                  <Menu className="w-6 h-6 shrink-0 text-[#FF5500]" strokeWidth={1.5} />
-                  <span className="text-[13.5px] leading-tight flex-1 font-bold">Categories</span>
-                  <ChevronRight className="w-4 h-4 shrink-0 text-[#FF5500]" />
-                </div>
-              )}
             </div>
-
-            {/* Flyout panel with the remaining categories */}
-            {moreCategories.length > 0 && (
-              <div
-                className={`absolute top-0 left-full h-full w-[230px] bg-white shadow-xl border-l border-gray-100 flex-col z-30 transition-opacity duration-150 ${
-                  showMoreCategories ? "flex opacity-100" : "hidden opacity-0 pointer-events-none"
-                }`}
-              >
-                {moreCategories.map((cat) => (
-                  <Link
-                    key={cat.name}
-                    to={`/products?category=${encodeURIComponent(cat.name)}`}
-                    className="flex items-center gap-3.5 px-4 py-[11px] transition-colors group border-b border-gray-100 last:border-0 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                  >
-                    <cat.icon className="w-6 h-6 shrink-0 transition-colors text-gray-500 group-hover:text-gray-700" strokeWidth={1.5} />
-                    <span className="text-[13.5px] leading-tight flex-1 font-medium">{cat.name}</span>
-                    <ChevronRight className="w-4 h-4 shrink-0 transition-all opacity-0 group-hover:opacity-100 text-gray-400" />
-                  </Link>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* ── CENTER: Hero Banner ── */}

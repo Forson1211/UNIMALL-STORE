@@ -1,54 +1,54 @@
 import { Link } from "react-router-dom";
-import { Laptop, BookOpen, Shirt, Utensils, Headphones, Dumbbell, Palette, Gift, ArrowRight, Sparkles } from "lucide-react";
+import { Apple, Smartphone, Sparkles, Home, Coffee, Tv, Monitor, Shirt, ArrowRight } from "lucide-react";
 
 const categories = [
   {
-    icon: Laptop,
-    name: "Electronics",
-    count: "230+ items",
-    img: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&h=400&fit=crop",
+    icon: Apple,
+    name: "Supermarket",
+    count: "350+ items",
+    img: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&h=400&fit=crop",
   },
   {
-    icon: BookOpen,
-    name: "Books & Notes",
-    count: "450+ items",
-    img: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&h=400&fit=crop",
+    icon: Smartphone,
+    name: "Phones & Tablets",
+    count: "290+ items",
+    img: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&h=400&fit=crop",
+  },
+  {
+    icon: Sparkles,
+    name: "Health & Beauty",
+    count: "180+ items",
+    img: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&h=400&fit=crop",
+  },
+  {
+    icon: Home,
+    name: "Home & Office",
+    count: "210+ items",
+    img: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=600&h=400&fit=crop",
+  },
+  {
+    icon: Coffee,
+    name: "Appliances",
+    count: "150+ items",
+    img: "https://images.unsplash.com/photo-1588854337236-6889d631faa8?w=600&h=400&fit=crop",
+  },
+  {
+    icon: Tv,
+    name: "Electronics",
+    count: "250+ items",
+    img: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=600&h=400&fit=crop",
+  },
+  {
+    icon: Monitor,
+    name: "Computing",
+    count: "310+ items",
+    img: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&h=400&fit=crop",
   },
   {
     icon: Shirt,
     name: "Fashion",
     count: "380+ items",
     img: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=600&h=400&fit=crop",
-  },
-  {
-    icon: Utensils,
-    name: "Food & Snacks",
-    count: "120+ items",
-    img: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop",
-  },
-  {
-    icon: Headphones,
-    name: "Phones & Accessories",
-    count: "290+ items",
-    img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=400&fit=crop",
-  },
-  {
-    icon: Dumbbell,
-    name: "Sports",
-    count: "85+ items",
-    img: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=400&fit=crop",
-  },
-  {
-    icon: Palette,
-    name: "Others",
-    count: "95+ items",
-    img: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600&h=400&fit=crop",
-  },
-  {
-    icon: Gift,
-    name: "Gifts",
-    count: "150+ items",
-    img: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600&h=400&fit=crop",
   },
 ];
 
