@@ -33,7 +33,12 @@ export function SearchSuggestions({ query, onNavigate }: SearchSuggestionsProps)
     enabled: debouncedQuery.length >= 2,
   });
 
-  if (trimmed.length < 2) return null;
+  const trendingSearches = ["watches", "shoes", "nonstick cooking pot", "perfumes for men", "sneakers"];
+
+  const handleTagClick = (tag: string) => {
+    navigate(`/products?search=${encodeURIComponent(tag)}`);
+    onNavigate?.();
+  };
 
   const goToProduct = (product: StorefrontProduct) => {
     navigate(`/products/${product.id}`);
@@ -46,6 +51,28 @@ export function SearchSuggestions({ query, onNavigate }: SearchSuggestionsProps)
   };
 
   const showEmpty = debouncedQuery.length >= 2 && !isFetching && results.length === 0;
+
+  if (trimmed.length < 2) {
+    return (
+      <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-[0_8px_40px_-8px_rgba(0,0,0,0.18)] border border-gray-100 p-5 z-50 max-sm:relative max-sm:top-auto max-sm:mt-3 max-sm:shadow-none max-sm:border-0 max-sm:p-2">
+        <h4 className="text-[10px] font-black uppercase tracking-wider text-gray-400 mb-3">
+          Trending Searches
+        </h4>
+        <div className="flex flex-wrap gap-2">
+          {trendingSearches.map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => handleTagClick(tag)}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-xs font-semibold transition-colors cursor-pointer"
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-[0_8px_40px_-8px_rgba(0,0,0,0.18)] border border-gray-100 overflow-hidden z-50 max-h-[420px] overflow-y-auto max-sm:relative max-sm:top-auto max-sm:mt-3 max-sm:shadow-none max-sm:border-0 max-sm:max-h-none max-sm:overflow-y-visible max-sm:z-0">

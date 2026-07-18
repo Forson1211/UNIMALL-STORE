@@ -94,21 +94,22 @@ const Navbar = () => {
 
             {/* Search Bar */}
             <div ref={searchWrapperRef} className="relative hidden md:block w-full max-w-md mx-4 lg:mx-8">
-              <form onSubmit={handleSearch} className="relative flex items-center h-10">
+              <form onSubmit={handleSearch} className="relative flex items-center h-10 w-full">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => setShowSuggestions(true)}
                   placeholder="Search products, brands and categories"
-                  className="w-full h-full rounded-full border border-gray-200 bg-gray-50 pl-4 pr-11 text-sm outline-none focus:border-[#FF5500] focus:bg-white transition-colors"
+                  className="w-full h-full rounded-full border border-gray-200 bg-gray-50 pl-11 pr-24 text-sm outline-none focus:border-[#FF5500] focus:bg-white transition-colors"
                 />
                 <button
                   type="submit"
                   aria-label="Search"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#FF5500] hover:bg-[#e54a00] text-white flex items-center justify-center transition-colors shrink-0"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 px-5 h-8 rounded-full bg-[#FF5500] hover:bg-[#e54a00] text-white flex items-center justify-center font-bold text-xs transition-colors shrink-0 shadow-sm"
                 >
-                  <Search className="w-4 h-4" />
+                  Search
                 </button>
               </form>
               {showSuggestions && (
