@@ -34,6 +34,7 @@ const Products = () => {
 
   const searchQuery = searchParams.get("search") || "";
   const categoryFilter = searchParams.get("category") || "All";
+  const campusFilter = searchParams.get("campus") || "All";
 
   const { addItem } = useCart();
   const { toast } = useToast();
@@ -41,6 +42,25 @@ const Products = () => {
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products", categoryFilter, searchQuery],
     queryFn: () => productService.getProducts({ category: categoryFilter, search: searchQuery }),
+  });
+
+  // Map of vendor names to their campus location (fallback to Legon)
+  const VENDOR_CAMPUS_MAP: Record<string, string> = {
+    "techhub": "Legon",
+    "bookworm": "KNUST",
+    "styleco": "Legon",
+    "fitzone": "UCC",
+    "megamart": "UPSA",
+    "freshfoods": "KNUST",
+    "stationeryexpress": "UCC",
+    "artvibes": "UPSA"
+  };
+
+  const filteredProducts = products.filter(product => {
+    if (campusFilter === "All") return true;
+    const vendorName = (product.vendor || "").toLowerCase();
+    const vendorCampus = VENDOR_CAMPUS_MAP[vendorName] || "Legon";
+    return vendorCampus.toLowerCase() === campusFilter.toLowerCase();
   });
 
   const handleSearch = (e: React.FormEvent) => {
@@ -118,7 +138,7 @@ const Products = () => {
               <div>
                 <h1 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight uppercase">{activeCategory.label}</h1>
                 <p className="text-xs md:text-sm text-gray-400 font-bold mt-1 uppercase tracking-widest">
-                  {isLoading ? "Fetching catalog..." : `${products.length} products available`}
+                  {isLoading ? "Fetching catalog..." : `${filteredProducts.length} products available`}
                 </p>
               </div>
 
@@ -241,7 +261,7 @@ const Products = () => {
                     </div>
                   ))}
                 </div>
-              ) : products.length === 0 ? (
+              ) : filteredProducts.length === 0 ? (
                 <div className="bg-white border border-gray-100 flex flex-col items-center justify-center py-32 text-center">
                   <div className="w-20 h-20 bg-gray-50 rounded-none flex items-center justify-center mb-6">
                     <Search className="w-8 h-8 text-gray-200" />
@@ -254,7 +274,7 @@ const Products = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {products.map((product) => (
+                  {filteredProducts.map((product) => (
                     <Link
                       key={product.id}
                       to={`/products/${product.id}`}
@@ -295,7 +315,7 @@ const Products = () => {
               )}
 
               {/* Bottom Load More */}
-              {products.length > 0 && (
+              {filteredProducts.length > 0 && (
                 <div className="mt-8 flex justify-center">
                   <button className="h-16 px-16 bg-white border-2 border-gray-200 text-gray-800 font-black text-sm uppercase tracking-[0.2em] hover:border-primary hover:text-primary transition-all rounded-none">
                     Load More Products

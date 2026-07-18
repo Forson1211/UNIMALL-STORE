@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   X, ShoppingCart, Store, Search, Heart, ChevronDown, User, ShoppingBag,
-  Zap, Phone, Truck
+  Zap, Phone, Truck, MapPin
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -27,6 +27,7 @@ const categoryLinks = PRODUCT_CATEGORIES.map((cat) => ({
 }));
 
 const Navbar = () => {
+  const [searchParams] = useSearchParams();
   const [scrolled, setScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
@@ -201,22 +202,29 @@ const Navbar = () => {
         <div className="hidden md:block border-t border-gray-100 bg-white">
           <div className="max-w-[1280px] mx-auto px-4">
             <div className="flex items-center h-10 overflow-x-auto no-scrollbar">
-              {/* All Categories dropdown trigger */}
+              {/* Select Campus dropdown trigger */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="shrink-0 flex items-center gap-1.5 px-4 h-full bg-[#FF5500] text-white font-bold text-sm hover:bg-[#e54a00] transition-colors whitespace-nowrap">
-                    ☰ All Categories
+                    <MapPin className="w-4 h-4 fill-white/20" />
+                    {searchParams.get("campus") ? `Campus: ${searchParams.get("campus")}` : "Select Campus"}
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-56 rounded shadow-xl border-gray-100 p-1 mt-0">
-                  {categoryLinks.map((cat) => (
+                <DropdownMenuContent align="start" className="w-56 rounded-none shadow-xl border-gray-200 p-1 mt-0">
+                  {[
+                    { name: "All Campuses", value: "All", path: "/products" },
+                    { name: "University of Ghana", value: "Legon", path: "/products?campus=Legon" },
+                    { name: "KNUST", value: "KNUST", path: "/products?campus=KNUST" },
+                    { name: "UCC", value: "UCC", path: "/products?campus=UCC" },
+                    { name: "UPSA", value: "UPSA", path: "/products?campus=UPSA" }
+                  ].map((camp) => (
                     <Link
-                      key={cat.name}
-                      to={cat.path}
-                      className="flex items-center gap-3 px-3 py-2 hover:bg-orange-50 hover:text-[#FF5500] text-sm text-gray-700 rounded transition-colors"
+                      key={camp.name}
+                      to={camp.path}
+                      className={`flex items-center gap-3 px-3 py-2 hover:bg-orange-50 hover:text-[#FF5500] text-sm transition-colors rounded-none
+                        ${(searchParams.get("campus") || "All") === camp.value ? "bg-orange-50 text-[#FF5500] font-black" : "text-gray-700 font-medium"}`}
                     >
-                      <cat.icon className="w-4 h-4 text-gray-400" />
-                      {cat.name}
+                      <span>{camp.name}</span>
                     </Link>
                   ))}
                 </DropdownMenuContent>
