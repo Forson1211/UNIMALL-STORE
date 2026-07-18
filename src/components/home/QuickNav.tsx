@@ -10,14 +10,17 @@ const QuickNav = () => {
   const [searchParams] = useSearchParams();
 
   return (
-    <div className="hidden md:block max-w-[1280px] mx-auto px-3 mt-2">
+    <div className="hidden md:block max-w-[1280px] mx-auto px-4 mt-2">
       <div className="bg-white shadow-sm border border-gray-100 flex items-stretch h-10 overflow-x-auto no-scrollbar">
         {/* Select Campus dropdown trigger */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="shrink-0 flex items-center gap-1.5 px-4 h-full bg-[#FF5500] text-white font-bold text-sm hover:bg-[#e54a00] transition-colors whitespace-nowrap outline-none border-none">
-              <MapPin className="w-4 h-4 fill-white/20" />
-              {searchParams.get("campus") ? `Campus: ${searchParams.get("campus")}` : "Select Campus"}
+            <button className="shrink-0 w-[230px] flex items-center justify-between px-4 h-full bg-[#FF5500] text-white font-bold text-sm hover:bg-[#e54a00] transition-colors whitespace-nowrap outline-none border-none">
+              <span className="flex items-center gap-1.5">
+                <MapPin className="w-4 h-4 fill-white/20" />
+                {searchParams.get("campus") ? `Campus: ${searchParams.get("campus")}` : "Select Campus"}
+              </span>
+              <span className="text-[10px] opacity-75">▼</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56 rounded-none shadow-xl border-gray-200 p-1 mt-0">

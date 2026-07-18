@@ -74,7 +74,7 @@ const HeroSection = () => {
 
   return (
     <section className="bg-[#f1f1f2] pt-3 pb-2">
-      <div className="max-w-[1280px] mx-auto px-3">
+      <div className="max-w-[1280px] mx-auto px-4">
         <div className="flex gap-2 h-[380px]">
 
           {/* ── LEFT: Category Sidebar ── */}
@@ -176,7 +176,7 @@ const HeroSection = () => {
           </div>
 
           {/* ── RIGHT: Quick Links + Mini Banner ── */}
-          <div className="hidden xl:flex flex-col w-[200px] shrink-0 gap-2">
+          <div className="hidden xl:flex flex-col w-[230px] shrink-0 gap-2">
             {/* Quick Links Card */}
             <div className="bg-white shadow-sm p-3 flex flex-col divide-y divide-gray-100">
               <div className="flex items-center gap-3 py-3 first:pt-0 group cursor-pointer hover:text-[#FF5500] transition-colors">
