@@ -74,7 +74,7 @@ const Navbar = () => {
       {/* ── TIER 2: Main Header ── */}
       <header className={`sticky-header sticky top-0 z-50 w-full transition-all duration-300 ${scrolled ? "shadow-md" : ""} bg-white border-b border-gray-200`}>
         <div className="max-w-[1280px] mx-auto px-4 xl:px-0">
-          <div className="flex items-center gap-4 h-[68px]">
+          <div className="flex items-center justify-between gap-4 h-[68px]">
 
             {/* Logo */}
             <Link to="/" className="shrink-0">
@@ -82,7 +82,7 @@ const Navbar = () => {
             </Link>
 
             {/* Wide Search Bar */}
-            <form onSubmit={handleSearch} className="flex-1 flex items-center h-10 max-w-2xl">
+            <form onSubmit={handleSearch} className="flex-1 flex items-center h-10 max-w-2xl mx-4 lg:mx-8">
               <input
                 type="text"
                 value={searchQuery}
@@ -92,10 +92,9 @@ const Navbar = () => {
               />
               <button
                 type="submit"
-                className="hidden md:flex h-full items-center gap-2 bg-[#FF5500] hover:bg-[#e54a00] text-white px-5 rounded-r-sm font-bold text-sm transition-colors shrink-0"
+                className="hidden md:flex h-full items-center justify-center bg-[#FF5500] hover:bg-[#e54a00] text-white px-6 rounded-r-sm font-bold text-sm transition-colors shrink-0"
               >
-                <Search className="w-4 h-4" />
-                Search
+                SEARCH
               </button>
               {/* Mobile search icon */}
               <button
@@ -108,7 +107,7 @@ const Navbar = () => {
             </form>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-2 lg:gap-4 shrink-0">
               {/* Account dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
