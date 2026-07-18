@@ -43,7 +43,7 @@ const ProductDetail = () => {
 
   useEffect(() => {
     if (product) {
-      document.title = `${product.name} | ${siteName || "Unimall"}`;
+      document.title = `${siteName || "Campus Marketplace"} - ${product.name}`;
     }
   }, [product, siteName]);
 

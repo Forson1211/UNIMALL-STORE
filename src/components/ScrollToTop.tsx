@@ -20,64 +20,70 @@ const ScrollToTop = () => {
 
   // Centralized Page Title updater
   useEffect(() => {
-    const baseName = siteName || "Unimall";
-    let title = "Campus Marketplace";
+    const baseName = siteName || "Campus Marketplace";
+    
+    if (pathname === "/") {
+      document.title = baseName;
+      return;
+    }
+
+    let pageTitle = "Page";
 
     // Dynamic mapping of routes to page titles
-    if (pathname === "/") {
-      title = "Campus Marketplace";
-    } else if (pathname === "/login") {
-      title = "Sign In";
+    if (pathname === "/login") {
+      pageTitle = "Sign In";
     } else if (pathname === "/signup") {
-      title = "Create Account";
+      pageTitle = "Create Account";
     } else if (pathname === "/products") {
-      title = "Catalog";
+      pageTitle = "Catalog";
     } else if (pathname === "/faqs") {
-      title = "FAQs";
+      pageTitle = "FAQs";
     } else if (pathname === "/about") {
-      title = "About Us";
+      pageTitle = "About Us";
     } else if (pathname === "/contact") {
-      title = "Contact Support";
+      pageTitle = "Contact Support";
     } else if (pathname === "/checkout") {
-      title = "Checkout";
+      pageTitle = "Checkout";
     } else if (pathname === "/how-it-works") {
-      title = "How It Works";
+      pageTitle = "How It Works";
     } else if (pathname === "/terms") {
-      title = "Terms of Service";
+      pageTitle = "Terms of Service";
     } else if (pathname === "/privacy") {
-      title = "Privacy Policy";
+      pageTitle = "Privacy Policy";
     } else if (pathname === "/news") {
-      title = "Campus News";
+      pageTitle = "Campus News";
     } else if (pathname === "/vendors") {
-      title = "Campus Stores";
+      pageTitle = "Campus Stores";
     } else if (pathname.startsWith("/product/")) {
-      title = "Product Details";
+      pageTitle = "Product Details";
     } else if (pathname.startsWith("/vendor-store/")) {
-      title = "Storefront";
+      pageTitle = "Storefront";
     } else if (pathname.startsWith("/admin/")) {
       const section = pathname.replace("/admin/", "");
       const formattedSection = section
         .split("-")
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ");
-      title = `Admin | ${formattedSection || "Dashboard"}`;
+      pageTitle = `Admin - ${formattedSection || "Dashboard"}`;
     } else if (pathname.startsWith("/vendor/")) {
       const section = pathname.replace("/vendor/", "");
       const formattedSection = section
         .split("-")
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ");
-      title = `Vendor | ${formattedSection || "Dashboard"}`;
+      pageTitle = `Vendor - ${formattedSection || "Dashboard"}`;
     } else if (pathname.startsWith("/account/")) {
       const section = pathname.replace("/account/", "");
       const formattedSection = section
         .split("-")
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ");
-      title = `My Account | ${formattedSection || "Profile"}`;
+      pageTitle = `Profile - ${formattedSection || "Dashboard"}`;
+    } else if (pathname === "/account") {
+      pageTitle = "Profile";
     }
 
-    document.title = `${title} | ${baseName}`;
+    document.title = `${baseName} - ${pageTitle}`;
   }, [pathname, siteName]);
 
   return null;
