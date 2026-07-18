@@ -79,12 +79,12 @@ const HeroSection = () => {
 
           {/* ── LEFT: Category Sidebar ── */}
           <div className="hidden lg:block w-[230px] shrink-0">
-            <div className="flex flex-col w-full h-full bg-white shadow-sm overflow-hidden py-1">
+            <div className="flex flex-col w-full h-full bg-white shadow-sm overflow-hidden py-0.5 justify-between">
               {categories.map((cat) => (
                 <Link
                   key={cat.name}
                   to={`/products?category=${encodeURIComponent(cat.name)}`}
-                  className="flex items-center gap-3 px-4 py-[7.5px] transition-colors group text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                  className="flex items-center gap-3 px-4 py-[5.5px] transition-colors group text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                 >
                   <cat.icon className="w-[18px] h-[18px] shrink-0 transition-colors text-gray-500 group-hover:text-gray-900" strokeWidth={1.5} />
                   <span className="text-[12px] leading-tight flex-1 font-medium">{cat.name}</span>
