@@ -5,9 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Download, Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { adminService } from "@/services/adminService";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const AdminTransactions = () => {
     const { data: transactions, isLoading } = useQuery({
@@ -15,6 +18,8 @@ const AdminTransactions = () => {
         queryFn: adminService.getTransactions,
         refetchInterval: 15000,
     });
+    const [search, setSearch] = useState("");
+    const [selectedTrx, setSelectedTrx] = useState<any | null>(null);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -26,6 +31,43 @@ const AdminTransactions = () => {
         }
     };
 
+    const filteredTransactions = (transactions || []).filter((trx) => {
+        if (!search.trim()) return true;
+        const term = search.toLowerCase();
+        return (
+            trx.id.toLowerCase().includes(term) ||
+            (trx.user?.full_name || "").toLowerCase().includes(term)
+        );
+    });
+
+    const handleExportCsv = () => {
+        if (!transactions || transactions.length === 0) {
+            toast.error("No transactions to export");
+            return;
+        }
+        const headers = ["Transaction ID", "User", "Amount", "Currency", "Payment Method", "Status", "Date"];
+        const rows = transactions.map((trx) => [
+            trx.id,
+            trx.user?.full_name || "Unknown",
+            trx.amount,
+            trx.currency,
+            trx.payment_method,
+            trx.status,
+            new Date(trx.created_at).toISOString(),
+        ]);
+        const csv = [headers, ...rows]
+            .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+            .join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `transactions-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+        toast.success("Transactions exported");
+    };
+
     return (
         <DashboardLayout type="admin" title="Transactions">
             <div className="space-y-6 animate-fade-in">
@@ -34,7 +76,7 @@ const AdminTransactions = () => {
                         <h1 className="text-3xl font-bold tracking-tight">Financial Records</h1>
                         <p className="text-muted-foreground mt-1">View and manage all platform transactions.</p>
                     </div>
-                    <Button variant="outline" className="gap-2">
+                    <Button variant="outline" className="gap-2" onClick={handleExportCsv}>
                         <Download className="w-4 h-4" /> Export CSV
                     </Button>
                 </div>
@@ -46,6 +88,8 @@ const AdminTransactions = () => {
                             type="search"
                             placeholder="Search by transaction ID or user..."
                             className="pl-8 bg-background"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
                     <Button variant="outline" size="icon">
@@ -85,7 +129,7 @@ const AdminTransactions = () => {
                                                 <TableCell><Skeleton className="h-4 w-10" /></TableCell>
                                             </TableRow>
                                         ))
-                                    ) : transactions?.map((trx) => (
+                                    ) : filteredTransactions.map((trx) => (
                                         <TableRow key={trx.id}>
                                             <TableCell className="font-medium">{trx.id}</TableCell>
                                             <TableCell>
@@ -103,7 +147,7 @@ const AdminTransactions = () => {
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <Button variant="ghost" size="sm">Details</Button>
+                                                <Button variant="ghost" size="sm" onClick={() => setSelectedTrx(trx)}>Details</Button>
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -113,6 +157,28 @@ const AdminTransactions = () => {
                     </CardContent>
                 </Card>
             </div>
+
+            <Dialog open={!!selectedTrx} onOpenChange={(open) => !open && setSelectedTrx(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Transaction Details</DialogTitle>
+                    </DialogHeader>
+                    {selectedTrx && (
+                        <div className="space-y-3 text-sm">
+                            <div className="flex justify-between"><span className="text-muted-foreground">Transaction ID</span><span className="font-medium">{selectedTrx.id}</span></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">User</span><span className="font-medium">{selectedTrx.user?.full_name || "Unknown"}</span></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">Amount</span><span className="font-medium">{selectedTrx.currency} {selectedTrx.amount.toFixed(2)}</span></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">Type</span><span className="font-medium capitalize">{selectedTrx.type}</span></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">Payment Method</span><span className="font-medium">{selectedTrx.payment_method || "—"}</span></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">Status</span><Badge className={getStatusColor(selectedTrx.status)} variant="outline">{selectedTrx.status}</Badge></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">Date</span><span className="font-medium">{new Date(selectedTrx.created_at).toLocaleString()}</span></div>
+                            {selectedTrx.reference_id && (
+                                <div className="flex justify-between"><span className="text-muted-foreground">Reference</span><span className="font-medium">{selectedTrx.reference_id}</span></div>
+                            )}
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </DashboardLayout>
     );
 };

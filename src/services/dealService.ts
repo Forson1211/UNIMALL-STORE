@@ -80,7 +80,8 @@ export const dealService = {
         product:products(name, price, image_url),
         vendor:profiles!inner(store_name)
       `)
-      .eq('approved_by_admin', false) as any);
+      .eq('approved_by_admin', false)
+      .is('rejected_at', null) as any);
 
     if (error) throw error;
     return data;
@@ -90,6 +91,15 @@ export const dealService = {
     const { error } = await (supabase
       .from('deals' as any)
       .update({ approved_by_admin: true } as any)
+      .eq('id', dealId) as any);
+
+    if (error) throw error;
+  },
+
+  async rejectDeal(dealId: string) {
+    const { error } = await (supabase
+      .from('deals' as any)
+      .update({ rejected_at: new Date().toISOString() } as any)
       .eq('id', dealId) as any);
 
     if (error) throw error;

@@ -50,7 +50,6 @@ import AdminDeals from "./pages/admin/AdminDeals";
 import AdminMessages from "./pages/admin/AdminMessages";
 import AdminSupport from "./pages/admin/AdminSupport";
 import AdminLogs from "./pages/admin/AdminLogs";
-import AdminPlaceholder from "./pages/admin/AdminPlaceholder";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 
 

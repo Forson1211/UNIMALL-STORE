@@ -5,6 +5,22 @@ import { Transaction, Review, Coupon, SupportTicket, SystemLog } from "@/types/a
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const adminService = {
+    // --- Audit logging (best-effort, never blocks the primary action) ---
+    async logAdminAction(source: string, message: string, metadata: Record<string, any> = {}) {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            await (supabase as any).from('system_logs').insert({
+                type: 'security',
+                source,
+                message,
+                metadata,
+                user_id: user?.id,
+            });
+        } catch {
+            // audit logging is best-effort only
+        }
+    },
+
     // --- Transactions ---
     async getTransactions(): Promise<Transaction[]> {
         const { data, error } = await (supabase as any)
@@ -32,6 +48,12 @@ export const adminService = {
 
         if (error) throw error;
         return data as Review[];
+    },
+
+    async moderateReview(id: string, status: 'approved' | 'rejected') {
+        const { error } = await (supabase as any).from('reviews').update({ status }).eq('id', id);
+        if (error) throw error;
+        await adminService.logAdminAction('review_moderation', `Review ${status}`, { review_id: id, status });
     },
 
     // --- Coupons ---
@@ -89,6 +111,25 @@ export const adminService = {
 
         if (error) throw error;
         return data as SupportTicket[];
+    },
+
+    async updateTicketStatus(id: string, status: 'open' | 'in_progress' | 'resolved' | 'closed') {
+        const { error } = await (supabase as any).from('support_tickets').update({ status }).eq('id', id);
+        if (error) throw error;
+        await adminService.logAdminAction('support_management', `Ticket status updated to ${status}`, { ticket_id: id, status });
+    },
+
+    async createTicket(subject: string, description: string, priority: 'low' | 'medium' | 'high' | 'critical' = 'medium') {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+        const { error } = await (supabase as any).from('support_tickets').insert({
+            user_id: user.id,
+            subject,
+            description,
+            priority,
+            status: 'open',
+        });
+        if (error) throw error;
     },
 
     // --- Logs ---

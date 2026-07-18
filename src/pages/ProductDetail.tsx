@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
+import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 import { Badge } from "@/components/ui/badge";
 import {
   Heart, Star, ShoppingCart, Minus, Plus, Truck, Shield, RotateCcw,
@@ -37,6 +38,14 @@ const ProductDetail = () => {
     queryFn: () => productService.getProducts({ category: product?.category, limit: 6 }),
     enabled: !!product?.category,
   });
+
+  const { siteName } = useSiteSettingsContext();
+
+  useEffect(() => {
+    if (product) {
+      document.title = `${product.name} | ${siteName || "Unimall"}`;
+    }
+  }, [product, siteName]);
 
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);

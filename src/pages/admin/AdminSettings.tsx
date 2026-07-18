@@ -33,10 +33,113 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 
 const AdminSettings = () => {
-  const handleSave = () => {
-    toast.success("Settings saved successfully");
+  const { getSetting, updateSettings } = useSiteSettingsContext();
+
+  // General tab
+  const [platformName, setPlatformName] = useState(() => getSetting("site_name", "Unimall"));
+  const [supportEmail, setSupportEmail] = useState(() => getSetting("support_email", ""));
+  const [siteDescription, setSiteDescription] = useState(() => getSetting("site_description", ""));
+  const [isSavingGeneral, setIsSavingGeneral] = useState(false);
+
+  // Notifications tab
+  const [notifyNewOrders, setNotifyNewOrders] = useState(() => getSetting("notify_new_orders", true));
+  const [notifyVendorApplications, setNotifyVendorApplications] = useState(() => getSetting("notify_vendor_applications", true));
+  const [notifyLowStock, setNotifyLowStock] = useState(() => getSetting("notify_low_stock", true));
+  const [notifyWeeklyReports, setNotifyWeeklyReports] = useState(() => getSetting("notify_weekly_reports", false));
+  const [notifyUserReports, setNotifyUserReports] = useState(() => getSetting("notify_user_reports", true));
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+
+  // Security tab (toggles only -- password change is a separate auth action, not a site setting)
+  const [require2fa, setRequire2fa] = useState(() => getSetting("require_2fa_admin", false));
+  const [sessionTimeoutEnabled, setSessionTimeoutEnabled] = useState(() => getSetting("session_timeout_enabled", true));
+  const [loginAttemptLimitEnabled, setLoginAttemptLimitEnabled] = useState(() => getSetting("login_attempt_limit_enabled", true));
+  const [isSavingSecurity, setIsSavingSecurity] = useState(false);
+
+  // Platform tab
+  const [allowVendorRegistration, setAllowVendorRegistration] = useState(() => getSetting("allow_vendor_registration", true));
+  const [requireVendorVerification, setRequireVendorVerification] = useState(() => getSetting("require_vendor_verification", true));
+  const [reviewModerationEnabled, setReviewModerationEnabled] = useState(() => getSetting("review_moderation_enabled", false));
+  const [commissionRate, setCommissionRate] = useState(() => String(getSetting("commission_rate", 10)));
+  const [minimumOrderValue, setMinimumOrderValue] = useState(() => String(getSetting("minimum_order_value", 10)));
+  const [isSavingPlatform, setIsSavingPlatform] = useState(false);
+
+  // Maintenance tab
+  const [maintenanceMode, setMaintenanceMode] = useState(() => getSetting("maintenance_mode", false));
+  const [maintenanceMessage, setMaintenanceMessage] = useState(() => getSetting("maintenance_message", "We're performing scheduled maintenance. We'll be back soon!"));
+  const [maintenanceEstimatedTime, setMaintenanceEstimatedTime] = useState(() => getSetting("maintenance_estimated_completion", ""));
+  const [maintenanceAllowAdminAccess, setMaintenanceAllowAdminAccess] = useState(() => getSetting("maintenance_allow_admin_access", true));
+  const [isSavingMaintenance, setIsSavingMaintenance] = useState(false);
+
+  const handleSaveGeneral = async () => {
+    setIsSavingGeneral(true);
+    const result = await updateSettings({
+      site_name: { value: platformName, category: "general" },
+      support_email: { value: supportEmail, category: "general" },
+      site_description: { value: siteDescription, category: "general" },
+    });
+    setIsSavingGeneral(false);
+    if (result?.success !== false) toast.success("Settings saved successfully");
+    else toast.error("Failed to save settings");
+  };
+
+  const handleSaveNotifications = async () => {
+    setIsSavingNotifications(true);
+    const result = await updateSettings({
+      notify_new_orders: { value: notifyNewOrders, category: "notifications" },
+      notify_vendor_applications: { value: notifyVendorApplications, category: "notifications" },
+      notify_low_stock: { value: notifyLowStock, category: "notifications" },
+      notify_weekly_reports: { value: notifyWeeklyReports, category: "notifications" },
+      notify_user_reports: { value: notifyUserReports, category: "notifications" },
+    });
+    setIsSavingNotifications(false);
+    if (result?.success !== false) toast.success("Notification preferences saved");
+    else toast.error("Failed to save notification preferences");
+  };
+
+  const handleSaveSecurity = async () => {
+    setIsSavingSecurity(true);
+    const result = await updateSettings({
+      require_2fa_admin: { value: require2fa, category: "security" },
+      session_timeout_enabled: { value: sessionTimeoutEnabled, category: "security" },
+      login_attempt_limit_enabled: { value: loginAttemptLimitEnabled, category: "security" },
+    });
+    setIsSavingSecurity(false);
+    if (result?.success !== false) toast.success("Security settings saved successfully");
+    else toast.error("Failed to save security settings");
+  };
+
+  const handleSavePlatform = async () => {
+    setIsSavingPlatform(true);
+    const result = await updateSettings({
+      allow_vendor_registration: { value: allowVendorRegistration, category: "platform" },
+      require_vendor_verification: { value: requireVendorVerification, category: "platform" },
+      review_moderation_enabled: { value: reviewModerationEnabled, category: "platform" },
+      commission_rate: { value: Number(commissionRate) || 0, category: "platform" },
+      minimum_order_value: { value: Number(minimumOrderValue) || 0, category: "platform" },
+    });
+    setIsSavingPlatform(false);
+    if (result?.success !== false) toast.success("Platform settings saved successfully");
+    else toast.error("Failed to save platform settings");
+  };
+
+  const handleSaveMaintenance = async () => {
+    setIsSavingMaintenance(true);
+    const result = await updateSettings({
+      maintenance_mode: { value: maintenanceMode, category: "maintenance" },
+      maintenance_message: { value: maintenanceMessage, category: "maintenance" },
+      maintenance_estimated_completion: { value: maintenanceEstimatedTime, category: "maintenance" },
+      maintenance_allow_admin_access: { value: maintenanceAllowAdminAccess, category: "maintenance" },
+    });
+    setIsSavingMaintenance(false);
+    if (result?.success !== false) toast.success("Maintenance settings saved successfully");
+    else toast.error("Failed to save maintenance settings");
+  };
+
+  const handleBackupNow = () => {
+    toast.info("Manual backups aren't available yet — coming soon.");
   };
 
   // Database Explorer State

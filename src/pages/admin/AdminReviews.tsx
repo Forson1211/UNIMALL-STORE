@@ -5,15 +5,27 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Star, ThumbsUp, MessageSquare, AlertCircle, Check, X, Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminService } from "@/services/adminService";
 import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 
 const AdminReviews = () => {
+    const queryClient = useQueryClient();
     const { data: reviews, isLoading } = useQuery({
         queryKey: ['admin-reviews'],
         queryFn: adminService.getReviews,
         refetchInterval: 20000,
+    });
+
+    const moderateMutation = useMutation({
+        mutationFn: ({ id, status }: { id: string; status: 'approved' | 'rejected' }) =>
+            adminService.moderateReview(id, status),
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });
+            toast.success(variables.status === 'approved' ? "Review approved" : "Review removed");
+        },
+        onError: (error: any) => toast.error(error.message || "Failed to update review"),
     });
 
     const getInitials = (name: string) => name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -68,6 +80,7 @@ const AdminReviews = () => {
                                                         {review.status === "pending" && <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending Approval</Badge>}
                                                         {review.status === "flagged" && <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Flagged</Badge>}
                                                         {review.status === "approved" && <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Approved</Badge>}
+                                                        {review.status === "rejected" && <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-200">Removed</Badge>}
                                                     </div>
 
                                                     <div className="flex items-center gap-1 text-yellow-500">
@@ -85,12 +98,27 @@ const AdminReviews = () => {
                                                         <div className="flex-1"></div>
 
                                                         <div className="flex gap-2">
-                                                            <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700">
-                                                                <X className="w-4 h-4 mr-1" /> Remove
-                                                            </Button>
-                                                            <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                                                                <Check className="w-4 h-4 mr-1" /> Approve
-                                                            </Button>
+                                                            {review.status !== "rejected" && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                                                                    disabled={moderateMutation.isPending}
+                                                                    onClick={() => moderateMutation.mutate({ id: review.id, status: "rejected" })}
+                                                                >
+                                                                    <X className="w-4 h-4 mr-1" /> Remove
+                                                                </Button>
+                                                            )}
+                                                            {review.status !== "approved" && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    className="bg-green-600 hover:bg-green-700"
+                                                                    disabled={moderateMutation.isPending}
+                                                                    onClick={() => moderateMutation.mutate({ id: review.id, status: "approved" })}
+                                                                >
+                                                                    <Check className="w-4 h-4 mr-1" /> Approve
+                                                                </Button>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>

@@ -22,6 +22,16 @@ const AdminDeals = () => {
       queryClient.invalidateQueries({ queryKey: ["active-flash-deals"] });
       toast.success("Flash deal approved and live!");
     },
+    onError: (error: any) => toast.error(error.message || "Failed to approve deal"),
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: (id: string) => dealService.rejectDeal(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pending-deals"] });
+      toast.success("Flash deal rejected");
+    },
+    onError: (error: any) => toast.error(error.message || "Failed to reject deal"),
   });
 
   const dealColumns = [
@@ -82,10 +92,12 @@ const AdminDeals = () => {
           >
             <Check className="w-3.5 h-3.5 mr-1" /> Approve
           </Button>
-          <Button 
-            size="sm" 
-            variant="outline" 
+          <Button
+            size="sm"
+            variant="outline"
             className="h-8 text-destructive border-destructive/20 hover:bg-destructive/5"
+            onClick={() => rejectMutation.mutate(deal.id)}
+            disabled={rejectMutation.isPending}
           >
             <X className="w-3.5 h-3.5 mr-1" /> Reject
           </Button>
