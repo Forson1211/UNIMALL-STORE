@@ -245,7 +245,10 @@
     @apply text-foreground font-sans antialiased;
     background-color: #f1f1f2;
     font-family: var(--font-family) !important;
-    overflow-x: hidden;
+    /* overflow-x: clip (not hidden) avoids implicitly forcing overflow-y to
+       "auto", which would turn body into a second scroll container and break
+       position: sticky on the header (page actually scrolls via html). */
+    overflow-x: clip;
   }
 
   /* Force container to respect the custom max-width if set */

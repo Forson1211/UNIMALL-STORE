@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { useSearch } from "@/contexts/SearchContext";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
+import { SearchSuggestions } from "@/components/search/SearchSuggestions";
 
 const trendingSearches = [
   "Wireless Earbuds",
@@ -78,48 +79,54 @@ export function SearchDialog() {
               <X className="w-4 h-4" />
             </Button>
           )}
+
+          {query.trim().length >= 2 && (
+            <SearchSuggestions query={query} onNavigate={closeSearch} />
+          )}
         </form>
 
-        <div className="space-y-6 pt-2">
-          {/* Categories */}
-          <div>
-            <h4 className="text-sm font-medium text-muted-foreground mb-3">
-              Categories
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {categories.map((cat) => (
-                <Button
-                  key={cat}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleCategoryClick(cat)}
-                  className="rounded-full"
-                >
-                  {cat}
-                </Button>
-              ))}
+        {query.trim().length < 2 && (
+          <div className="space-y-6 pt-2">
+            {/* Categories */}
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground mb-3">
+                Categories
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((cat) => (
+                  <Button
+                    key={cat}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCategoryClick(cat)}
+                    className="rounded-full"
+                  >
+                    {cat}
+                  </Button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Trending Searches */}
-          <div>
-            <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
-              Trending Searches
-            </h4>
-            <div className="space-y-1">
-              {trendingSearches.map((term) => (
-                <button
-                  key={term}
-                  onClick={() => handleQuickSearch(term)}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors text-sm"
-                >
-                  {term}
-                </button>
-              ))}
+            {/* Trending Searches */}
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4" />
+                Trending Searches
+              </h4>
+              <div className="space-y-1">
+                {trendingSearches.map((term) => (
+                  <button
+                    key={term}
+                    onClick={() => handleQuickSearch(term)}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors text-sm"
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
   );

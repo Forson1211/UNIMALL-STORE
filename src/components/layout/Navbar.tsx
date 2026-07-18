@@ -1,13 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
-  X, ShoppingCart, Store, Search, Heart, ChevronDown, User, ShoppingBag,
-  Zap, Phone, Truck
+  X, ShoppingCart, Store, Heart, ChevronDown, User, ShoppingBag,
+  Zap, Phone, Truck, Search
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
-import { useSearch } from "@/contexts/SearchContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,10 +14,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
-import BottomTabBar from "@/components/layout/BottomTabBar";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
+import { SearchSuggestions } from "@/components/search/SearchSuggestions";
 
 const categoryLinks = PRODUCT_CATEGORIES.map((cat) => ({
   name: cat.label,
@@ -29,12 +28,23 @@ const categoryLinks = PRODUCT_CATEGORIES.map((cat) => ({
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchWrapperRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile, role, signOut } = useAuth();
   const { totalItems, openCart } = useCart();
-  const { openSearch } = useSearch();
   const { siteName } = useSiteSettingsContext();
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchWrapperRef.current && !searchWrapperRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -51,6 +61,7 @@ const Navbar = () => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+      setShowSuggestions(false);
     }
   };
 
@@ -81,38 +92,64 @@ const Navbar = () => {
               <img src="/LOGO.png" alt={siteName || "Unimall"} className="h-10 w-auto object-contain" />
             </Link>
 
-            {/* Wide Search Bar */}
-            <form onSubmit={handleSearch} className="flex-1 flex items-center h-10 max-w-2xl mx-4 lg:mx-8">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search products, brands and categories"
-                className="hidden md:block flex-1 h-full border border-gray-300 border-r-0 rounded-l-sm px-4 text-sm outline-none focus:border-[#FF5500] transition-colors bg-white"
-              />
-              <button
-                type="submit"
-                className="hidden md:flex h-full items-center justify-center bg-[#FF5500] hover:bg-[#e54a00] text-white px-6 rounded-r-sm font-bold text-sm transition-colors shrink-0"
-              >
-                SEARCH
-              </button>
-              {/* Mobile search icon */}
-              <button
-                type="button"
-                onClick={openSearch}
-                className="md:hidden p-2 text-gray-600 hover:text-[#FF5500] transition-colors"
-              >
-                <Search className="w-5 h-5" />
-              </button>
-            </form>
+            {/* Search Bar */}
+            <div ref={searchWrapperRef} className="relative hidden md:block w-full max-w-md mx-4 lg:mx-8">
+              <form onSubmit={handleSearch} className="relative flex items-center h-10">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setShowSuggestions(true)}
+                  placeholder="Search products, brands and categories"
+                  className="w-full h-full rounded-full border border-gray-200 bg-gray-50 pl-4 pr-11 text-sm outline-none focus:border-[#FF5500] focus:bg-white transition-colors"
+                />
+                <button
+                  type="submit"
+                  aria-label="Search"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#FF5500] hover:bg-[#e54a00] text-white flex items-center justify-center transition-colors shrink-0"
+                >
+                  <Search className="w-4 h-4" />
+                </button>
+              </form>
+              {showSuggestions && (
+                <SearchSuggestions query={searchQuery} onNavigate={() => setShowSuggestions(false)} />
+              )}
+            </div>
 
             {/* Right Actions */}
             <div className="flex items-center gap-2 lg:gap-4 shrink-0">
-              {/* Account dropdown */}
+              {/* Help */}
+              <Link to="/faqs" className="hidden lg:flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-50 transition-colors text-sm text-gray-700 font-bold">
+                Help
+                <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+              </Link>
+
+              {/* Cart */}
+              <button
+                onClick={openCart}
+                className="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-50 transition-colors relative"
+              >
+                <div className="relative">
+                  <ShoppingCart className="w-5 h-5 text-gray-600" />
+                  {totalItems > 0 && (
+                    <span className="absolute -top-2 -right-2 w-4 h-4 bg-[#FF5500] text-[10px] text-white rounded-full flex items-center justify-center font-bold">
+                      {totalItems}
+                    </span>
+                  )}
+                </div>
+                <span className="hidden md:block font-bold text-sm text-gray-700">Cart</span>
+              </button>
+
+              {/* Account dropdown — after Cart */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="hidden md:flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-50 transition-colors group text-sm">
-                    <User className="w-4 h-4 text-gray-600" />
+                    <Avatar className="h-6 w-6">
+                      {profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt={profile?.full_name || "Profile"} />}
+                      <AvatarFallback className="bg-[#FF5500] text-white font-bold text-[10px]">
+                        {profile?.full_name?.charAt(0) || user?.email?.charAt(0).toUpperCase() || <User className="w-3.5 h-3.5" />}
+                      </AvatarFallback>
+                    </Avatar>
                     <span className="font-bold text-gray-700">
                       {user ? (profile?.full_name?.split(" ")[0] || "Account") : "Account"}
                     </span>
@@ -131,6 +168,7 @@ const Navbar = () => {
                   ) : (
                     <div className="p-2 pb-3 border-b border-gray-100 mb-2 flex items-center gap-2">
                       <Avatar className="h-8 w-8">
+                        {profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt={profile?.full_name || "Profile"} />}
                         <AvatarFallback className="bg-[#FF5500] text-white font-bold text-xs">
                           {profile?.full_name?.charAt(0) || user.email?.charAt(0).toUpperCase()}
                         </AvatarFallback>
@@ -164,41 +202,27 @@ const Navbar = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Help */}
-              <Link to="/faqs" className="hidden lg:flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-50 transition-colors text-sm text-gray-700 font-bold">
-                Help
-                <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-              </Link>
-
-              {/* Cart */}
-              <button
-                onClick={openCart}
-                className="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-50 transition-colors relative"
-              >
-                <div className="relative">
-                  <ShoppingCart className="w-5 h-5 text-gray-600" />
-                  {totalItems > 0 && (
-                    <span className="absolute -top-2 -right-2 w-4 h-4 bg-[#FF5500] text-[10px] text-white rounded-full flex items-center justify-center font-bold">
-                      {totalItems}
-                    </span>
-                  )}
-                </div>
-                <span className="hidden md:block font-bold text-sm text-gray-700">Cart</span>
-              </button>
-
               {/* Sell CTA — mobile only */}
               <Link to="/vendor" className="md:hidden">
                 <Button className="bg-[#FF5500] hover:bg-[#e54a00] text-white font-bold rounded text-xs px-3 h-8">
                   SELL
                 </Button>
               </Link>
+
+              {/* Profile picture — mobile only */}
+              <Link to={user ? "/account" : "/login"} className="md:hidden shrink-0">
+                <Avatar className="h-8 w-8 border border-gray-200">
+                  {profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt={profile?.full_name || "Profile"} />}
+                  <AvatarFallback className="bg-[#FF5500] text-white font-bold text-xs">
+                    {profile?.full_name?.charAt(0) || user?.email?.charAt(0).toUpperCase() || <User className="w-4 h-4" />}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
             </div>
           </div>
         </div>
 
       </header>
-
-      <BottomTabBar />
     </>
   );
 };

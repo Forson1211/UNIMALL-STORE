@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ShoppingBag, Facebook, Twitter, Instagram, Youtube, ExternalLink, ShieldCheck, Globe, ChevronDown, ChevronUp, Menu } from "lucide-react";
+import { ShoppingBag, Facebook, Twitter, Instagram, Youtube, ExternalLink, ShieldCheck, Globe, ChevronDown, Menu } from "lucide-react";
 import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -322,28 +322,20 @@ const Footer = () => {
       </div>
     </footer>
 
-    {/* ── Mobile: compact bar replacing the full footer, opens a drawer with everything ── */}
-    <div
-      className="lg:hidden flex items-center justify-between px-4 py-3 border-t border-white/10"
-      style={footerVars}
+    {/* ── Mobile: floating "More" button, opens a drawer with everything ── */}
+    <button
+      onClick={() => setMobileMenuOpen(true)}
+      aria-label="More"
+      className="lg:hidden fixed right-4 z-40 w-12 h-12 rounded-full text-white shadow-[0_8px_24px_-4px_rgba(0,0,0,0.4)] flex items-center justify-center active:scale-95 transition-transform"
+      style={{ bottom: "calc(6.5rem + env(safe-area-inset-bottom))", backgroundColor: "hsl(var(--footer-background))" }}
     >
-      <Link to="/" className="flex items-center gap-2">
-        <img src="/FOOTER LOGO.png" alt={siteName} className="h-7 w-auto object-contain" />
-      </Link>
-      <button
-        onClick={() => setMobileMenuOpen(true)}
-        className="flex items-center gap-1.5 text-sm font-bold opacity-80"
-      >
-        <Menu className="w-4 h-4" />
-        More
-        <ChevronUp className="w-4 h-4" />
-      </button>
-    </div>
+      <Menu className="w-5 h-5" />
+    </button>
 
     <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
       <SheetContent
         side="bottom"
-        className="lg:hidden h-[85vh] overflow-y-auto rounded-t-2xl border-t-0 p-0"
+        className="lg:hidden h-[85vh] overflow-y-auto rounded-none border-t-0 p-0 [&>button]:hidden"
         style={footerVars}
       >
         <div className="px-5 pt-6 pb-10">

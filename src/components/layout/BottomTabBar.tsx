@@ -1,31 +1,35 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Store, ShoppingCart, User } from "lucide-react";
+import { Home, Store, ShoppingCart, User, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
+import { useSearch } from "@/contexts/SearchContext";
 
 const BottomTabBar = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { totalItems, isOpen: isCartOpen, openCart } = useCart();
+  const { isSearchOpen, openSearch } = useSearch();
   const [pop, setPop] = useState<string | null>(null);
 
-  // Define tabs in order
+  // Define tabs in order — Search sits in the middle (index 2 of 5)
   const tabs = [
     { key: "home", name: "Home", path: "/", icon: Home, type: "link", badge: false },
     { key: "shop", name: "Shop", path: "/products", icon: Store, type: "link", badge: false },
+    { key: "search", name: "Search", icon: Search, type: "button", action: openSearch, badge: false },
     { key: "cart", name: "Cart", icon: ShoppingCart, type: "button", action: openCart, badge: true },
     { key: "account", name: "Account", path: "/account", icon: User, type: "link", badge: false },
   ] as const;
 
   // Find active tab index
   const getActiveIndex = () => {
-    if (isCartOpen) return 2;
+    if (isCartOpen) return 3;
+    if (isSearchOpen) return 2;
 
     const path = location.pathname;
     if (path === "/") return 0;
     if (path.startsWith("/products") || path.startsWith("/vendors") || path.startsWith("/news")) return 1;
-    if (path.startsWith("/account") || path.startsWith("/login")) return 3;
+    if (path.startsWith("/account") || path.startsWith("/login")) return 4;
 
     return 0; // Default fallback to Home
   };
@@ -43,11 +47,21 @@ const BottomTabBar = () => {
     if (activeTab) {
       triggerPop(activeTab.key);
     }
-  }, [location.pathname, isCartOpen]);
+  }, [location.pathname, isCartOpen, isSearchOpen]);
+
+  // Hidden on dashboard shells (admin/vendor) and auth screens, which use their own navigation
+  const isDashboardOrAuth =
+    location.pathname.startsWith("/admin") ||
+    location.pathname === "/vendor" ||
+    location.pathname.startsWith("/vendor/") ||
+    location.pathname === "/login" ||
+    location.pathname === "/signup";
+
+  if (isDashboardOrAuth) return null;
 
   return (
     <div 
-      className="lg:hidden fixed inset-x-0 z-50 flex justify-center animate-tab-bar-in pointer-events-none"
+      className="lg:hidden fixed inset-x-0 z-[60] flex justify-center animate-tab-bar-in pointer-events-none"
       style={{ bottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
     >
       {/* Floating pill wrapper with drop shadow */}
@@ -58,17 +72,17 @@ const BottomTabBar = () => {
         {/* Background rounded pill container (clipping background components) */}
         <div className="absolute inset-0 rounded-[30px] overflow-hidden bg-transparent pointer-events-none">
           {/* Left Block */}
-          <div 
-            className="absolute left-0 top-0 bottom-0 bg-card transition-all duration-350 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]"
-            style={{ 
-              right: `calc(100% - (21% * ${activeIndex} + 18.5%) + 42.5px)`
-            }} 
+          <div
+            className="absolute left-0 top-0 bottom-0 bg-card transition-all [transition-duration:350ms] [transition-timing-function:cubic-bezier(0.175,0.885,0.32,1.275)]"
+            style={{
+              right: `calc(100% - (15.2% * ${activeIndex} + 19.6%) + 42.5px)`
+            }}
           />
           {/* SVG Notch Column */}
-          <div 
-            className="absolute h-full w-[88px] transition-all duration-350 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]"
+          <div
+            className="absolute h-full w-[88px] transition-all [transition-duration:350ms] [transition-timing-function:cubic-bezier(0.175,0.885,0.32,1.275)]"
             style={{ 
-              left: `calc((21% * ${activeIndex} + 18.5%) - 44px)`,
+              left: `calc((15.2% * ${activeIndex} + 19.6%) - 44px)`,
               top: 0,
               bottom: 0
             }}
@@ -82,18 +96,18 @@ const BottomTabBar = () => {
             </svg>
           </div>
           {/* Right Block */}
-          <div 
-            className="absolute right-0 top-0 bottom-0 bg-card transition-all duration-350 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]"
-            style={{ 
-              left: `calc((21% * ${activeIndex} + 18.5%) + 42.5px)`
-            }} 
+          <div
+            className="absolute right-0 top-0 bottom-0 bg-card transition-all [transition-duration:350ms] [transition-timing-function:cubic-bezier(0.175,0.885,0.32,1.275)]"
+            style={{
+              left: `calc((15.2% * ${activeIndex} + 19.6%) + 42.5px)`
+            }}
           />
         </div>
 
         {/* Sliding Active FAB */}
-        <div 
-          className="absolute top-[-18px] h-[50px] w-[50px] rounded-full bg-gradient-to-tr from-[#FF3300] via-[#FF5500] to-[#FF007F] flex items-center justify-center shadow-[0_6px_18px_rgba(255,85,0,0.40)] transition-all duration-350 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]"
-          style={{ left: `calc((21% * ${activeIndex} + 18.5%) - 25px)` }}
+        <div
+          className="absolute top-[-18px] h-[50px] w-[50px] rounded-full bg-gradient-to-tr from-[#FF3300] via-[#FF5500] to-[#FF007F] flex items-center justify-center shadow-[0_6px_18px_rgba(255,85,0,0.40)] transition-all [transition-duration:350ms] [transition-timing-function:cubic-bezier(0.175,0.885,0.32,1.275)]"
+          style={{ left: `calc((15.2% * ${activeIndex} + 19.6%) - 25px)` }}
         >
           <div className="relative w-full h-full flex items-center justify-center">
             {tabs.map((tab, idx) => {
@@ -120,8 +134,8 @@ const BottomTabBar = () => {
           </div>
         </div>
 
-        {/* Foreground Links/Buttons Grid (with 8% left/right padding to keep outer tabs away from edges) */}
-        <div className="absolute inset-0 flex items-center z-10 pl-[8%] pr-[8%]">
+        {/* Foreground Links/Buttons Grid (with 12% left/right padding to keep outer tabs away from edges) */}
+        <div className="absolute inset-0 flex items-center z-10 pl-[12%] pr-[12%]">
           {tabs.map((tab, idx) => {
             const Icon = tab.icon;
             const isActive = activeIndex === idx;

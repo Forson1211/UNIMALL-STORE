@@ -13,6 +13,7 @@ import { SearchDialog } from "@/components/search/SearchDialog";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import ScrollToTop from "@/components/ScrollToTop";
 import PageTransition from "@/components/PageTransition";
+import BottomTabBar from "@/components/layout/BottomTabBar";
 
 import Index from "./pages/Index";
 import Products from "./pages/Products";
@@ -254,6 +255,7 @@ const App = () => (
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                   </PageTransition>
+                  <BottomTabBar />
                 </TooltipProvider>
               </SearchProvider>
             </CartProvider>
