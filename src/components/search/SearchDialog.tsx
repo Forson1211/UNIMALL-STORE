@@ -66,7 +66,6 @@ export function SearchDialog() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search for products, vendors, categories..."
             className="pl-10 pr-10 h-12 text-base max-sm:h-10 max-sm:text-sm max-sm:pl-9"
-            autoFocus
           />
           {query && (
             <Button
