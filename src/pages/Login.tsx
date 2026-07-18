@@ -34,6 +34,18 @@ const Login = () => {
     }
   }, [user, role, authLoading, navigate, location]);
 
+  useEffect(() => {
+    const rootEl = document.getElementById("root");
+    if (rootEl) {
+      rootEl.classList.add("full-screen-auth");
+    }
+    return () => {
+      if (rootEl) {
+        rootEl.classList.remove("full-screen-auth");
+      }
+    };
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {

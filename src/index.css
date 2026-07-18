@@ -390,8 +390,9 @@ body {
     min-height: 100vh;
   }
 
-  /* Override desktop centering when inside admin/vendor dashboards */
-  #root.full-screen-dashboard {
+  /* Override desktop centering when inside admin/vendor dashboards or login/signup */
+  #root.full-screen-dashboard,
+  #root.full-screen-auth {
     max-width: 100% !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
