@@ -82,7 +82,6 @@ const AdminSettings = () => {
     });
     setIsSavingGeneral(false);
     if (result?.success !== false) toast.success("Settings saved successfully");
-    else toast.error("Failed to save settings");
   };
 
   const handleSaveNotifications = async () => {
@@ -96,7 +95,6 @@ const AdminSettings = () => {
     });
     setIsSavingNotifications(false);
     if (result?.success !== false) toast.success("Notification preferences saved");
-    else toast.error("Failed to save notification preferences");
   };
 
   const handleSaveSecurity = async () => {
@@ -108,7 +106,6 @@ const AdminSettings = () => {
     });
     setIsSavingSecurity(false);
     if (result?.success !== false) toast.success("Security settings saved successfully");
-    else toast.error("Failed to save security settings");
   };
 
   const handleSavePlatform = async () => {
@@ -122,7 +119,6 @@ const AdminSettings = () => {
     });
     setIsSavingPlatform(false);
     if (result?.success !== false) toast.success("Platform settings saved successfully");
-    else toast.error("Failed to save platform settings");
   };
 
   const handleSaveMaintenance = async () => {
@@ -135,7 +131,6 @@ const AdminSettings = () => {
     });
     setIsSavingMaintenance(false);
     if (result?.success !== false) toast.success("Maintenance settings saved successfully");
-    else toast.error("Failed to save maintenance settings");
   };
 
   const handleBackupNow = () => {
@@ -311,16 +306,16 @@ const AdminSettings = () => {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="platformName">Platform Name</Label>
-                  <Input id="platformName" defaultValue="Unimall" />
+                  <Input id="platformName" value={platformName} onChange={(e) => setPlatformName(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="supportEmail">Support Email</Label>
-                  <Input id="supportEmail" type="email" defaultValue="support@campusconnect.com" />
+                  <Input id="supportEmail" type="email" value={supportEmail} onChange={(e) => setSupportEmail(e.target.value)} />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="description">Platform Description</Label>
-                <Input id="description" defaultValue="Your campus marketplace for students" />
+                <Input id="description" value={siteDescription} onChange={(e) => setSiteDescription(e.target.value)} />
               </div>
 
               <Separator />
@@ -345,7 +340,9 @@ const AdminSettings = () => {
               </div>
 
               <Separator />
-              <Button onClick={handleSave}>Save Changes</Button>
+              <Button onClick={handleSaveGeneral} disabled={isSavingGeneral}>
+                {isSavingGeneral ? "Saving..." : "Save Changes"}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -362,7 +359,7 @@ const AdminSettings = () => {
                   <p className="font-medium">New Order Alerts</p>
                   <p className="text-sm text-muted-foreground">Get notified when new orders are placed</p>
                 </div>
-                <Switch defaultChecked />
+                <Switch checked={notifyNewOrders} onCheckedChange={setNotifyNewOrders} />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
@@ -370,7 +367,7 @@ const AdminSettings = () => {
                   <p className="font-medium">New Vendor Applications</p>
                   <p className="text-sm text-muted-foreground">Get notified when vendors apply</p>
                 </div>
-                <Switch defaultChecked />
+                <Switch checked={notifyVendorApplications} onCheckedChange={setNotifyVendorApplications} />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
@@ -378,7 +375,7 @@ const AdminSettings = () => {
                   <p className="font-medium">Low Stock Alerts</p>
                   <p className="text-sm text-muted-foreground">Get notified when products are low on stock</p>
                 </div>
-                <Switch defaultChecked />
+                <Switch checked={notifyLowStock} onCheckedChange={setNotifyLowStock} />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
@@ -386,7 +383,7 @@ const AdminSettings = () => {
                   <p className="font-medium">Weekly Reports</p>
                   <p className="text-sm text-muted-foreground">Receive weekly sales and analytics reports</p>
                 </div>
-                <Switch />
+                <Switch checked={notifyWeeklyReports} onCheckedChange={setNotifyWeeklyReports} />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
@@ -394,8 +391,12 @@ const AdminSettings = () => {
                   <p className="font-medium">User Reports & Disputes</p>
                   <p className="text-sm text-muted-foreground">Get notified about reported content</p>
                 </div>
-                <Switch defaultChecked />
+                <Switch checked={notifyUserReports} onCheckedChange={setNotifyUserReports} />
               </div>
+              <Separator />
+              <Button onClick={handleSaveNotifications} disabled={isSavingNotifications}>
+                {isSavingNotifications ? "Saving..." : "Save Notification Settings"}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -412,7 +413,7 @@ const AdminSettings = () => {
                   <p className="font-medium">Two-Factor Authentication</p>
                   <p className="text-sm text-muted-foreground">Require 2FA for admin accounts</p>
                 </div>
-                <Switch />
+                <Switch checked={require2fa} onCheckedChange={setRequire2fa} />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
@@ -420,7 +421,7 @@ const AdminSettings = () => {
                   <p className="font-medium">Session Timeout</p>
                   <p className="text-sm text-muted-foreground">Auto-logout after 30 minutes of inactivity</p>
                 </div>
-                <Switch defaultChecked />
+                <Switch checked={sessionTimeoutEnabled} onCheckedChange={setSessionTimeoutEnabled} />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
@@ -428,17 +429,21 @@ const AdminSettings = () => {
                   <p className="font-medium">Login Attempt Limit</p>
                   <p className="text-sm text-muted-foreground">Lock account after 5 failed attempts</p>
                 </div>
-                <Switch defaultChecked />
+                <Switch checked={loginAttemptLimitEnabled} onCheckedChange={setLoginAttemptLimitEnabled} />
               </div>
+              <Separator />
+              <Button onClick={handleSaveSecurity} disabled={isSavingSecurity}>
+                {isSavingSecurity ? "Saving..." : "Update Security Settings"}
+              </Button>
               <Separator />
               <div className="space-y-2">
                 <Label>Change Password</Label>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Input type="password" placeholder="Current password" />
-                  <Input type="password" placeholder="New password" />
+                <p className="text-xs text-muted-foreground">Not yet available here — admins can reset their password from the standard login flow.</p>
+                <div className="grid gap-4 md:grid-cols-2 opacity-50 pointer-events-none">
+                  <Input type="password" placeholder="Current password" disabled />
+                  <Input type="password" placeholder="New password" disabled />
                 </div>
               </div>
-              <Button onClick={handleSave}>Update Security Settings</Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -455,7 +460,7 @@ const AdminSettings = () => {
                   <p className="font-medium">Vendor Registration</p>
                   <p className="text-sm text-muted-foreground">Allow new vendors to register</p>
                 </div>
-                <Switch defaultChecked />
+                <Switch checked={allowVendorRegistration} onCheckedChange={setAllowVendorRegistration} />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
@@ -463,7 +468,7 @@ const AdminSettings = () => {
                   <p className="font-medium">Require Vendor Verification</p>
                   <p className="text-sm text-muted-foreground">Vendors must be verified before selling</p>
                 </div>
-                <Switch defaultChecked />
+                <Switch checked={requireVendorVerification} onCheckedChange={setRequireVendorVerification} />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
@@ -471,20 +476,22 @@ const AdminSettings = () => {
                   <p className="font-medium">Product Review Moderation</p>
                   <p className="text-sm text-muted-foreground">Reviews require approval before publishing</p>
                 </div>
-                <Switch />
+                <Switch checked={reviewModerationEnabled} onCheckedChange={setReviewModerationEnabled} />
               </div>
               <Separator />
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Commission Rate (%)</Label>
-                  <Input type="number" defaultValue="5" min="0" max="100" />
+                  <Input type="number" value={commissionRate} onChange={(e) => setCommissionRate(e.target.value)} min="0" max="100" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Minimum Order Value ($)</Label>
-                  <Input type="number" defaultValue="10" min="0" />
+                  <Label>Minimum Order Value (GH₵)</Label>
+                  <Input type="number" value={minimumOrderValue} onChange={(e) => setMinimumOrderValue(e.target.value)} min="0" />
                 </div>
               </div>
-              <Button onClick={handleSave}>Save Platform Settings</Button>
+              <Button onClick={handleSavePlatform} disabled={isSavingPlatform}>
+                {isSavingPlatform ? "Saving..." : "Save Platform Settings"}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -502,26 +509,36 @@ const AdminSettings = () => {
                   <p className="font-medium">Enable Maintenance Mode</p>
                   <p className="text-sm text-muted-foreground">Site will show maintenance page to visitors</p>
                 </div>
-                <Switch />
+                <Switch checked={maintenanceMode} onCheckedChange={setMaintenanceMode} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="maintenanceMessage">Maintenance Message</Label>
                 <Input
                   id="maintenanceMessage"
-                  defaultValue="We're performing scheduled maintenance. We'll be back soon!"
+                  value={maintenanceMessage}
+                  onChange={(e) => setMaintenanceMessage(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="estimatedTime">Estimated Completion Time</Label>
-                <Input id="estimatedTime" type="datetime-local" />
+                <Input
+                  id="estimatedTime"
+                  type="datetime-local"
+                  value={maintenanceEstimatedTime}
+                  onChange={(e) => setMaintenanceEstimatedTime(e.target.value)}
+                />
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Allow Admin Access</p>
                   <p className="text-sm text-muted-foreground">Admins can access site during maintenance</p>
                 </div>
-                <Switch defaultChecked />
+                <Switch checked={maintenanceAllowAdminAccess} onCheckedChange={setMaintenanceAllowAdminAccess} />
               </div>
+              <Separator />
+              <Button onClick={handleSaveMaintenance} disabled={isSavingMaintenance}>
+                {isSavingMaintenance ? "Saving..." : "Save Maintenance Settings"}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -573,7 +590,7 @@ const AdminSettings = () => {
                 </div>
               </div>
 
-              <Button onClick={handleSave}>Create Manual Backup Now</Button>
+              <Button onClick={handleBackupNow}>Create Manual Backup Now</Button>
             </CardContent>
           </Card>
         </TabsContent>

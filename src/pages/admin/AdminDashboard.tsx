@@ -141,6 +141,20 @@ const AdminDashboard = () => {
     refetchInterval: 300000, // 5 mins
   });
 
+  // 3b. Fetch real daily revenue for the last 7 days
+  const { data: weeklyRevenue } = useQuery({
+    queryKey: ["admin-weekly-revenue"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_admin_weekly_revenue' as any);
+      if (error) {
+        console.error("RPC Error:", error);
+        return null;
+      }
+      return data as { name: string; revenue: number }[];
+    },
+    refetchInterval: 300000,
+  });
+
   // 4. Fetch top vendors
   const { data: topVendors = [], isLoading: vendorsLoading, refetch: refetchVendors, isRefetching: isRefetchingVendors } = useQuery({
     queryKey: ["admin-top-vendors-main"],
@@ -183,16 +197,12 @@ const AdminDashboard = () => {
     value: orderStatusCounts[status]
   }));
 
-  // Mock Trend Data for Charts (simulated until backend provides time-series)
-  const revenueTrendData = [
-    { name: "Mon", revenue: 1200 },
-    { name: "Tue", revenue: 1900 },
-    { name: "Wed", revenue: 1500 },
-    { name: "Thu", revenue: 2200 },
-    { name: "Fri", revenue: 3100 },
-    { name: "Sat", revenue: Math.max(3000, (stats?.total_revenue || 0) * 0.1) },
-    { name: "Sun", revenue: Math.max(4000, (stats?.total_revenue || 0) * 0.15) },
-  ];
+  // Real last-7-days revenue via get_admin_weekly_revenue(); falls back to zeros
+  // (not fabricated numbers) if the RPC hasn't been applied to the database yet.
+  const revenueTrendData = weeklyRevenue || Array.from({ length: 7 }).map((_, i) => ({
+    name: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][i],
+    revenue: 0,
+  }));
 
   const recentOrders = allOrders.slice(0, 10);
 
