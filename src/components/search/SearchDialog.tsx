@@ -54,18 +54,18 @@ export function SearchDialog() {
 
   return (
     <Dialog open={isSearchOpen} onOpenChange={closeSearch}>
-      <DialogContent className="sm:max-w-xl max-sm:fixed max-sm:inset-x-0 max-sm:top-0 max-sm:bottom-auto max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:w-full max-sm:max-w-none max-sm:rounded-b-2xl max-sm:rounded-t-none max-sm:border-x-0 max-sm:border-t-0 max-sm:p-5 max-sm:h-auto max-sm:max-h-[85vh] max-sm:overflow-y-auto max-sm:data-[state=open]:slide-in-from-top max-sm:data-[state=open]:slide-in-from-left-0 max-sm:data-[state=open]:zoom-in-100 max-sm:data-[state=closed]:slide-out-to-top max-sm:data-[state=closed]:slide-out-to-left-0 max-sm:data-[state=closed]:zoom-out-100">
+      <DialogContent className="sm:max-w-xl max-sm:fixed max-sm:inset-x-0 max-sm:top-0 max-sm:bottom-auto max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:w-full max-sm:max-w-none max-sm:rounded-b-2xl max-sm:rounded-t-none max-sm:border-x-0 max-sm:border-t-0 max-sm:p-4 max-sm:gap-3 max-sm:h-auto max-sm:max-h-[85vh] max-sm:overflow-y-auto max-sm:data-[state=open]:slide-in-from-top max-sm:data-[state=open]:slide-in-from-left-0 max-sm:data-[state=open]:zoom-in-100 max-sm:data-[state=closed]:slide-out-to-top max-sm:data-[state=closed]:slide-out-to-left-0 max-sm:data-[state=closed]:zoom-out-100">
         <DialogHeader>
-          <DialogTitle className="text-left">Search Products</DialogTitle>
+          <DialogTitle className="text-left max-sm:text-sm max-sm:text-muted-foreground">Search Products</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSearch} className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground max-sm:w-4 max-sm:h-4" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search for products, vendors, categories..."
-            className="pl-10 pr-10 h-12 text-base"
+            className="pl-10 pr-10 h-12 text-base max-sm:h-10 max-sm:text-sm max-sm:pl-9"
             autoFocus
           />
           {query && (
@@ -86,20 +86,20 @@ export function SearchDialog() {
         </form>
 
         {query.trim().length < 2 && (
-          <div className="space-y-6 pt-2">
+          <div className="space-y-6 pt-2 max-sm:space-y-4 max-sm:pt-1">
             {/* Categories */}
             <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-3">
+              <h4 className="text-sm font-medium text-muted-foreground mb-3 max-sm:mb-2 max-sm:text-xs">
                 Categories
               </h4>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 max-sm:gap-1.5">
                 {categories.map((cat) => (
                   <Button
                     key={cat}
                     variant="outline"
                     size="sm"
                     onClick={() => handleCategoryClick(cat)}
-                    className="rounded-full"
+                    className="rounded-full max-sm:text-xs max-sm:px-3 max-sm:h-8"
                   >
                     {cat}
                   </Button>
@@ -109,16 +109,16 @@ export function SearchDialog() {
 
             {/* Trending Searches */}
             <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4" />
+              <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2 max-sm:mb-2 max-sm:text-xs">
+                <TrendingUp className="w-4 h-4 max-sm:w-3.5 max-sm:h-3.5" />
                 Trending Searches
               </h4>
-              <div className="space-y-1">
+              <div className="space-y-1 max-sm:space-y-0.5">
                 {trendingSearches.map((term) => (
                   <button
                     key={term}
                     onClick={() => handleQuickSearch(term)}
-                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors text-sm"
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors text-sm max-sm:text-xs max-sm:py-1.5 max-sm:px-2"
                   >
                     {term}
                   </button>

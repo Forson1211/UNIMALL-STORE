@@ -48,30 +48,30 @@ export function SearchSuggestions({ query, onNavigate }: SearchSuggestionsProps)
   const showEmpty = debouncedQuery.length >= 2 && !isFetching && results.length === 0;
 
   return (
-    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-[0_8px_40px_-8px_rgba(0,0,0,0.18)] border border-gray-100 overflow-hidden z-50 max-h-[420px] overflow-y-auto">
+    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-[0_8px_40px_-8px_rgba(0,0,0,0.18)] border border-gray-100 overflow-hidden z-50 max-h-[420px] overflow-y-auto max-sm:relative max-sm:top-auto max-sm:mt-3 max-sm:shadow-none max-sm:border-0 max-sm:max-h-none max-sm:overflow-y-visible max-sm:z-0">
       {showEmpty ? (
-        <div className="flex items-center gap-3 px-4 py-5 text-sm text-gray-400">
-          <PackageSearch className="w-5 h-5 shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-5 text-sm text-gray-400 max-sm:px-2 max-sm:py-3 max-sm:text-xs">
+          <PackageSearch className="w-5 h-5 max-sm:w-4 max-sm:h-4 shrink-0" />
           No products found for &ldquo;{trimmed}&rdquo;
         </div>
       ) : (
         <>
           {results.map((product, idx) => (
             <Fragment key={product.id}>
-              {idx > 0 && <div className="h-px bg-gray-100 mx-4" />}
+              {idx > 0 && <div className="h-px bg-gray-100 mx-4 max-sm:mx-2" />}
               <button
                 type="button"
                 onClick={() => goToProduct(product)}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
+                className="w-full flex items-center gap-3 px-4 py-3 max-sm:px-2 max-sm:py-2 hover:bg-gray-50 transition-colors text-left"
               >
-                <div className="w-9 h-9 rounded-full bg-gray-100 overflow-hidden shrink-0 border border-gray-100">
+                <div className="w-9 h-9 max-sm:w-8 max-sm:h-8 rounded-full bg-gray-100 overflow-hidden shrink-0 border border-gray-100">
                   <img src={product.image} alt="" className="w-full h-full object-cover" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-gray-700 truncate">
+                  <p className="text-sm max-sm:text-xs font-medium text-gray-700 truncate">
                     {highlightMatch(product.name, trimmed)}
                   </p>
-                  <p className="text-xs text-gray-400 truncate">
+                  <p className="text-xs max-sm:text-[10px] text-gray-400 truncate">
                     {product.category} · GH₵{product.price.toFixed(2)} · {product.vendor}
                   </p>
                 </div>
@@ -79,17 +79,17 @@ export function SearchSuggestions({ query, onNavigate }: SearchSuggestionsProps)
             </Fragment>
           ))}
 
-          {results.length > 0 && <div className="h-px bg-gray-100 mx-4" />}
+          {results.length > 0 && <div className="h-px bg-gray-100 mx-4 max-sm:mx-2" />}
 
           <button
             type="button"
             onClick={seeAllResults}
-            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
+            className="w-full flex items-center gap-3 px-4 py-3 max-sm:px-2 max-sm:py-2 hover:bg-gray-50 transition-colors text-left"
           >
-            <div className="w-9 h-9 rounded-full bg-[#FF5500]/10 flex items-center justify-center shrink-0">
-              <SearchIcon className="w-4 h-4 text-[#FF5500]" />
+            <div className="w-9 h-9 max-sm:w-8 max-sm:h-8 rounded-full bg-[#FF5500]/10 flex items-center justify-center shrink-0">
+              <SearchIcon className="w-4 h-4 max-sm:w-3.5 max-sm:h-3.5 text-[#FF5500]" />
             </div>
-            <p className="text-sm font-semibold text-[#FF5500]">
+            <p className="text-sm max-sm:text-xs font-semibold text-[#FF5500]">
               See all results for &ldquo;{trimmed}&rdquo;
             </p>
           </button>
