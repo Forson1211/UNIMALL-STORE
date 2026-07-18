@@ -36,15 +36,55 @@ const BuyerAccount = () => {
     address: profile?.address || "",
   });
 
+  // Load preferences from local storage (scoped by user.id)
+  const prefsKey = `buyer-prefs-${user.id}`;
+  const [preferredCategory, setPreferredCategory] = useState(() => {
+    return localStorage.getItem(`${prefsKey}-category`) || "Electronics & Gadgets";
+  });
+  const [preferredPayment, setPreferredPayment] = useState(() => {
+    return localStorage.getItem(`${prefsKey}-payment`) || "MTN Mobile Money";
+  });
+
+  const [prefCategoryForm, setPrefCategoryForm] = useState(preferredCategory);
+  const [prefPaymentForm, setPrefPaymentForm] = useState(preferredPayment);
+
   // Fetch real order statistics & list
   const { data: orders = [], refetch: refetchOrders } = useQuery({
     queryKey: ["buyer-account-orders", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("id, created_at, total_amount, order_status")
+        .select("id, created_at, total_amount, status")
         .eq("buyer_id", user?.id)
         .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user?.id,
+  });
+
+  // Fetch real wishlist items count
+  const { data: wishlist = [] } = useQuery({
+    queryKey: ["buyer-account-wishlist", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("wishlist")
+        .select("id")
+        .eq("user_id", user?.id);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user?.id,
+  });
+
+  // Fetch real reviews count
+  const { data: reviews = [] } = useQuery({
+    queryKey: ["buyer-account-reviews", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reviews")
+        .select("id")
+        .eq("user_id", user?.id);
       if (error) throw error;
       return data || [];
     },
@@ -68,6 +108,12 @@ const BuyerAccount = () => {
         variant: "destructive",
       });
     } else {
+      // Save local preferences
+      localStorage.setItem(`${prefsKey}-category`, prefCategoryForm);
+      localStorage.setItem(`${prefsKey}-payment`, prefPaymentForm);
+      setPreferredCategory(prefCategoryForm);
+      setPreferredPayment(prefPaymentForm);
+
       toast({
         title: "Profile updated",
         description: "Your changes have been saved successfully.",
@@ -250,7 +296,7 @@ const BuyerAccount = () => {
                     <Heart className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-lg font-black text-gray-900 block leading-none">3</span>
+                    <span className="text-lg font-black text-gray-900 block leading-none">{wishlist.length}</span>
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Saved Items</span>
                   </div>
                 </Card>
@@ -260,7 +306,7 @@ const BuyerAccount = () => {
                     <Star className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-lg font-black text-gray-900 block leading-none">0</span>
+                    <span className="text-lg font-black text-gray-900 block leading-none">{reviews.length}</span>
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Reviews Left</span>
                   </div>
                 </Card>
@@ -274,10 +320,10 @@ const BuyerAccount = () => {
                 {/* Profile tag highlights */}
                 <div className="flex flex-wrap gap-1.5 mb-5">
                   <span className="text-[11px] font-bold bg-gray-50 border border-gray-100 px-2.5 py-1 text-gray-600 rounded">
-                    Joined Unimall 2026
+                    Joined Unimall {new Date(user?.created_at || Date.now()).getFullYear()}
                   </span>
-                  <span className="text-[11px] font-bold bg-orange-50 border border-orange-100 px-2.5 py-1 text-[#FF5500] rounded">
-                    Student Buyer
+                  <span className="text-[11px] font-bold bg-orange-50 border border-orange-100 px-2.5 py-1 text-[#FF5500] rounded uppercase">
+                    {role || "Buyer"}
                   </span>
                   <span className="text-[11px] font-bold bg-green-50 border border-green-100 px-2.5 py-1 text-green-600 rounded">
                     Active Account Status
@@ -299,21 +345,35 @@ const BuyerAccount = () => {
                     <Calendar className="w-4.5 h-4.5 text-gray-400 shrink-0" />
                     <div>
                       <p className="text-[10px] font-bold text-gray-400 leading-none">MEMBER DURATION</p>
-                      <p className="text-xs font-semibold text-gray-800 mt-1">1 year active</p>
+                      <p className="text-xs font-semibold text-gray-800 mt-1">
+                        {(() => {
+                          const joined = new Date(user?.created_at || Date.now());
+                          const now = new Date();
+                          const diffTime = Math.abs(now.getTime() - joined.getTime());
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          if (diffDays <= 30) return "New Member";
+                          const months = Math.floor(diffDays / 30);
+                          if (months < 12) return `${months} months active`;
+                          const years = Math.floor(months / 12);
+                          return `${years} ${years === 1 ? "year" : "years"} active`;
+                        })()}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2.5">
                     <ShoppingBag className="w-4.5 h-4.5 text-gray-400 shrink-0" />
                     <div>
                       <p className="text-[10px] font-bold text-gray-400 leading-none">PREFERRED CATEGORY</p>
-                      <p className="text-xs font-semibold text-gray-800 mt-1">Electronics & Gadgets</p>
+                      <p className="text-xs font-semibold text-gray-800 mt-1">{preferredCategory}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2.5">
                     <User className="w-4.5 h-4.5 text-gray-400 shrink-0" />
                     <div>
                       <p className="text-[10px] font-bold text-gray-400 leading-none">ACCOUNT LEVEL</p>
-                      <p className="text-xs font-semibold text-gray-800 mt-1 uppercase tracking-wider text-[#FF5500]">Gold Tier</p>
+                      <p className="text-xs font-semibold text-gray-800 mt-1 uppercase tracking-wider text-[#FF5500]">
+                        {role === "admin" ? "Admin Tier" : "Gold Tier"}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -356,9 +416,9 @@ const BuyerAccount = () => {
                         <div className="text-right">
                           <p className="text-xs font-black text-gray-900">GH₵ {ord.total_amount.toLocaleString()}</p>
                           <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm ${
-                            ord.order_status === "delivered" ? "bg-green-50 text-green-600" : "bg-yellow-50 text-yellow-600"
+                            ord.status === "delivered" ? "bg-green-50 text-green-600" : "bg-yellow-50 text-yellow-600"
                           }`}>
-                            {ord.order_status}
+                            {ord.status}
                           </span>
                         </div>
                       </div>
@@ -483,6 +543,34 @@ const BuyerAccount = () => {
                   placeholder="e.g. Hostal Room 204, Campus East"
                 />
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="pref_category" className="text-xs font-bold text-gray-700">Preferred Category</Label>
+              <select
+                id="pref_category"
+                value={prefCategoryForm}
+                onChange={(e) => setPrefCategoryForm(e.target.value)}
+                className="w-full h-10 px-3 bg-white border border-gray-200 text-sm rounded-none focus:border-[#FF5500] outline-none cursor-pointer"
+              >
+                {["Electronics & Gadgets", "Food & Drinks", "Fashion & Apparel", "Books & Stationery", "Health & Beauty", "Sports & Fitness"].map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="pref_payment" className="text-xs font-bold text-gray-700">Preferred Payment Option</Label>
+              <select
+                id="pref_payment"
+                value={prefPaymentForm}
+                onChange={(e) => setPrefPaymentForm(e.target.value)}
+                className="w-full h-10 px-3 bg-white border border-gray-200 text-sm rounded-none focus:border-[#FF5500] outline-none cursor-pointer"
+              >
+                {["MTN Mobile Money", "Telecel Cash", "Debit Card / Visa", "Cash on Delivery"].map(pay => (
+                  <option key={pay} value={pay}>{pay}</option>
+                ))}
+              </select>
             </div>
           </div>
 
