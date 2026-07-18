@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardHeader } from "./DashboardHeader";
@@ -20,6 +20,18 @@ export function DashboardLayout({ children, type, title, userName, userRole }: D
   const { vendorStatus, role, isLoading, refreshProfile } = useAuth();
   const isVendor = type === 'vendor';
   const isApproved = role === 'admin' || !isVendor || vendorStatus === 'approved';
+
+  useEffect(() => {
+    const rootEl = document.getElementById("root");
+    if (rootEl) {
+      rootEl.classList.add("full-screen-dashboard");
+    }
+    return () => {
+      if (rootEl) {
+        rootEl.classList.remove("full-screen-dashboard");
+      }
+    };
+  }, []);
 
   if (isLoading) {
     return (

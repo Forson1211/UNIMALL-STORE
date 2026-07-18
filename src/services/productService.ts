@@ -21,7 +21,13 @@ export interface StorefrontProduct {
 }
 
 export const productService = {
-    async getProducts(filters?: { category?: string; search?: string; limit?: number }) {
+    async getProducts(filters?: {
+        category?: string;
+        search?: string;
+        limit?: number;
+        sortBy?: "created_at" | "rating" | "price";
+        sortOrder?: "asc" | "desc";
+    }) {
         return withRetry(async () => {
             let query = supabase
                 .from("storefront_products_view" as any)
@@ -33,6 +39,9 @@ export const productService = {
             if (filters?.search) {
                 query = query.ilike("name", `%${filters.search}%`);
             }
+            if (filters?.sortBy) {
+                query = query.order(filters.sortBy, { ascending: filters.sortOrder === "asc" });
+            }
             if (filters?.limit) {
                 query = query.limit(filters.limit);
             }
@@ -43,6 +52,29 @@ export const productService = {
                 return [] as StorefrontProduct[];
             }
             return (data ?? []) as unknown as StorefrontProduct[];
+        }, [] as StorefrontProduct[]);
+    },
+
+    // Products with a real discount (original_price > price), ranked by discount %.
+    // original_price isn't reliably filterable at the query level across environments,
+    // so we fetch a batch with a plain select and rank client-side.
+    async getDeals(limit = 6) {
+        return withRetry(async () => {
+            const { data, error } = await supabase
+                .from("storefront_products_view" as any)
+                .select("*")
+                .limit(50);
+
+            if (error) {
+                console.error("Error fetching deals:", error);
+                return [] as StorefrontProduct[];
+            }
+
+            const products = (data ?? []) as unknown as StorefrontProduct[];
+            return products
+                .filter((p) => p.original_price && p.original_price > p.price)
+                .sort((a, b) => (1 - b.price / b.original_price!) - (1 - a.price / a.original_price!))
+                .slice(0, limit);
         }, [] as StorefrontProduct[]);
     },
 

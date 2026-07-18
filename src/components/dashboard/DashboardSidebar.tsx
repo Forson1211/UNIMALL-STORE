@@ -212,18 +212,13 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
   return (
     <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon" data-state={state}>
       <SidebarHeader className="border-b border-sidebar-border p-4">
-        <Link to="/" className="flex items-center gap-2" onClick={handleMobileClick}>
-          {logoUrl ? (
-            <img src={logoUrl} alt={siteName} className="w-10 h-10 rounded-full object-contain bg-background" />
+        <Link to="/" className="flex items-center" onClick={handleMobileClick}>
+          {collapsed ? (
+            <img src={logoUrl || "/LOGO.png"} alt={siteName} className="w-10 h-10 rounded-md object-contain bg-white border border-gray-100" />
           ) : (
-            <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center shadow-md shrink-0">
-              <ShoppingBag className="w-5 h-5 text-primary-foreground" />
-            </div>
-          )}
-          {!collapsed && (
-            <div className="flex flex-col">
-              <span className="text-lg font-bold text-gradient-primary">{siteName}</span>
-              <span className="text-xs text-muted-foreground capitalize">{type} Portal</span>
+            <div className="flex flex-col items-start gap-1">
+              <img src={logoUrl || "/LOGO.png"} alt={siteName} className="h-10 w-auto object-contain" />
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-0.5">{type} Portal</span>
             </div>
           )}
         </Link>

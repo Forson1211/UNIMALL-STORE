@@ -21,6 +21,7 @@ import { Plus, X, Upload, Loader2, Image as ImageIcon, Link as LinkIcon } from "
 import { Product } from "@/types/dashboard";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { PRODUCT_CATEGORIES } from "@/lib/categories";
 
 interface ProductFormProps {
   open: boolean;
@@ -335,12 +336,9 @@ export const ProductForm = ({ open, onClose, product, onSave }: ProductFormProps
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Electronics">Electronics</SelectItem>
-                    <SelectItem value="Clothing">Clothing</SelectItem>
-                    <SelectItem value="Home">Home</SelectItem>
-                    <SelectItem value="Books">Books</SelectItem>
-                    <SelectItem value="Stationery">Stationery</SelectItem>
-                    <SelectItem value="Others">Others</SelectItem>
+                    {PRODUCT_CATEGORIES.map((cat) => (
+                      <SelectItem key={cat.label} value={cat.label}>{cat.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

@@ -126,6 +126,24 @@ export default {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
+        "tab-bar-in": {
+          "0%": { opacity: "0", transform: "translateY(140%)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "tab-pop": {
+          "0%": { transform: "scale(1)" },
+          "45%": { transform: "scale(1.22)" },
+          "70%": { transform: "scale(0.94)" },
+          "100%": { transform: "scale(1)" },
+        },
+        "fab-glow": {
+          "0%, 100%": { boxShadow: "0 8px 20px -4px rgba(255,85,0,0.55), 0 0 0 0 rgba(255,85,0,0.35)" },
+          "50%": { boxShadow: "0 8px 20px -4px rgba(255,85,0,0.55), 0 0 0 8px rgba(255,85,0,0)" },
+        },
+        kenburns: {
+          "0%": { transform: "scale(1)" },
+          "100%": { transform: "scale(1.08)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -135,6 +153,10 @@ export default {
         "slide-in-right": "slide-in-right 0.5s ease-out",
         "scale-in": "scale-in 0.3s ease-out",
         shimmer: "shimmer 2s infinite linear",
+        "tab-bar-in": "tab-bar-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "tab-pop": "tab-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "fab-glow": "fab-glow 2.6s ease-in-out infinite",
+        kenburns: "kenburns 6s ease-out forwards",
       },
     },
   },

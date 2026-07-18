@@ -5,29 +5,22 @@ import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Search, Grid3X3, LayoutList, Heart, Star, ShoppingCart,
-  SlidersHorizontal, ChevronRight, Laptop, Smartphone, Shirt,
-  BookOpen, Utensils, Headphones, Gift, Dumbbell, Package, X,
-  Monitor, Smartphone as SmartphoneIcon, Shirt as ShirtIcon,
-  Home as HomeIcon, Headphones as HeadphonesIcon, Camera,
-  Laptop as LaptopIcon, Baby, Gamepad2, ShoppingBag, Stethoscope, ArrowRight
+  Search, Heart, ShoppingCart,
+  SlidersHorizontal, ChevronRight, Package, ArrowRight
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { productService, StorefrontProduct } from "@/services/productService";
+import ShopHeroCarousel from "@/components/shop/ShopHeroCarousel";
+import ShopQuickLinks from "@/components/shop/ShopQuickLinks";
+import ProductShowcaseSection from "@/components/shop/ProductShowcaseSection";
+import ShopCategoryBanners from "@/components/shop/ShopCategoryBanners";
+import { PRODUCT_CATEGORIES } from "@/lib/categories";
 
 const categories = [
   { label: "All Products", value: "All", icon: Package },
-  { label: "Computers", value: "Computers", icon: Monitor },
-  { label: "Phones & Accessories", value: "Phones & Accessories", icon: SmartphoneIcon },
-  { label: "Fashion", value: "Fashion", icon: ShirtIcon },
-  { label: "Books & Notes", value: "Books & Notes", icon: BookOpen },
-  { label: "Food & Snacks", value: "Food & Snacks", icon: Utensils },
-  { label: "Electronics", value: "Electronics", icon: HeadphonesIcon },
-  { label: "Sports", value: "Sports", icon: Dumbbell },
-  { label: "Gifts", value: "Gifts", icon: Gift },
-  { label: "Others", value: "Others", icon: ShoppingBag },
+  ...PRODUCT_CATEGORIES.map((cat) => ({ label: cat.label, value: cat.label, icon: cat.icon })),
 ];
 
 const sortOptions = ["Newest", "Price: Low to High", "Price: High to Low", "Most Popular"];
@@ -89,8 +82,37 @@ const Products = () => {
       <Navbar />
 
       <main className="pb-20">
+        {/* Curated Shop Sections */}
+        <div className="container mx-auto px-4 pt-4 md:pt-6">
+          <ShopHeroCarousel />
+          <ShopQuickLinks />
+          <ProductShowcaseSection
+            id="featured-products"
+            title="Featured Products"
+            sortBy="rating"
+            promo={{
+              title: "Trending Now",
+              subtitle: "Top rated picks from campus vendors.",
+              cta: "Explore",
+              gradient: "bg-gradient-to-br from-gray-900 to-gray-700",
+            }}
+          />
+          <ProductShowcaseSection
+            id="just-arrived"
+            title="Just Arrived"
+            sortBy="created_at"
+            promo={{
+              title: "Just Dropped",
+              subtitle: "New listings added by vendors every day.",
+              cta: "See New",
+              gradient: "bg-gradient-to-br from-primary to-secondary",
+            }}
+          />
+          <ShopCategoryBanners />
+        </div>
+
         {/* Top Header Section */}
-        <div className="bg-white border-b border-gray-100 mb-6 py-4">
+        <div id="all-products" className="bg-white border-b border-gray-100 mb-6 py-4 scroll-mt-24">
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
@@ -127,33 +149,6 @@ const Products = () => {
         </div>
 
         <div className="container mx-auto px-4">
-
-          {/* Full-Width Shop Promo Banner */}
-          <div className="relative w-full h-40 md:h-72 bg-[#FF5500] rounded-none overflow-hidden mb-8 group shadow-lg">
-            <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent z-10" />
-            <img
-              src="https://images.unsplash.com/photo-1526170315870-ef6876b84782?q=80&w=1500&auto=format&fit=crop"
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-[10s] group-hover:scale-105 opacity-60"
-              alt="Shop Promotion"
-            />
-            <div className="relative z-20 h-full flex flex-col justify-center px-6 md:px-16">
-              <div className="space-y-1 md:space-y-3">
-                <p className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.4em] text-white/70">Unimall Marketplace Event</p>
-                <h2 className="text-3xl md:text-6xl font-black text-white tracking-tighter leading-none uppercase">
-                  Tech <br /> Showcase
-                </h2>
-                <div className="flex items-center gap-4 md:gap-6 mt-4">
-                  <div className="bg-white text-primary px-3 py-1 md:px-6 md:py-2 text-[10px] md:text-sm font-black uppercase tracking-widest shadow-xl">
-                    UP TO 50% OFF
-                  </div>
-                  <div className="hidden sm:flex flex-col">
-                    <p className="text-white font-black text-[10px] md:text-xs uppercase tracking-[0.2em]">Limited Time</p>
-                    <div className="h-0.5 w-full bg-white/40 mt-1" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
           <div className="flex flex-col lg:flex-row gap-6">
 

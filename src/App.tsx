@@ -11,11 +11,14 @@ import { SiteSettingsProvider } from "@/contexts/SiteSettingsContext";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { SearchDialog } from "@/components/search/SearchDialog";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import ScrollToTop from "@/components/ScrollToTop";
+import PageTransition from "@/components/PageTransition";
 
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import Vendors from "./pages/Vendors";
+import VendorStore from "./pages/VendorStore";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import About from "./pages/About";
@@ -90,12 +93,15 @@ const App = () => (
                   <Sonner />
                   <CartDrawer />
                   <SearchDialog />
+                  <ScrollToTop />
+                  <PageTransition>
                   <Routes>
                     {/* Public Routes */}
                     <Route path="/" element={<Index />} />
                     <Route path="/products" element={<Products />} />
                     <Route path="/products/:id" element={<ProductDetail />} />
                     <Route path="/vendors" element={<Vendors />} />
+                    <Route path="/vendors/:id" element={<VendorStore />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/about" element={<About />} />
@@ -247,6 +253,7 @@ const App = () => (
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
+                  </PageTransition>
                 </TooltipProvider>
               </SearchProvider>
             </CartProvider>

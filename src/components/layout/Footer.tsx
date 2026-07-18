@@ -113,7 +113,7 @@ const Footer = () => {
 
   return (
     <footer
-      className="w-full pt-8 pb-6"
+      className="full-width-breakout pt-8 pb-6"
       style={{
         backgroundColor: "hsl(var(--footer-background))",
         color: "hsl(var(--footer-foreground))",
@@ -211,9 +211,9 @@ const Footer = () => {
                     <Link
                       key={news.id}
                       to={`/news/${news.id}`}
-                      className="bg-[#2a2a35] rounded-xl p-2 flex items-center gap-3 flex-1 border border-white/5 hover:bg-[#323240] transition-all group cursor-pointer"
+                      className="bg-[#2a2a35] rounded-none p-2 flex items-center gap-3 flex-1 border border-white/5 hover:bg-[#323240] transition-all group cursor-pointer"
                     >
-                      <div className="w-20 h-14 rounded-md overflow-hidden shrink-0 border border-white/5">
+                      <div className="w-20 h-14 rounded-none overflow-hidden shrink-0 border border-white/5">
                         {news.image_url ? (
                           <img
                             src={news.image_url}
@@ -240,8 +240,8 @@ const Footer = () => {
                 </>
               ) : (
                 <>
-                  <Link to="/news" className="bg-white/5 rounded-xl p-4 flex items-center gap-4 flex-1 border border-white/5 hover:bg-white/[0.08] transition-colors group cursor-pointer">
-                    <div className="w-16 h-12 md:w-12 md:h-12 rounded-lg bg-primary/20 flex items-center justify-center overflow-hidden shrink-0">
+                  <Link to="/news" className="bg-white/5 rounded-none p-4 flex items-center gap-4 flex-1 border border-white/5 hover:bg-white/[0.08] transition-colors group cursor-pointer">
+                    <div className="w-16 h-12 md:w-12 md:h-12 rounded-none bg-primary/20 flex items-center justify-center overflow-hidden shrink-0">
                       <div className="w-full h-full bg-gradient-to-tr from-primary to-orange-400 opacity-80" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -250,8 +250,8 @@ const Footer = () => {
                     </div>
                     <ExternalLink className="w-4 h-4 opacity-50 md:opacity-0 md:group-hover:opacity-40 transition-opacity" />
                   </Link>
-                  <Link to="/news" className="bg-white/5 rounded-xl p-4 flex items-center gap-4 flex-1 border border-white/5 hover:bg-white/[0.08] transition-colors group cursor-pointer">
-                    <div className="w-16 h-12 md:w-12 md:h-12 rounded-lg bg-primary/20 flex items-center justify-center overflow-hidden shrink-0">
+                  <Link to="/news" className="bg-white/5 rounded-none p-4 flex items-center gap-4 flex-1 border border-white/5 hover:bg-white/[0.08] transition-colors group cursor-pointer">
+                    <div className="w-16 h-12 md:w-12 md:h-12 rounded-none bg-primary/20 flex items-center justify-center overflow-hidden shrink-0">
                       <div className="w-full h-full bg-gradient-to-tr from-blue-500 to-indigo-600 opacity-80" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -325,14 +325,14 @@ const Footer = () => {
 
             {/* Right: Apps */}
             <div className="flex flex-row items-center gap-4 w-full md:w-auto">
-              <a href="#" className="flex-1 md:flex-none h-10 bg-black border border-white/20 rounded-xl px-4 flex items-center justify-center gap-2 hover:bg-white/5 transition-colors">
+              <a href="#" className="flex-1 md:flex-none h-10 bg-black border border-white/20 rounded-none px-4 flex items-center justify-center gap-2 hover:bg-white/5 transition-colors">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/3/31/Apple_logo_white.svg" alt="Apple" className="w-3.5" />
                 <div className="text-left text-white">
                   <p className="text-[10px] leading-none opacity-60 uppercase">Download on the</p>
                   <p className="text-[14px] font-bold leading-none">App Store</p>
                 </div>
               </a>
-              <a href="#" className="flex-1 md:flex-none h-10 bg-black border border-white/20 rounded-xl px-4 flex items-center justify-center gap-2 hover:bg-white/5 transition-colors">
+              <a href="#" className="flex-1 md:flex-none h-10 bg-black border border-white/20 rounded-none px-4 flex items-center justify-center gap-2 hover:bg-white/5 transition-colors">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/Google_Play_Arrow_logo.svg" alt="Google Play" className="w-4" />
                 <div className="text-left text-white">
                   <p className="text-[10px] leading-none opacity-60 uppercase">Get it on</p>

@@ -1,31 +1,16 @@
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  ArrowRight,
-  Phone,
-  Store,
-  Truck,
-  Smartphone,
-  Monitor,
-  Shirt,
-  Gamepad2,
-  Baby,
-  Dumbbell,
-  Laptop,
-  Home,
-  Utensils,
-  Camera,
-  ShoppingBag,
-  ChevronRight,
-  Headphones,
-  Stethoscope
+  Smartphone, Monitor, Shirt, Gamepad2, Baby, Dumbbell, Laptop,
+  Home as HomeIcon, Utensils, Camera, ShoppingBag, ChevronRight, ChevronLeft,
+  Headphones, Stethoscope, Phone, Store, Truck
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 const categories = [
   { name: "Supermarket", icon: Utensils },
   { name: "Phones & Tablets", icon: Smartphone },
   { name: "Health & Beauty", icon: Stethoscope },
-  { name: "Home & Office", icon: Home },
+  { name: "Home & Office", icon: HomeIcon },
   { name: "Appliances", icon: Headphones },
   { name: "Electronics", icon: Camera },
   { name: "Computing", icon: Laptop },
@@ -36,130 +21,260 @@ const categories = [
   { name: "Other categories", icon: ShoppingBag },
 ];
 
-const HeroSection = () => {
-  return (
-    <section className="bg-[#f1f1f2] py-2 md:py-6">
-      <div className="container mx-auto px-2 md:px-4">
-        <div className="flex flex-col lg:flex-row gap-2 md:gap-4 h-full lg:h-[420px]">
+const slides = [
+  {
+    title: ["Shopping", "Spree"],
+    subtitle: "Fresh Deals, Hot Prices",
+    discount: "-45%",
+    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop",
+  },
+  {
+    title: ["Campus", "Essentials"],
+    subtitle: "Everything for the semester",
+    discount: "-30%",
+    image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=2070&auto=format&fit=crop",
+  },
+  {
+    title: ["Fashion", "Week"],
+    subtitle: "Look sharp for less",
+    discount: "-60%",
+    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070&auto=format&fit=crop",
+  },
+  {
+    title: ["Tech", "Deals"],
+    subtitle: "Upgrade your gear",
+    discount: "-40%",
+    image: "https://images.unsplash.com/photo-1550009158-9ebf69173e03?q=80&w=2070&auto=format&fit=crop",
+  },
+];
 
-          {/* 1. Left Sidebar: Categories - Hidden on mobile, shown on large screens */}
-          <div className="hidden lg:flex flex-col w-64 bg-white rounded-none shadow-sm border border-border/40 overflow-hidden">
-            <div className="flex-1 py-2 overflow-y-auto custom-scrollbar">
-              {categories.map((cat, i) => (
+const SWIPE_THRESHOLD = 40;
+
+const HeroSection = () => {
+  const [index, setIndex] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+  const dragDeltaX = useRef(0);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const goTo = (i: number) => setIndex((i + slides.length) % slides.length);
+  const next = () => goTo(index + 1);
+  const prev = () => goTo(index - 1);
+
+  useEffect(() => {
+    if (isDragging) return;
+    const timer = setInterval(() => setIndex((i) => (i + 1) % slides.length), 6000);
+    return () => clearInterval(timer);
+  }, [isDragging]);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    touchStartX.current = e.clientX;
+    dragDeltaX.current = 0;
+    setIsDragging(true);
+  };
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (touchStartX.current == null) return;
+    dragDeltaX.current = e.clientX - touchStartX.current;
+    setDragOffset(dragDeltaX.current);
+  };
+  const endDrag = () => {
+    if (touchStartX.current != null) {
+      if (dragDeltaX.current > SWIPE_THRESHOLD) prev();
+      else if (dragDeltaX.current < -SWIPE_THRESHOLD) next();
+    }
+    touchStartX.current = null;
+    dragDeltaX.current = 0;
+    setDragOffset(0);
+    setIsDragging(false);
+  };
+
+  return (
+    <section className="bg-[#f1f1f2] pt-3 pb-2">
+      <div className="max-w-[1280px] mx-auto px-3">
+        <div className="flex gap-2 h-[380px]">
+
+          {/* ── LEFT: Category Sidebar ── */}
+          <div className="hidden lg:flex flex-col w-[230px] shrink-0 bg-white shadow-sm overflow-hidden">
+            {categories.map((cat, i) => {
+              const isLast = i === categories.length - 1;
+              return (
                 <Link
                   key={i}
-                  to={`/products?category=${cat.name}`}
-                  className="flex items-center justify-between px-4 py-2 hover:bg-muted/50 transition-colors group"
+                  to={`/products?category=${encodeURIComponent(cat.name)}`}
+                  className={`flex items-center gap-3.5 px-4 py-[11px] transition-colors group border-b border-gray-100 last:border-0
+                    ${isLast
+                      ? "text-[#FF5500] hover:bg-orange-50"
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                    }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <cat.icon className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
-                    <span className="text-sm text-foreground/80 group-hover:text-primary transition-colors">{cat.name}</span>
+                  <cat.icon
+                    className={`w-6 h-6 shrink-0 transition-colors
+                      ${isLast ? "text-[#FF5500]" : "text-gray-500 group-hover:text-gray-700"}`}
+                    strokeWidth={1.5}
+                  />
+                  <span className={`text-[13.5px] leading-tight flex-1
+                    ${isLast ? "font-bold text-[#FF5500]" : "font-medium"}`}>
+                    {cat.name}
+                  </span>
+                  <ChevronRight
+                    className={`w-4 h-4 shrink-0 transition-all opacity-0 group-hover:opacity-100
+                      ${isLast ? "text-[#FF5500]" : "text-gray-400"}`}
+                  />
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* ── CENTER: Hero Banner ── */}
+          <div
+            className="flex-1 relative overflow-hidden shadow-sm group min-h-[200px] select-none touch-pan-y cursor-grab active:cursor-grabbing"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={endDrag}
+            onPointerLeave={endDrag}
+            onPointerCancel={endDrag}
+          >
+            {/* Sliding strip: all slides sit side by side, the strip translates smoothly between them */}
+            <div
+              className="absolute inset-0 flex h-full"
+              style={{
+                width: `${slides.length * 100}%`,
+                transform: `translateX(calc(${-index * (100 / slides.length)}% + ${dragOffset}px))`,
+                transition: isDragging ? "none" : "transform 550ms cubic-bezier(0.22, 1, 0.36, 1)",
+              }}
+            >
+              {slides.map((s, i) => (
+                <div key={s.image} className="relative h-full shrink-0" style={{ width: `${100 / slides.length}%` }}>
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#FF5500]/90 via-[#FF5500]/60 to-transparent z-10" />
+                  <img
+                    src={s.image}
+                    alt={`${s.title.join(" ")} Promotion`}
+                    draggable={false}
+                    className={`absolute inset-0 w-full h-full object-cover ${i === index ? "animate-kenburns" : ""}`}
+                  />
+                  <div className="relative z-20 h-full flex flex-col justify-center px-8 md:px-12 py-8 space-y-3 pointer-events-none">
+                    <div>
+                      <h2 className="text-white text-4xl md:text-5xl font-black tracking-tight leading-tight uppercase drop-shadow-sm">
+                        {s.title[0]}<br />{s.title[1]}
+                      </h2>
+                      <p className="text-white/95 text-base md:text-lg font-semibold mt-2">
+                        {s.subtitle}
+                      </p>
+                    </div>
+                    <div className="bg-[#FF5500] border-2 border-white/30 inline-flex items-center px-3 py-1.5 w-fit">
+                      <span className="text-white font-black text-xl md:text-2xl tracking-tight">
+                        UP TO <span className="text-yellow-300">{s.discount}</span>
+                      </span>
+                    </div>
+                    <p className="text-white/80 text-xs font-medium">Limited time offer. T&Cs apply</p>
+                    <Link
+                      to="/products"
+                      className="mt-1 inline-flex items-center justify-center bg-white text-gray-900 font-black text-xs uppercase tracking-widest px-6 py-2.5 hover:bg-gray-100 transition-colors shadow-lg w-fit pointer-events-auto"
+                    >
+                      Shop Now
+                    </Link>
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-all" />
-                </Link>
+                </div>
+              ))}
+            </div>
+
+            {/* Prev / Next arrows */}
+            <button
+              onClick={prev}
+              aria-label="Previous slide"
+              className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 items-center justify-center bg-white/15 hover:bg-white/30 text-white transition-colors opacity-0 group-hover:opacity-100"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={next}
+              aria-label="Next slide"
+              className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 items-center justify-center bg-white/15 hover:bg-white/30 text-white transition-colors opacity-0 group-hover:opacity-100"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+
+            {/* Dots */}
+            <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-20">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => goTo(i)}
+                  aria-label={`Go to slide ${i + 1}`}
+                  className={`h-1.5 rounded-full transition-all ${i === index ? "bg-white w-4" : "bg-white/40 w-1.5"}`}
+                />
               ))}
             </div>
           </div>
 
-          {/* 2. Center: Main Banner Slider - Responsive height and text sizing */}
-          <div className="flex-1 relative rounded-none overflow-hidden shadow-sm group min-h-[250px] md:min-h-full">
-            <div className="absolute inset-0 bg-gradient-to-r from-orange-600/90 to-orange-400/40 z-10" />
-            <img
-              src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop"
-              alt="Promotion"
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-[10s] group-hover:scale-110"
-            />
-
-            <div className="relative z-20 h-full flex flex-col justify-center px-6 md:px-16 py-8 md:py-0 space-y-4 md:space-y-6">
-              <div className="space-y-1 md:space-y-2">
-                <h2 className="text-white text-3xl md:text-5xl lg:text-7xl font-black tracking-tighter leading-none md:leading-[0.9]">
-                  UNIMALL <br /> BRAND DAY
-                </h2>
-                <p className="text-white/90 text-sm md:text-xl lg:text-2xl font-bold tracking-tight">
-                  Up to <span className="text-yellow-300 font-black">40% OFF</span> on tech
-                </p>
-              </div>
-              <div className="pt-2 md:pt-4">
-                <Link to="/products">
-                  <Button className="h-10 md:h-12 px-8 md:px-10 bg-white text-black font-black text-xs md:text-sm uppercase tracking-widest rounded-none hover:bg-gray-100 transition-all shadow-xl">
-                    Shop Now
-                  </Button>
-                </Link>
-              </div>
-            </div>
-
-            {/* Pagination dots */}
-            <div className="absolute bottom-4 md:bottom-6 left-0 right-0 flex justify-center gap-1.5 md:gap-2 z-20">
-              {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-none ${i === 1 ? 'bg-white' : 'bg-white/40'}`} />
-              ))}
-            </div>
-          </div>
-
-          {/* 3. Right Side: Quick Links - Shown on large screens, stacks on very wide screens */}
-          <div className="hidden xl:flex flex-col w-64 gap-4">
-            <div className="bg-white p-4 rounded-none shadow-sm border border-border/40 flex flex-col gap-5">
-              <div className="flex items-center gap-3 group cursor-pointer">
-                <div className="w-10 h-10 rounded-none bg-primary/10 flex items-center justify-center group-hover:bg-primary transition-colors">
-                  <Phone className="w-5 h-5 text-primary group-hover:text-white" />
+          {/* ── RIGHT: Quick Links + Mini Banner ── */}
+          <div className="hidden xl:flex flex-col w-[200px] shrink-0 gap-2">
+            {/* Quick Links Card */}
+            <div className="bg-white shadow-sm p-3 flex flex-col divide-y divide-gray-100">
+              <div className="flex items-center gap-3 py-3 first:pt-0 group cursor-pointer hover:text-[#FF5500] transition-colors">
+                <div className="w-9 h-9 bg-green-50 rounded-full flex items-center justify-center shrink-0">
+                  <Phone className="w-4 h-4 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-muted-foreground uppercase leading-none mb-1">Call / WhatsApp</p>
-                  <p className="text-sm font-black">0302740642</p>
+                  <p className="text-[10px] font-bold text-gray-500 uppercase leading-none mb-0.5">Call / WhatsApp</p>
+                  <p className="text-xs font-black text-gray-900">0302740642</p>
                 </div>
               </div>
-
-              <Link to="/vendor" className="flex items-center gap-3 group">
-                <div className="w-10 h-10 rounded-none bg-primary/10 flex items-center justify-center group-hover:bg-primary transition-colors">
-                  <Store className="w-5 h-5 text-primary group-hover:text-white" />
+              <Link to="/vendor" className="flex items-center gap-3 py-3 group hover:text-[#FF5500] transition-colors">
+                <div className="w-9 h-9 bg-orange-50 rounded-full flex items-center justify-center shrink-0">
+                  <Store className="w-4 h-4 text-[#FF5500]" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-muted-foreground uppercase leading-none mb-1">Sell on Unimall</p>
-                  <p className="text-sm font-black">Make more money</p>
+                  <p className="text-[10px] font-bold text-gray-500 uppercase leading-none mb-0.5">Sell on Unimall</p>
+                  <p className="text-xs font-black text-gray-900">Make more money</p>
                 </div>
               </Link>
-
-              <Link to="/account/orders" className="flex items-center gap-3 group">
-                <div className="w-10 h-10 rounded-none bg-primary/10 flex items-center justify-center group-hover:bg-primary transition-colors">
-                  <Truck className="w-5 h-5 text-primary group-hover:text-white" />
+              <Link to="/account/orders" className="flex items-center gap-3 py-3 group hover:text-[#FF5500] transition-colors">
+                <div className="w-9 h-9 bg-blue-50 rounded-full flex items-center justify-center shrink-0">
+                  <Truck className="w-4 h-4 text-blue-500" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-muted-foreground uppercase leading-none mb-1">Track your order</p>
-                  <p className="text-sm font-black">Stay up to date</p>
+                  <p className="text-[10px] font-bold text-gray-500 uppercase leading-none mb-0.5">Track your order</p>
+                  <p className="text-xs font-black text-gray-900">Stay up to date</p>
                 </div>
               </Link>
             </div>
 
-            <div className="flex-1 bg-white rounded-none shadow-sm border border-border/40 overflow-hidden relative group">
+            {/* Mini Promo Banner */}
+            <div className="flex-1 bg-[#FF5500] shadow-sm overflow-hidden relative group">
               <img
-                src="https://images.unsplash.com/photo-1556911220-e15b29be8c8f?q=80&w=1000&auto=format&fit=crop"
+                src="https://images.unsplash.com/photo-1556911220-e15b29be8c8f?q=80&w=800&auto=format&fit=crop"
                 alt="Home Makeover"
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                className="absolute inset-0 w-full h-full object-cover opacity-40 transition-transform duration-700 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-primary/40 backdrop-blur-[2px] flex items-center justify-center">
-                <div className="text-center p-4">
-                  <h3 className="text-white text-xl lg:text-3xl font-black leading-none tracking-tighter uppercase mb-2">Home <br /> Makeover</h3>
-                  <div className="h-1 w-12 bg-white mx-auto" />
+              <div className="relative z-10 h-full flex flex-col items-center justify-center text-center p-3">
+                <h3 className="text-white text-lg font-black leading-tight uppercase tracking-tight">
+                  Shopping<br />Spree
+                </h3>
+                <div className="mt-2 bg-white/20 border border-white/30 px-2 py-1">
+                  <span className="text-white font-black text-sm">UP TO</span>
+                  <span className="text-yellow-300 font-black text-xl ml-1">-40%</span>
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Mobile Categories - Horizontal Scroll (Optional but good for UX) */}
-          <div className="lg:hidden flex overflow-x-auto gap-2 py-2 no-scrollbar px-2">
-            {categories.slice(0, 6).map((cat, i) => (
-              <Link
-                key={i}
-                to={`/products?category=${cat.name}`}
-                className="flex-shrink-0 flex flex-col items-center justify-center w-20 h-20 bg-white shadow-sm border border-border/20 rounded-none gap-2"
-              >
-                <cat.icon className="w-5 h-5 text-primary" />
-                <span className="text-[11px] font-bold text-center leading-none px-1">{cat.name.split(' ')[0]}</span>
-              </Link>
-            ))}
           </div>
 
         </div>
+
+        {/* ── Mobile Horizontal Category Chips ── */}
+        <div className="lg:hidden flex overflow-x-auto gap-2 py-2 no-scrollbar mt-2">
+          {categories.map((cat, i) => (
+            <Link
+              key={i}
+              to={`/products?category=${encodeURIComponent(cat.name)}`}
+              className="shrink-0 flex flex-col items-center justify-center w-[72px] h-[72px] bg-white shadow-sm gap-1.5 border border-gray-100 hover:border-[#FF5500]/30 transition-colors"
+            >
+              <cat.icon className="w-5 h-5 text-[#FF5500]" />
+              <span className="text-[10px] font-bold text-center leading-tight px-1 text-gray-700">{cat.name.split(" ")[0]}</span>
+            </Link>
+          ))}
+        </div>
+
       </div>
     </section>
   );

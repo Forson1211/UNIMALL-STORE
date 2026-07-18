@@ -77,6 +77,13 @@
   font-family: 'Sora', sans-serif;
 }
 
+/* Reserve space for the fixed mobile bottom tab bar */
+@media (max-width: 1023.98px) {
+  body.has-bottom-tabbar {
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+  }
+}
+
 .font-kanit {
   font-family: 'Kanit', sans-serif;
 }
@@ -235,7 +242,8 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply text-foreground font-sans antialiased;
+    background-color: #f1f1f2;
     font-family: var(--font-family) !important;
     overflow-x: hidden;
   }
@@ -363,3 +371,47 @@
     animation: none !important;
   }
 }
+
+/* ── Jumia-style page layout ── */
+body {
+  background-color: #f1f1f2 !important;
+}
+
+/* Box and center everything at 1280px on desktop */
+@media (min-width: 1280px) {
+  #root {
+    max-width: 1280px;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: #f1f1f2;
+    min-height: 100vh;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.04), 0 4px 24px rgba(0,0,0,0.06);
+  }
+
+  /* Override desktop centering when inside admin/vendor dashboards */
+  #root.full-screen-dashboard {
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Sticky header stays within the boxed container */
+  header.sticky-header {
+    width: 100%;
+  }
+}
+
+/* Break child element out of parent container width constraints to span 100vw */
+.full-width-breakout {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+}
+
+/* Hide scrollbar but allow scroll */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
