@@ -43,6 +43,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import SiteCustomization from "./pages/admin/SiteCustomization";
 import ContentManagement from "./pages/admin/ContentManagement";
 import AdminTransactions from "./pages/admin/AdminTransactions";
+import AdminPayouts from "./pages/admin/AdminPayouts";
 import AdminReviews from "./pages/admin/AdminReviews";
 import AdminCoupons from "./pages/admin/AdminCoupons";
 import AdminDeals from "./pages/admin/AdminDeals";
@@ -181,6 +182,11 @@ const App = () => (
                     <Route path="/admin/transactions" element={
                       <ProtectedRoute allowedRoles={["admin", "order_manager"]}>
                         <AdminTransactions />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/payouts" element={
+                      <ProtectedRoute allowedRoles={["admin", "order_manager"]}>
+                        <AdminPayouts />
                       </ProtectedRoute>
                     } />
                     <Route path="/admin/reviews" element={

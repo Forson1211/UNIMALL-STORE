@@ -37,6 +37,7 @@ import {
   LifeBuoy,
   Scroll,
   Lock,
+  Banknote,
 } from "lucide-react";
 import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -76,14 +77,20 @@ const adminMenuItems = [
     icon: ShoppingCart,
     allowedRoles: ["admin", "order_manager"] 
   },
-  { 
-    title: "Transactions", 
-    url: "/admin/transactions", 
+  {
+    title: "Transactions",
+    url: "/admin/transactions",
     icon: CreditCard,
-    allowedRoles: ["admin", "order_manager"] 
+    allowedRoles: ["admin", "order_manager"]
   },
-  { 
-    title: "Reviews", 
+  {
+    title: "Payouts",
+    url: "/admin/payouts",
+    icon: Banknote,
+    allowedRoles: ["admin", "order_manager"]
+  },
+  {
+    title: "Reviews",
     url: "/admin/reviews", 
     icon: Star,
     allowedRoles: ["admin", "moderator", "content_manager"] 

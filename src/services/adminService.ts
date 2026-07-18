@@ -47,16 +47,25 @@ export const adminService = {
 
     // --- Payouts ---
     async getPayoutRequests() {
-        const { data, error } = await (supabase as any)
+        const { data: payouts, error } = await (supabase as any)
             .from('payout_requests')
-            .select(`
-                *,
-                vendor:profiles!payout_requests_vendor_id_fkey(store_name, full_name)
-            `)
+            .select('*')
             .order('requested_at', { ascending: false });
 
         if (error) throw error;
-        return data;
+        if (!payouts || payouts.length === 0) return [];
+
+        const vendorIds = [...new Set(payouts.map((p: any) => p.vendor_id))];
+        const { data: vendorProfiles } = await supabase
+            .from('profiles')
+            .select('user_id, store_name, full_name')
+            .in('user_id', vendorIds);
+
+        const profileMap = new Map((vendorProfiles || []).map((p: any) => [p.user_id, p]));
+        return payouts.map((p: any) => ({
+            ...p,
+            vendor: profileMap.get(p.vendor_id) || null,
+        }));
     },
 
     async processPayoutRequest(payoutId: string, newStatus: 'approved' | 'paid' | 'rejected') {
