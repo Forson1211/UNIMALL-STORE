@@ -379,6 +379,7 @@ body {
 
 @media (min-width: 1280px) {
   #root {
+    position: relative;
     max-width: 1280px;
     margin-left: auto;
     margin-right: auto;
