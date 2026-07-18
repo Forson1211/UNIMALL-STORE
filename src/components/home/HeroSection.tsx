@@ -78,7 +78,7 @@ const HeroSection = () => {
         <div className="flex gap-2 h-[380px]">
 
           {/* ── LEFT: Category Sidebar ── */}
-          <div className="hidden lg:block w-[230px] shrink-0">
+          <div className="hidden lg:block w-[230px] shrink-0 h-full">
             <div className="flex flex-col w-full h-full bg-white shadow-sm overflow-hidden py-0.5 justify-between">
               {categories.map((cat) => (
                 <Link

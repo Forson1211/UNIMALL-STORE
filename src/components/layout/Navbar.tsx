@@ -201,7 +201,7 @@ const Navbar = () => {
         {/* ── TIER 3: Quick Navigation Bar ── */}
         <div className="hidden md:block border-t border-gray-100 bg-white">
           <div className="max-w-[1280px] mx-auto px-4">
-            <div className="flex items-center h-10 overflow-x-auto no-scrollbar">
+            <div className="flex items-stretch h-10 overflow-x-auto no-scrollbar">
               {/* Select Campus dropdown trigger */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
