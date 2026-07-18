@@ -58,7 +58,7 @@ const Navbar = () => {
     <>
       {/* ── TIER 1: Top Announcement Bar ── */}
       <div className="hidden md:block bg-[#FF5500] text-white text-xs">
-        <div className="max-w-[1280px] mx-auto px-4 flex items-center justify-between h-8">
+        <div className="max-w-[1280px] mx-auto px-4 xl:px-0 flex items-center justify-between h-8">
           <Link to="/vendor" className="flex items-center gap-1.5 font-bold hover:underline">
             <Store className="w-3.5 h-3.5" />
             Sell on {siteName || "Unimall"}
@@ -73,7 +73,7 @@ const Navbar = () => {
 
       {/* ── TIER 2: Main Header ── */}
       <header className={`sticky-header sticky top-0 z-50 w-full transition-all duration-300 ${scrolled ? "shadow-md" : ""} bg-white border-b border-gray-200`}>
-        <div className="max-w-[1280px] mx-auto px-4">
+        <div className="max-w-[1280px] mx-auto px-4 xl:px-0">
           <div className="flex items-center gap-4 h-[68px]">
 
             {/* Logo */}

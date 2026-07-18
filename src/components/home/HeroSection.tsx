@@ -74,7 +74,7 @@ const HeroSection = () => {
 
   return (
     <section className="bg-[#f1f1f2] pt-3 pb-2">
-      <div className="max-w-[1280px] mx-auto px-4">
+      <div className="max-w-[1280px] mx-auto px-4 xl:px-0">
         <div className="flex gap-2 h-[380px]">
 
           {/* ── LEFT: Category Sidebar ── */}

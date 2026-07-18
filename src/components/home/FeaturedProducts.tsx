@@ -148,7 +148,7 @@ const FeaturedProducts = () => {
 
   return (
     <section className="py-3 bg-[#f1f1f2]">
-      <div className="max-w-[1280px] mx-auto px-4 space-y-3">
+      <div className="max-w-[1280px] mx-auto px-4 xl:px-0 space-y-3">
 
         {/* ── DEALS OF THE DAY ── */}
         {deals.length > 0 && (

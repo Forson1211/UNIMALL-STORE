@@ -10,7 +10,7 @@ const QuickNav = () => {
   const [searchParams] = useSearchParams();
 
   return (
-    <div className="hidden md:block max-w-[1280px] mx-auto px-4 mt-2">
+    <div className="hidden md:block max-w-[1280px] mx-auto px-4 xl:px-0 mt-2">
       <div className="bg-white shadow-sm border border-gray-100 flex items-stretch h-10 overflow-x-auto no-scrollbar">
         {/* Select Campus dropdown trigger */}
         <DropdownMenu>
