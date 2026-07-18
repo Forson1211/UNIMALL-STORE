@@ -420,8 +420,8 @@ body {
 
 /* Custom premium transitions */
 .ease-premium-slide {
-  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
-  transition-duration: 450ms !important;
-  animation-duration: 450ms !important;
+  transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1) !important;
+  animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1) !important;
+  transition-duration: 500ms !important;
+  animation-duration: 500ms !important;
 }
