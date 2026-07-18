@@ -17,6 +17,19 @@ interface Profile {
   store_name: string | null;
   store_description: string | null;
   campus?: string | null;
+  banner_url?: string | null;
+  store_category?: string | null;
+  verified?: boolean | null;
+  rating?: number | null;
+  notification_preferences?: {
+    new_order?: boolean;
+    low_stock?: boolean;
+    customer_messages?: boolean;
+    weekly_report?: boolean;
+    product_reviews?: boolean;
+    two_factor?: boolean;
+    login_notifications?: boolean;
+  } | null;
 }
 
 interface AuthContextType {

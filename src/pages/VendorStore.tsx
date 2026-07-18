@@ -143,7 +143,7 @@ const VendorStore = () => {
     p.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const banner = vendor.banner_url || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1200";
+  const banner = vendor.banner_url as string | undefined;
 
   return (
     <div className="min-h-screen bg-[#f1f1f2]">
@@ -163,7 +163,11 @@ const VendorStore = () => {
 
           {/* Vendor Cover Banner */}
           <div className="relative h-48 md:h-64 bg-gray-200 overflow-hidden shadow-sm border border-gray-100 mb-4">
-            <img src={banner} alt="" className="w-full h-full object-cover" />
+            {banner ? (
+              <img src={banner} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-[#FF5500] to-[#FF007F]" />
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent" />
             
             {/* Overlay Info Block */}
@@ -181,7 +185,7 @@ const VendorStore = () => {
                 <div>
                   <div className="flex items-center gap-2">
                     <h1 className="text-xl md:text-3xl font-black">{vendor.store_name || vendor.full_name}</h1>
-                    {(vendor.verified || vendor.verified !== false) && (
+                    {vendor.verified === true && (
                       <ShieldCheck className="w-5 h-5 text-blue-400 shrink-0" />
                     )}
                   </div>
@@ -194,7 +198,7 @@ const VendorStore = () => {
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1 bg-white/20 border border-white/25 px-2.5 py-1 text-sm font-bold">
                   <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span>{vendor.rating || "4.8"}</span>
+                  <span>{vendor.rating != null ? Number(vendor.rating).toFixed(1) : "New"}</span>
                 </div>
                 <button 
                   onClick={() => setIsFollowing(!isFollowing)}
@@ -227,7 +231,7 @@ const VendorStore = () => {
                     <Phone className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-[10px] font-bold text-gray-400 leading-none">PHONE NUMBER</p>
-                      <p className="text-xs font-bold text-gray-800 mt-1">{vendor.phone || "0302740642"}</p>
+                      <p className="text-xs font-bold text-gray-800 mt-1">{vendor.phone || "Not provided"}</p>
                     </div>
                   </div>
                   <div className="flex gap-2.5">
@@ -240,8 +244,10 @@ const VendorStore = () => {
                   <div className="flex gap-2.5">
                     <Star className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-[10px] font-bold text-gray-400 leading-none">SELLER PERFORMANCE</p>
-                      <p className="text-xs font-bold text-green-600 mt-1">Excellent (96% Score)</p>
+                      <p className="text-[10px] font-bold text-gray-400 leading-none">MEMBER SINCE</p>
+                      <p className="text-xs font-bold text-gray-800 mt-1">
+                        {vendor.created_at ? new Date(vendor.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "N/A"}
+                      </p>
                     </div>
                   </div>
                 </div>

@@ -36,6 +36,28 @@ const VendorDashboard = () => {
     enabled: !!user,
   });
 
+  const { data: weeklySales = [] } = useQuery({
+    queryKey: ["vendor-weekly-sales", user?.id],
+    queryFn: () => vendorService.getWeeklySales(user!.id),
+    enabled: !!user,
+  });
+
+  const salesChartData = (() => {
+    const weeks: { name: string; sales: number; orders: number }[] = [];
+    for (let i = 3; i >= 0; i--) {
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay() - i * 7);
+      weekStart.setHours(0, 0, 0, 0);
+      const match = weeklySales.find((w) => new Date(w.week_start).toDateString() === weekStart.toDateString());
+      weeks.push({
+        name: `Week ${4 - i}`,
+        sales: match?.revenue || 0,
+        orders: match?.orders || 0,
+      });
+    }
+    return weeks;
+  })();
+
   const lowStockProducts = products.filter((p: any) => p.stock < 10);
 
   if (statsLoading || productsLoading || ordersLoading) {
@@ -84,14 +106,9 @@ const VendorDashboard = () => {
 
       {/* Analytics Group */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <SalesChart 
-          title="Sales Performance"
-          data={[
-            { name: "Week 1", sales: (stats?.total_revenue || 0) * 0.2, orders: (stats?.total_orders || 0) * 0.2 },
-            { name: "Week 2", sales: (stats?.total_revenue || 0) * 0.35, orders: (stats?.total_orders || 0) * 0.3 },
-            { name: "Week 3", sales: (stats?.total_revenue || 0) * 0.15, orders: (stats?.total_orders || 0) * 0.1 },
-            { name: "Week 4", sales: (stats?.total_revenue || 0) * 0.3, orders: (stats?.total_orders || 0) * 0.4 },
-          ]} 
+        <SalesChart
+          title="Sales Performance (Last 4 Weeks)"
+          data={salesChartData}
         />
         <CategoryChart 
           title="Product Distribution"

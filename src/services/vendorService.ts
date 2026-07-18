@@ -44,6 +44,21 @@ export const vendorService = {
         return data;
     },
 
+    async getWeeklySales(vendorId: string) {
+        const { data, error } = await (supabase
+            .from("vendor_weekly_sales" as any)
+            .select("*")
+            .eq("vendor_id", vendorId)
+            .order("week_start", { ascending: true }) as any);
+
+        if (error) {
+            // View may not exist yet if the migration hasn't been run
+            console.error("Error fetching weekly sales:", error);
+            return [];
+        }
+        return data as { week_start: string; revenue: number; orders: number }[];
+    },
+
     async createProduct(product: any) {
         const { data, error } = await supabase
             .from("products")

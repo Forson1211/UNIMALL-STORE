@@ -27,16 +27,23 @@ interface Coupon {
     created_by: string;
 }
 
+const emptyForm = {
+    code: "",
+    discount_type: "percentage" as "percentage" | "fixed_amount",
+    discount_value: "",
+    usage_limit: "",
+    start_date: "",
+    end_date: "",
+    status: "active" as Coupon["status"],
+};
+
 const VendorCoupons = () => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const [isAddOpen, setIsAddOpen] = useState(false);
-    const [formData, setFormData] = useState({
-        code: "",
-        discount_type: "percentage" as "percentage" | "fixed_amount",
-        discount_value: "",
-        usage_limit: "",
-    });
+    const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
+    const [formData, setFormData] = useState(emptyForm);
+    const [editFormData, setEditFormData] = useState(emptyForm);
 
     const { data: coupons, isLoading } = useQuery({
         queryKey: ['vendor-coupons', user?.id],
@@ -47,7 +54,7 @@ const VendorCoupons = () => {
                 .select('*')
                 .eq('created_by', user.id)
                 .order('created_at', { ascending: false });
-            
+
             if (error) throw error;
             return data as Coupon[];
         },
@@ -66,7 +73,22 @@ const VendorCoupons = () => {
             queryClient.invalidateQueries({ queryKey: ['vendor-coupons'] });
             toast.success("Coupon created successfully!");
             setIsAddOpen(false);
-            setFormData({ code: "", discount_type: "percentage", discount_value: "", usage_limit: "" });
+            setFormData(emptyForm);
+        },
+        onError: (error: any) => {
+            toast.error(`Error: ${error.message}`);
+        }
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
+            const { error } = await (supabase as any).from('coupons').update(updates).eq('id', id);
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['vendor-coupons'] });
+            toast.success("Coupon updated successfully!");
+            setEditingCoupon(null);
         },
         onError: (error: any) => {
             toast.error(`Error: ${error.message}`);
@@ -90,6 +112,19 @@ const VendorCoupons = () => {
     const handleCopyCode = (code: string) => {
         navigator.clipboard.writeText(code);
         toast.success("Coupon code copied!");
+    };
+
+    const openEdit = (coupon: Coupon) => {
+        setEditFormData({
+            code: coupon.code,
+            discount_type: coupon.discount_type,
+            discount_value: String(coupon.discount_value),
+            usage_limit: coupon.usage_limit ? String(coupon.usage_limit) : "",
+            start_date: coupon.start_date ? coupon.start_date.slice(0, 10) : "",
+            end_date: coupon.end_date ? coupon.end_date.slice(0, 10) : "",
+            status: coupon.status,
+        });
+        setEditingCoupon(coupon);
     };
 
     return (
@@ -157,6 +192,9 @@ const VendorCoupons = () => {
                                     <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => handleCopyCode(coupon.code)}>
                                         <Copy className="h-4 w-4" />
                                     </Button>
+                                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => openEdit(coupon)}>
+                                        <Edit className="h-4 w-4" />
+                                    </Button>
                                     <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => deleteMutation.mutate(coupon.id)}>
                                         <Trash2 className="h-4 w-4 text-destructive" />
                                     </Button>
@@ -176,11 +214,11 @@ const VendorCoupons = () => {
                     <div className="grid gap-4 py-4">
                         <div className="space-y-2">
                             <Label htmlFor="code">Coupon Code (e.g. SUMMER20)</Label>
-                            <Input 
-                                id="code" 
-                                value={formData.code} 
+                            <Input
+                                id="code"
+                                value={formData.code}
                                 onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
-                                placeholder="SAVE10" 
+                                placeholder="SAVE10"
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -196,23 +234,54 @@ const VendorCoupons = () => {
                             </div>
                             <div className="space-y-2">
                                 <Label>Value</Label>
-                                <Input 
-                                    type="number" 
-                                    value={formData.discount_value} 
+                                <Input
+                                    type="number"
+                                    value={formData.discount_value}
                                     onChange={(e) => setFormData({...formData, discount_value: e.target.value})}
-                                    placeholder="10" 
+                                    placeholder="10"
                                 />
                             </div>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="limit">Usage Limit (Leave empty for unlimited)</Label>
-                            <Input 
-                                id="limit" 
-                                type="number" 
-                                value={formData.usage_limit} 
+                            <Input
+                                id="limit"
+                                type="number"
+                                value={formData.usage_limit}
                                 onChange={(e) => setFormData({...formData, usage_limit: e.target.value})}
-                                placeholder="100" 
+                                placeholder="100"
                             />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="start_date">Start Date</Label>
+                                <Input
+                                    id="start_date"
+                                    type="date"
+                                    value={formData.start_date}
+                                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="end_date">End Date (Leave empty for no expiry)</Label>
+                                <Input
+                                    id="end_date"
+                                    type="date"
+                                    value={formData.end_date}
+                                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Status</Label>
+                            <Select value={formData.status} onValueChange={(val: Coupon["status"]) => setFormData({ ...formData, status: val })}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="active">Active</SelectItem>
+                                    <SelectItem value="disabled">Disabled</SelectItem>
+                                    <SelectItem value="expired">Expired</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
                     <DialogFooter>
@@ -221,9 +290,112 @@ const VendorCoupons = () => {
                             code: formData.code,
                             discount_type: formData.discount_type,
                             discount_value: parseFloat(formData.discount_value),
-                            usage_limit: formData.usage_limit ? parseInt(formData.usage_limit) : null
+                            usage_limit: formData.usage_limit ? parseInt(formData.usage_limit) : null,
+                            start_date: formData.start_date || new Date().toISOString(),
+                            end_date: formData.end_date || null,
+                            status: formData.status,
                         })}>
                             Create Coupon
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Coupon Dialog */}
+            <Dialog open={!!editingCoupon} onOpenChange={(open) => !open && setEditingCoupon(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Coupon</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="edit_code">Coupon Code</Label>
+                            <Input
+                                id="edit_code"
+                                value={editFormData.code}
+                                onChange={(e) => setEditFormData({ ...editFormData, code: e.target.value.toUpperCase() })}
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Type</Label>
+                                <Select value={editFormData.discount_type} onValueChange={(val: "percentage" | "fixed_amount") => setEditFormData({ ...editFormData, discount_type: val })}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="percentage">Percentage (%)</SelectItem>
+                                        <SelectItem value="fixed_amount">Fixed Amount (GH₵)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Value</Label>
+                                <Input
+                                    type="number"
+                                    value={editFormData.discount_value}
+                                    onChange={(e) => setEditFormData({ ...editFormData, discount_value: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="edit_limit">Usage Limit</Label>
+                            <Input
+                                id="edit_limit"
+                                type="number"
+                                value={editFormData.usage_limit}
+                                onChange={(e) => setEditFormData({ ...editFormData, usage_limit: e.target.value })}
+                                placeholder="Leave empty for unlimited"
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="edit_start_date">Start Date</Label>
+                                <Input
+                                    id="edit_start_date"
+                                    type="date"
+                                    value={editFormData.start_date}
+                                    onChange={(e) => setEditFormData({ ...editFormData, start_date: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="edit_end_date">End Date</Label>
+                                <Input
+                                    id="edit_end_date"
+                                    type="date"
+                                    value={editFormData.end_date}
+                                    onChange={(e) => setEditFormData({ ...editFormData, end_date: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Status</Label>
+                            <Select value={editFormData.status} onValueChange={(val: Coupon["status"]) => setEditFormData({ ...editFormData, status: val })}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="active">Active</SelectItem>
+                                    <SelectItem value="disabled">Disabled</SelectItem>
+                                    <SelectItem value="expired">Expired</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setEditingCoupon(null)}>Cancel</Button>
+                        <Button
+                            disabled={updateMutation.isPending}
+                            onClick={() => editingCoupon && updateMutation.mutate({
+                                id: editingCoupon.id,
+                                updates: {
+                                    code: editFormData.code,
+                                    discount_type: editFormData.discount_type,
+                                    discount_value: parseFloat(editFormData.discount_value),
+                                    usage_limit: editFormData.usage_limit ? parseInt(editFormData.usage_limit) : null,
+                                    start_date: editFormData.start_date || editingCoupon.start_date,
+                                    end_date: editFormData.end_date || null,
+                                    status: editFormData.status,
+                                }
+                            })}
+                        >
+                            {updateMutation.isPending ? "Saving..." : "Save Changes"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
