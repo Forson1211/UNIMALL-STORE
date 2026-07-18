@@ -43,11 +43,11 @@ const AdminNotifications = () => {
     });
 
     // Fetch profiles for target selector
-    const { data: profiles = [] } = useQuery({
+    const { data: profiles = [] } = useQuery<any[]>({
         queryKey: ['profiles-list-for-notifications'],
         queryFn: async () => {
-            const { data, error } = await supabase
-                .from('profiles')
+            const { data, error } = await (supabase as any)
+                .from('admin_users_view')
                 .select('user_id, email, full_name');
             if (error) throw error;
             return data || [];
@@ -91,7 +91,7 @@ const AdminNotifications = () => {
                 read: false
             }));
 
-            const { error: insertError } = await supabase
+            const { error: insertError } = await (supabase as any)
                 .from('notifications')
                 .insert(inserts);
 
@@ -113,7 +113,7 @@ const AdminNotifications = () => {
     // Delete Notification Mutation
     const deleteNotificationMutation = useMutation({
         mutationFn: async (id: string) => {
-            const { error } = await supabase
+            const { error } = await (supabase as any)
                 .from('notifications')
                 .delete()
                 .eq('id', id);
