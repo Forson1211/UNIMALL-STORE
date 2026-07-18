@@ -28,7 +28,7 @@ const categories = [
   },
   {
     icon: Headphones,
-    name: "Accessories",
+    name: "Phones & Accessories",
     count: "290+ items",
     img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=400&fit=crop",
   },
@@ -40,7 +40,7 @@ const categories = [
   },
   {
     icon: Palette,
-    name: "Art & Crafts",
+    name: "Others",
     count: "95+ items",
     img: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600&h=400&fit=crop",
   },
@@ -84,7 +84,7 @@ const CategoriesSection = () => {
           {categories.map((category, index) => (
             <Link
               key={index}
-              to={`/products?category=${encodeURIComponent(category.name.toLowerCase())}`}
+              to={`/products?category=${encodeURIComponent(category.name)}`}
               className="group relative aspect-square rounded-none overflow-hidden border border-border/10 hover:shadow-2xl transition-all duration-700"
             >
               {/* Image with overlay */}

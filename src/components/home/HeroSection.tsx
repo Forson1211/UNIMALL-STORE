@@ -1,25 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  Smartphone, Monitor, Shirt, Gamepad2, Baby, Dumbbell, Laptop,
-  Home as HomeIcon, Utensils, Camera, ShoppingBag, ChevronRight, ChevronLeft,
-  Headphones, Stethoscope, Phone, Store, Truck
-} from "lucide-react";
+import { ChevronRight, ChevronLeft, Phone, Store, Truck } from "lucide-react";
+import { PRODUCT_CATEGORIES } from "@/lib/categories";
 
-const categories = [
-  { name: "Supermarket", icon: Utensils },
-  { name: "Phones & Tablets", icon: Smartphone },
-  { name: "Health & Beauty", icon: Stethoscope },
-  { name: "Home & Office", icon: HomeIcon },
-  { name: "Appliances", icon: Headphones },
-  { name: "Electronics", icon: Camera },
-  { name: "Computing", icon: Laptop },
-  { name: "Fashion", icon: Shirt },
-  { name: "Sporting Goods", icon: Dumbbell },
-  { name: "Baby Products", icon: Baby },
-  { name: "Gaming", icon: Gamepad2 },
-  { name: "Other categories", icon: ShoppingBag },
-];
+const categories = PRODUCT_CATEGORIES.map((cat) => ({ name: cat.label, icon: cat.icon }));
 
 const slides = [
   {

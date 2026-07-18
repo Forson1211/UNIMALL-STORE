@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useSearch } from "@/contexts/SearchContext";
+import { PRODUCT_CATEGORIES } from "@/lib/categories";
 
 const trendingSearches = [
   "Wireless Earbuds",
@@ -19,15 +20,7 @@ const trendingSearches = [
   "Yoga Mat",
 ];
 
-const categories = [
-  "All",
-  "Electronics",
-  "Books",
-  "Fashion",
-  "Food",
-  "Sports",
-  "Services",
-];
+const categories = ["All", ...PRODUCT_CATEGORIES.map((c) => c.label)];
 
 export function SearchDialog() {
   const { isSearchOpen, closeSearch, performSearch } = useSearch();

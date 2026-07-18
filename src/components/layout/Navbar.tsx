@@ -224,14 +224,14 @@ const Navbar = () => {
 
               {/* Distinct quick-links — NOT categories */}
               {[
-                { label: "⚡ Flash Sales",     path: "/products",          highlight: true  },
-                { label: "Official Stores",     path: "/vendors",           highlight: false },
-                { label: "New Arrivals",        path: "/products?sort=new", highlight: false },
-                { label: "Top Deals",           path: "/products?sort=top", highlight: false },
-                { label: "Vendors",             path: "/vendors",           highlight: false },
-                { label: "News & Blog",         path: "/news",              highlight: false },
-                { label: "Sell on Unimall",     path: "/vendor",            highlight: false },
-                { label: "Track My Order",      path: "/account/orders",    highlight: false },
+                { label: "⚡ Flash Sales",     path: "/products#featured-products", highlight: true  },
+                { label: "New Arrivals",        path: "/products#just-arrived",      highlight: false },
+                { label: "Vendors",             path: "/vendors",                    highlight: false },
+                { label: "How It Works",        path: "/how-it-works",               highlight: false },
+                { label: "News & Blog",         path: "/news",                       highlight: false },
+                { label: "About Us",            path: "/about",                      highlight: false },
+                { label: "Sell on Unimall",     path: "/vendor",                     highlight: false },
+                { label: "Track My Order",      path: "/account/orders",             highlight: false },
               ].map((link) => (
                 <Link
                   key={link.label}
