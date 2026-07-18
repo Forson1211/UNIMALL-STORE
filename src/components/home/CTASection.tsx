@@ -76,6 +76,18 @@ const UpsaLogo = () => (
   </svg>
 );
 
+const PentecostLogo = () => (
+  <svg className="w-auto h-8 text-foreground/20 hover:text-[#0033aa] dark:hover:text-[#3388ff] transition-all duration-300 transform hover:scale-105 cursor-default shrink-0" viewBox="0 0 160 40">
+    <g transform="translate(5, 5)">
+      <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2.5" />
+      <path d="M 12,5 Q 16,10 12,18 Q 8,10 12,5 Z" fill="currentColor" />
+      <path d="M 12,9 Q 14,12 12,17 Q 10,12 12,9 Z" fill="white" />
+    </g>
+    <text x="40" y="24" fontFamily="sans-serif" fontSize="13" fontWeight="900" letterSpacing="1.5" fill="currentColor">PENTECOST</text>
+    <text x="40" y="34" fontFamily="sans-serif" fontSize="8" fontWeight="600" letterSpacing="1" opacity="0.6" fill="currentColor">UNIVERSITY</text>
+  </svg>
+);
+
 const CTASection = () => {
   const { user, role } = useAuth();
 
@@ -157,6 +169,7 @@ const CTASection = () => {
                   <UccLogo />
                   <GimpaLogo />
                   <UpsaLogo />
+                  <PentecostLogo />
                 </div>
                 {/* Loop 2 (Duplicate for infinite seamless scroll) */}
                 <div className="flex items-center gap-16 shrink-0" aria-hidden="true">
@@ -166,6 +179,7 @@ const CTASection = () => {
                   <UccLogo />
                   <GimpaLogo />
                   <UpsaLogo />
+                  <PentecostLogo />
                 </div>
               </div>
             </div>
