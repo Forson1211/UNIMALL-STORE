@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { useTheme } from "@/components/ThemeProvider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,13 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
@@ -32,9 +25,41 @@ import {
     Sparkles,
     Moon,
     Sun,
-    Monitor
+    Monitor,
+    ChevronDown,
+    Check
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
+const FONT_OPTIONS = [
+    { value: "'Barlow Condensed', sans-serif", label: "Barlow Condensed (MCB)" },
+    { value: "Arial, sans-serif", label: "Arial" },
+    { value: "'Arial Narrow', Arial, sans-serif", label: "Arial Narrow" },
+    { value: "Helvetica, Arial, sans-serif", label: "Helvetica" },
+    { value: "'Inter', sans-serif", label: "Inter" },
+    { value: "'Roboto', sans-serif", label: "Roboto" },
+    { value: "'Open Sans', sans-serif", label: "Open Sans" },
+    { value: "'Lato', sans-serif", label: "Lato" },
+    { value: "'Poppins', sans-serif", label: "Poppins" },
+    { value: "'Montserrat', sans-serif", label: "Montserrat" },
+    { value: "'Plus Jakarta Sans', sans-serif", label: "Plus Jakarta Sans" },
+    { value: "'Outfit', sans-serif", label: "Outfit" },
+    { value: "'Lexend', sans-serif", label: "Lexend" },
+    { value: "'Space Grotesk', sans-serif", label: "Space Grotesk" },
+    { value: "'Bebas Neue', cursive", label: "Bebas Neue" },
+    { value: "'Raleway', sans-serif", label: "Raleway" },
+    { value: "'Playfair Display', serif", label: "Playfair Display" },
+    { value: "'Ubuntu', sans-serif", label: "Ubuntu" },
+    { value: "'Merriweather', serif", label: "Merriweather" },
+    { value: "'Oswald', sans-serif", label: "Oswald" },
+    { value: "'Nunito', sans-serif", label: "Nunito" },
+    { value: "'Sora', sans-serif", label: "Sora" },
+    { value: "'Kanit', sans-serif", label: "Kanit" },
+    { value: "'Syne', sans-serif", label: "Syne" },
+    { value: "'DM Sans', sans-serif", label: "DM Sans" },
+    { value: "'Cormorant Garamond', serif", label: "Cormorant Garamond" },
+    { value: "'Manrope', sans-serif", label: "Manrope" },
+];
 
 export default function SiteCustomization() {
     const {
@@ -49,6 +74,18 @@ export default function SiteCustomization() {
     const { setTheme } = useTheme();
     const [isSaving, setIsSaving] = useState(false);
     const [previewMode, setPreviewMode] = useState(false);
+    const [isFontDropdownOpen, setIsFontDropdownOpen] = useState(false);
+    const fontDropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (fontDropdownRef.current && !fontDropdownRef.current.contains(event.target as Node)) {
+                setIsFontDropdownOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     // Branding State
     const [siteName, setSiteName] = useState("");
@@ -753,92 +790,45 @@ export default function SiteCustomization() {
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="grid gap-6 md:grid-cols-2">
-                                    <div className="space-y-2">
+                                    <div className="space-y-2 relative" ref={fontDropdownRef}>
                                         <Label htmlFor="fontFamily">Font Family</Label>
-                                        <Select
-                                            value={fontFamily}
-                                            onValueChange={(value) => {
-                                                console.log("Font changed to:", value);
-                                                setFontFamily(value);
-                                                // Immediately update preview
-                                                updatePreviewSettings({ fontFamily: value });
-                                            }}
+                                        <button
+                                            id="fontFamily"
+                                            type="button"
+                                            onClick={() => setIsFontDropdownOpen(!isFontDropdownOpen)}
+                                            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                            style={{ fontFamily }}
                                         >
-                                            <SelectTrigger id="fontFamily" className="w-full" style={{ fontFamily }}>
-                                                <SelectValue placeholder="Select font" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="'Inter', sans-serif">
-                                                    <span style={{ fontFamily: "'Inter', sans-serif" }} className="font-inter">Inter</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Roboto', sans-serif">
-                                                    <span style={{ fontFamily: "'Roboto', sans-serif" }} className="font-roboto">Roboto</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Open Sans', sans-serif">
-                                                    <span style={{ fontFamily: "'Open Sans', sans-serif" }} className="font-open-sans">Open Sans</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Poppins', sans-serif">
-                                                    <span style={{ fontFamily: "'Poppins', sans-serif" }} className="font-poppins">Poppins</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Montserrat', sans-serif">
-                                                    <span style={{ fontFamily: "'Montserrat', sans-serif" }} className="font-montserrat">Montserrat</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Plus Jakarta Sans', sans-serif">
-                                                    <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }} className="font-jakarta">Plus Jakarta Sans</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Outfit', sans-serif">
-                                                    <span style={{ fontFamily: "'Outfit', sans-serif" }} className="font-outfit">Outfit</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Lexend', sans-serif">
-                                                    <span style={{ fontFamily: "'Lexend', sans-serif" }} className="font-lexend">Lexend</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Space Grotesk', sans-serif">
-                                                    <span style={{ fontFamily: "'Space Grotesk', sans-serif" }} className="font-space">Space Grotesk</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Bebas Neue', cursive">
-                                                    <span style={{ fontFamily: "'Bebas Neue', cursive" }} className="font-bebas">Bebas Neue</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Raleway', sans-serif">
-                                                    <span style={{ fontFamily: "'Raleway', sans-serif" }} className="font-raleway">Raleway</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Playfair Display', serif">
-                                                    <span style={{ fontFamily: "'Playfair Display', serif" }} className="font-playfair">Playfair Display</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Lato', sans-serif">
-                                                    <span style={{ fontFamily: "'Lato', sans-serif" }} className="font-lato">Lato</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Ubuntu', sans-serif">
-                                                    <span style={{ fontFamily: "'Ubuntu', sans-serif" }} className="font-ubuntu">Ubuntu</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Merriweather', serif">
-                                                    <span style={{ fontFamily: "'Merriweather', serif" }} className="font-merriweather">Merriweather</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Oswald', sans-serif">
-                                                    <span style={{ fontFamily: "'Oswald', sans-serif" }} className="font-oswald">Oswald</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Nunito', sans-serif">
-                                                    <span style={{ fontFamily: "'Nunito', sans-serif" }} className="font-nunito">Nunito</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Sora', sans-serif">
-                                                    <span style={{ fontFamily: "'Sora', sans-serif" }} className="font-sora">Sora</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Kanit', sans-serif">
-                                                    <span style={{ fontFamily: "'Kanit', sans-serif" }} className="font-kanit">Kanit</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Syne', sans-serif">
-                                                    <span style={{ fontFamily: "'Syne', sans-serif" }} className="font-syne">Syne</span>
-                                                </SelectItem>
-                                                <SelectItem value="'DM Sans', sans-serif">
-                                                    <span style={{ fontFamily: "'DM Sans', sans-serif" }} className="font-dmsans">DM Sans</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Cormorant Garamond', serif">
-                                                    <span style={{ fontFamily: "'Cormorant Garamond', serif" }} className="font-cormorant">Cormorant Garamond</span>
-                                                </SelectItem>
-                                                <SelectItem value="'Manrope', sans-serif">
-                                                    <span style={{ fontFamily: "'Manrope', sans-serif" }} className="font-manrope">Manrope</span>
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                            <span>
+                                                {FONT_OPTIONS.find(f => f.value === fontFamily)?.label || fontFamily || "Select font"}
+                                            </span>
+                                            <ChevronDown className="h-4 w-4 opacity-50 ml-2 shrink-0" />
+                                        </button>
+
+                                        {isFontDropdownOpen && (
+                                            <div className="absolute top-full left-0 mt-1 z-50 w-full max-h-60 overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-lg animate-in fade-in-0 zoom-in-95">
+                                                {FONT_OPTIONS.map((font) => (
+                                                    <button
+                                                        key={font.value}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setFontFamily(font.value);
+                                                            updatePreviewSettings({ fontFamily: font.value });
+                                                            setIsFontDropdownOpen(false);
+                                                        }}
+                                                        className={`flex w-full items-center justify-between px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors text-left ${
+                                                            fontFamily === font.value ? "bg-accent font-medium text-primary" : ""
+                                                        }`}
+                                                        style={{ fontFamily: font.value }}
+                                                    >
+                                                        <span>{font.label}</span>
+                                                        {fontFamily === font.value && (
+                                                            <Check className="h-4 w-4 text-primary ml-2 shrink-0" />
+                                                        )}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">

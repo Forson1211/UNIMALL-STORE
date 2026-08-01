@@ -9,6 +9,24 @@
   font-family: 'Inter', sans-serif;
 }
 
+/* MCB Rentals font — condensed, clean uppercase sans-serif */
+.font-barlow {
+  font-family: 'Barlow Condensed', sans-serif;
+}
+
+/* System fonts — no Google Fonts import needed */
+.font-arial {
+  font-family: Arial, sans-serif;
+}
+
+.font-arial-narrow {
+  font-family: 'Arial Narrow', Arial, sans-serif;
+}
+
+.font-helvetica {
+  font-family: Helvetica, Arial, sans-serif;
+}
+
 .font-roboto {
   font-family: 'Roboto', sans-serif;
 }
@@ -82,6 +100,50 @@
   body.has-bottom-tabbar {
     padding-bottom: calc(6rem + env(safe-area-inset-bottom));
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PREVENT RADIX UI SCROLL-LOCK LAYOUT SHIFT
+   Radix UI's react-remove-scroll injects a padding-right onto <body>
+   equal to the scrollbar width whenever any Dialog/Sheet/Dropdown opens.
+   This causes the entire page to shift left on desktop. Zero it out.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 1. Reset the CSS variable Radix uses as the scrollbar gap */
+:root {
+  --removed-body-scroll-bar-size: 0px !important;
+  --radix-scroll-lock-offset: 0px !important;
+}
+
+/* 2. Prevent body from ever getting padding-right injected */
+html,
+body {
+  --removed-body-scroll-bar-size: 0px !important;
+  margin-right: 0px !important;
+  padding-right: 0px !important;
+  overflow-x: hidden !important;
+}
+
+/* 3. Same for when data-scroll-locked attribute is added */
+html[data-scroll-locked],
+body[data-scroll-locked] {
+  --removed-body-scroll-bar-size: 0px !important;
+  margin-right: 0px !important;
+  padding-right: 0px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* 4. Prevent fixed/sticky containers from being nudged */
+body[data-scroll-locked] #root,
+html[data-scroll-locked] #root,
+body[data-scroll-locked] header,
+body[data-scroll-locked] nav,
+body[data-scroll-locked] .fixed,
+body[data-scroll-locked] .sticky {
+  margin-right: 0px !important;
+  padding-right: 0px !important;
+  width: 100% !important;
 }
 
 .font-kanit {
@@ -459,4 +521,11 @@ body {
 /* Safe area notch padding for iOS Chrome & Safari fullscreen standalone mode */
 .sticky-header {
   padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Mobile Bottom Navigation Bar Safe Padding */
+@media (max-width: 767px) {
+  body.has-bottom-tabbar {
+    padding-bottom: 4rem;
+  }
 }

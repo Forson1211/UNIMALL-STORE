@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Search, Heart, ShoppingCart,
-  SlidersHorizontal, ChevronRight, Package, ArrowRight
+  SlidersHorizontal, ChevronRight, Package, ArrowRight,
+  Minus, Plus, Check
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +25,138 @@ const categories = [
 ];
 
 const sortOptions = ["Newest", "Price: Low to High", "Price: High to Low", "Most Popular"];
+
+/* ── MCB Rentals Style Product Card ── */
+const MCBProductCard = ({ product }: { product: any }) => {
+  const [qty, setQty] = useState(1);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { addItem } = useCart();
+  const { toast } = useToast();
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    for (let i = 0; i < qty; i++) {
+      addItem({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        vendor: product.vendor,
+        vendorId: product.vendorId || "",
+      });
+    }
+    toast({
+      title: "Added to Cart",
+      description: `${qty}x ${product.name} added to your bag.`,
+    });
+  };
+
+  const handleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsWishlisted((prev) => !prev);
+    toast({
+      title: isWishlisted ? "Removed from Wishlist" : "Added to Wishlist",
+      description: product.name,
+    });
+  };
+
+  const inStock = product.stock == null || product.stock > 0;
+
+  return (
+    <Link
+      to={`/products/${product.id}`}
+      className="group bg-white dark:bg-card border border-gray-200/80 dark:border-border rounded-xl p-3 flex flex-col justify-between hover:shadow-xl transition-all duration-300 relative h-full"
+    >
+      <div>
+        {/* Top Image Box */}
+        <div className="relative aspect-square bg-gray-50/70 dark:bg-muted/30 rounded-lg p-3 flex items-center justify-center overflow-hidden mb-3">
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+          />
+          <button
+            type="button"
+            onClick={handleWishlist}
+            className={`absolute top-2 right-2 w-8 h-8 rounded-full bg-white dark:bg-card shadow-sm border border-gray-100 dark:border-border flex items-center justify-center transition-all ${
+              isWishlisted ? "text-red-500 bg-red-50" : "text-gray-400 hover:text-[#FF5500]"
+            }`}
+            aria-label="Wishlist"
+          >
+            <Heart className={`w-4 h-4 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`} />
+          </button>
+        </div>
+
+        {/* Product Title */}
+        <h3 className="font-bold text-xs md:text-sm text-gray-900 dark:text-foreground line-clamp-2 leading-snug hover:text-[#FF5500] transition-colors mb-1">
+          {product.name}
+        </h3>
+
+        {/* Category / Vendor */}
+        <p className="text-[11px] text-gray-400 dark:text-muted-foreground font-medium mb-1.5 truncate">
+          {product.vendor || product.category || "Unimall"}
+        </p>
+
+        {/* Stock Status */}
+        <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mb-2">
+          <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+          <span>{inStock ? "In stock" : "Out of stock"}</span>
+        </div>
+      </div>
+
+      {/* Price & MCB Pill Button Bar */}
+      <div className="mt-auto pt-1">
+        <p className="text-base md:text-lg font-black text-[#FF5500] tracking-tight">
+          GH₵ {product.price.toLocaleString()}
+          {product.original_price && product.original_price > product.price && (
+            <span className="text-xs text-gray-400 line-through font-medium ml-2">
+              GH₵ {product.original_price.toLocaleString()}
+            </span>
+          )}
+        </p>
+
+        {/* Combined Pill Action Bar */}
+        <div className="mt-2.5 flex items-center bg-[#FF5500] hover:bg-[#e54a00] text-white rounded-full h-9 p-0.5 shadow-md shadow-orange-500/20 transition-colors w-full overflow-hidden">
+          {/* Quantity Selector inside Pill */}
+          <div
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            className="bg-black/20 dark:bg-black/40 rounded-full h-full px-1.5 flex items-center gap-0.5 text-xs font-bold shrink-0"
+          >
+            <button
+              type="button"
+              onClick={() => setQty((q) => Math.max(1, q - 1))}
+              className="w-4.5 h-4.5 rounded-full flex items-center justify-center hover:bg-white/20 active:scale-90 transition-all text-white"
+              aria-label="Decrease quantity"
+            >
+              <Minus className="w-2.5 h-2.5 stroke-[2.5]" />
+            </button>
+            <span className="w-3 text-center font-black select-none text-[11px] text-white">{qty}</span>
+            <button
+              type="button"
+              onClick={() => setQty((q) => q + 1)}
+              className="w-4.5 h-4.5 rounded-full flex items-center justify-center hover:bg-white/20 active:scale-90 transition-all text-white"
+              aria-label="Increase quantity"
+            >
+              <Plus className="w-2.5 h-2.5 stroke-[2.5]" />
+            </button>
+          </div>
+
+          {/* Buy Now / Add to Cart Action Label */}
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            className="group/btn flex-1 text-center font-extrabold text-[10px] sm:text-xs uppercase tracking-wider text-white h-full flex items-center justify-center px-1 truncate"
+          >
+            <span className="group-hover/btn:hidden">BUY NOW</span>
+            <span className="hidden group-hover/btn:inline">ADD TO CART</span>
+          </button>
+        </div>
+      </div>
+    </Link>
+  );
+};
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -275,41 +408,7 @@ const Products = () => {
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                   {filteredProducts.map((product) => (
-                    <Link
-                      key={product.id}
-                      to={`/products/${product.id}`}
-                      className="group bg-white rounded-none border border-orange-100 hover:border-primary/40 hover:shadow-2xl transition-all duration-300 flex flex-col"
-                    >
-                      <div className="relative aspect-[4/3] overflow-hidden bg-[#fafafa]">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
-                        />
-                        <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
-                          <button className="w-8 h-8 bg-white shadow-xl flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
-                            <Heart className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                      <div className="p-2.5 flex flex-col flex-1">
-                        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-primary mb-0">{product.vendor}</p>
-                        <h3 className="text-xs md:text-sm font-black text-primary line-clamp-2 mb-1.5 leading-tight transition-colors">
-                          {product.name}
-                        </h3>
-                        <div className="mt-auto">
-                          <div className="mb-2">
-                            <span className="text-base md:text-lg font-black text-gray-900 tracking-tighter">GH₵ {product.price.toLocaleString()}</span>
-                          </div>
-                          <button
-                            onClick={(e) => handleAddToCart(product, e)}
-                            className="w-full h-9 bg-white border border-gray-200 text-gray-900 text-[9px] font-black uppercase tracking-widest hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 flex items-center justify-center gap-1.5"
-                          >
-                            <ShoppingCart className="w-3 h-3" /> Buy Now
-                          </button>
-                        </div>
-                      </div>
-                    </Link>
+                    <MCBProductCard key={product.id} product={product} />
                   ))}
                 </div>
               )}

@@ -325,21 +325,25 @@ const ProductDetail = () => {
 
                   {/* Quantity & Add to Cart button */}
                   <div className="flex gap-3 mt-auto">
-                    <div className="flex items-center border border-gray-300 rounded-sm h-12">
+                    <div className="flex items-center bg-gray-100/80 dark:bg-muted/80 rounded-full p-1 border border-gray-200/80 dark:border-border shadow-2xs h-12 px-2">
                       <button
                         onClick={decrementQuantity}
                         disabled={quantity <= 1}
-                        className="px-3 h-full hover:bg-gray-50 transition-colors disabled:opacity-40"
+                        className="w-8 h-8 rounded-full flex items-center justify-center bg-white dark:bg-card border border-gray-200/80 dark:border-border text-gray-700 dark:text-foreground hover:bg-[#FF5500] hover:text-white hover:border-[#FF5500] active:scale-95 transition-all disabled:opacity-40 shadow-2xs"
+                        aria-label="Decrease quantity"
                       >
-                        <Minus className="w-4 h-4 text-gray-600" />
+                        <Minus className="w-3.5 h-3.5 stroke-[2.5]" />
                       </button>
-                      <span className="w-8 text-center font-bold text-sm text-gray-800">{quantity}</span>
+                      <span className="w-10 text-center font-black text-sm text-gray-900 dark:text-foreground select-none">
+                        {quantity}
+                      </span>
                       <button
                         onClick={incrementQuantity}
                         disabled={quantity >= product.stock}
-                        className="px-3 h-full hover:bg-gray-50 transition-colors disabled:opacity-40"
+                        className="w-8 h-8 rounded-full flex items-center justify-center bg-white dark:bg-card border border-gray-200/80 dark:border-border text-gray-700 dark:text-foreground hover:bg-[#FF5500] hover:text-white hover:border-[#FF5500] active:scale-95 transition-all disabled:opacity-40 shadow-2xs"
+                        aria-label="Increase quantity"
                       >
-                        <Plus className="w-4 h-4 text-gray-600" />
+                        <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                       </button>
                     </div>
 

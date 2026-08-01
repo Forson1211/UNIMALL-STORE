@@ -1,14 +1,18 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  ShoppingCart, Flame, ChevronRight, Monitor, Smartphone, Shirt, Home as HomeIcon
+  ShoppingCart, Flame, ChevronRight, Monitor, Smartphone, Shirt, Home as HomeIcon,
+  Heart, Check, Minus, Plus
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { productService } from "@/services/productService";
 
-/* ─────────────────── Product Card ─────────────────── */
+/* ─────────────────── MCB Rentals Style Product Card ─────────────────── */
 const ProductCard = ({ product, discountPct }: { product: any; discountPct?: number }) => {
+  const [qty, setQty] = useState(1);
+  const [isWishlisted, setIsWishlisted] = useState(false);
   const { addItem } = useCart();
   const { toast } = useToast();
 
@@ -18,71 +22,130 @@ const ProductCard = ({ product, discountPct }: { product: any; discountPct?: num
       ? Math.round((1 - product.price / product.original_price) * 100)
       : undefined);
 
-  const itemsLeft = product.items_left ?? product.stock;
-
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addItem({
-      id: product.id || product.product_id,
-      name: product.name || product.product_name,
-      price: product.discount_price || product.price,
-      image: product.image || product.image_url,
-      vendor: product.vendor || product.vendor_name || "Unimall",
-      vendorId: product.vendor_id || "",
+    for (let i = 0; i < qty; i++) {
+      addItem({
+        id: product.id || product.product_id,
+        name: product.name || product.product_name,
+        price: product.discount_price || product.price,
+        image: product.image || product.image_url,
+        vendor: product.vendor || product.vendor_name || "Unimall",
+        vendorId: product.vendor_id || "",
+      });
+    }
+    toast({
+      title: "Added to Cart",
+      description: `${qty}x ${product.name || product.product_name} added to your bag.`,
     });
-    toast({ title: "Added to cart", description: `${product.name || product.product_name} is in your bag.` });
   };
+
+  const handleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsWishlisted((prev) => !prev);
+    toast({
+      title: isWishlisted ? "Removed from Wishlist" : "Added to Wishlist",
+      description: product.name || product.product_name,
+    });
+  };
+
+  const inStock = (product.items_left ?? product.stock ?? 1) > 0;
 
   return (
     <Link
       to={`/products/${product.id || product.product_id}`}
-      className="group flex flex-col bg-white overflow-hidden hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-gray-200 h-full"
+      className="group flex flex-col bg-white dark:bg-card rounded-xl border border-gray-200/80 dark:border-border p-3 hover:shadow-xl transition-all duration-300 relative h-full justify-between"
     >
-      {/* Image */}
-      <div className="relative aspect-square overflow-hidden bg-gray-50 p-2">
-        <img
-          src={product.image || product.image_url}
-          alt={product.name || product.product_name}
-          className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
-        />
-        {resolvedDiscountPct > 0 && (
-          <div className="absolute top-1 right-1 bg-[#FF5500] text-white text-[11px] font-black px-1.5 py-0.5 leading-none">
-            -{resolvedDiscountPct}%
-          </div>
-        )}
-        <button
-          onClick={handleAddToCart}
-          className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 bg-[#FF5500] text-white p-1.5 rounded-full shadow-lg transition-all duration-200 hover:bg-[#e54a00]"
-        >
-          <ShoppingCart className="w-3.5 h-3.5" />
-        </button>
-      </div>
-      {/* Info */}
-      <div className="p-2 flex flex-col flex-1">
-        <p className="text-xs text-gray-700 line-clamp-2 leading-snug font-medium flex-1 min-h-[32px]">
-          {product.name || product.product_name}
-        </p>
-        <div className="mt-1.5">
-          <p className="text-sm font-black text-gray-900">
-            GH₵ {(product.discount_price || product.price)?.toLocaleString()}
-          </p>
-          {product.original_price && product.discount_price && (
-            <p className="text-[11px] text-gray-400 line-through font-medium">
-              GH₵ {product.original_price?.toLocaleString()}
-            </p>
-          )}
-          {itemsLeft != null && (
-            <div className="mt-1">
-              <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-[#FF5500] rounded-full transition-all"
-                  style={{ width: `${Math.max(6, 100 - Math.min(itemsLeft, 50) / 50 * 100)}%` }}
-                />
-              </div>
-              <p className="text-[10px] text-gray-500 mt-0.5">{itemsLeft > 0 ? `${itemsLeft} items left` : "Out of stock"}</p>
+      <div>
+        {/* Top Image Box */}
+        <div className="relative aspect-square bg-gray-50/70 dark:bg-muted/30 rounded-lg p-3 flex items-center justify-center overflow-hidden mb-3">
+          <img
+            src={product.image || product.image_url}
+            alt={product.name || product.product_name}
+            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+          />
+          {resolvedDiscountPct > 0 && (
+            <div className="absolute top-2 left-2 bg-[#FF5500] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-xs">
+              -{resolvedDiscountPct}%
             </div>
           )}
+          <button
+            type="button"
+            onClick={handleWishlist}
+            className={`absolute top-2 right-2 w-8 h-8 rounded-full bg-white dark:bg-card shadow-sm border border-gray-100 dark:border-border flex items-center justify-center transition-all ${
+              isWishlisted ? "text-red-500 bg-red-50" : "text-gray-400 hover:text-[#FF5500]"
+            }`}
+            aria-label="Wishlist"
+          >
+            <Heart className={`w-4 h-4 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`} />
+          </button>
+        </div>
+
+        {/* Product Title */}
+        <h3 className="font-bold text-xs md:text-sm text-gray-900 dark:text-foreground line-clamp-2 leading-snug hover:text-[#FF5500] transition-colors mb-1">
+          {product.name || product.product_name}
+        </h3>
+
+        {/* Vendor Tag */}
+        <p className="text-[11px] text-gray-400 dark:text-muted-foreground font-medium mb-1.5 truncate">
+          {product.vendor || product.vendor_name || "Unimall"}
+        </p>
+
+        {/* Stock Status */}
+        <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mb-2">
+          <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+          <span>{inStock ? "In stock" : "Out of stock"}</span>
+        </div>
+      </div>
+
+      {/* Price & MCB Pill Button Bar */}
+      <div className="mt-auto pt-1">
+        <p className="text-base md:text-lg font-black text-[#FF5500] tracking-tight">
+          GH₵ {(product.discount_price || product.price)?.toLocaleString()}
+          {product.original_price && product.original_price > (product.discount_price || product.price) && (
+            <span className="text-xs text-gray-400 line-through font-medium ml-2">
+              GH₵ {product.original_price.toLocaleString()}
+            </span>
+          )}
+        </p>
+
+        {/* Combined Pill Action Bar */}
+        <div className="mt-2.5 flex items-center bg-[#FF5500] hover:bg-[#e54a00] text-white rounded-full h-9 p-0.5 shadow-md shadow-orange-500/20 transition-colors w-full overflow-hidden">
+          {/* Quantity Selector inside Pill */}
+          <div
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            className="bg-black/20 dark:bg-black/40 rounded-full h-full px-1.5 flex items-center gap-0.5 text-xs font-bold shrink-0"
+          >
+            <button
+              type="button"
+              onClick={() => setQty((q) => Math.max(1, q - 1))}
+              className="w-4.5 h-4.5 rounded-full flex items-center justify-center hover:bg-white/20 active:scale-90 transition-all text-white"
+              aria-label="Decrease quantity"
+            >
+              <Minus className="w-2.5 h-2.5 stroke-[2.5]" />
+            </button>
+            <span className="w-3 text-center font-black select-none text-[11px] text-white">{qty}</span>
+            <button
+              type="button"
+              onClick={() => setQty((q) => q + 1)}
+              className="w-4.5 h-4.5 rounded-full flex items-center justify-center hover:bg-white/20 active:scale-90 transition-all text-white"
+              aria-label="Increase quantity"
+            >
+              <Plus className="w-2.5 h-2.5 stroke-[2.5]" />
+            </button>
+          </div>
+
+          {/* Buy Now / Add to Cart Action Label */}
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            className="group/btn flex-1 text-center font-extrabold text-[10px] sm:text-xs uppercase tracking-wider text-white h-full flex items-center justify-center px-1 truncate"
+          >
+            <span className="group-hover/btn:hidden">BUY NOW</span>
+            <span className="hidden group-hover/btn:inline">ADD TO CART</span>
+          </button>
         </div>
       </div>
     </Link>
@@ -116,7 +179,7 @@ const CategoryRow = ({ title, category, icon: Icon }: { title: string; category:
   return (
     <div className="bg-white shadow-sm overflow-hidden">
       <SectionHeader title={title} icon={Icon} linkTo={`/products?category=${encodeURIComponent(category)}`} />
-      <div className="p-2 md:p-3 grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+      <div className="p-2 md:p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
         {products.map((p: any) => <ProductCard key={p.id} product={p} />)}
       </div>
     </div>
@@ -223,7 +286,7 @@ const FeaturedProducts = () => {
         {topRated.length > 0 && (
           <div className="bg-white shadow-sm overflow-hidden">
             <SectionHeader title="Top Rated" linkTo="/products" />
-            <div className="p-2 grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            <div className="p-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
               {topRated.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}

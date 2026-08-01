@@ -51,7 +51,7 @@ export function DashboardLayout({ children, type, title, userName, userRole }: D
             userName={userName || (type === 'admin' ? 'Admin User' : 'Vendor User')}
             userRole={userRole || (type === 'admin' ? 'Administrator' : 'Vendor')}
           />
-          <main className="flex-1 p-4 lg:p-6 overflow-auto">
+          <main className="flex-1 p-4 lg:p-6 overflow-x-hidden overflow-y-auto">
             {!isApproved ? (
               vendorStatus === 'suspended' ? (
                 <div className="flex flex-col items-center justify-center h-[70vh] max-w-2xl mx-auto text-center space-y-8 animate-in fade-in zoom-in duration-500">
