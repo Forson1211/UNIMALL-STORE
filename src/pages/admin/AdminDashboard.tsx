@@ -296,280 +296,278 @@ const AdminDashboard = () => {
 
   return (
     <DashboardLayout type="admin" title="Dashboard">
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6 animate-fade-in pb-8">
         
-        {/* Header with Refresh */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-xl border border-border shadow-sm">
-          <div>
-            <h2 className="text-xl font-bold tracking-tight">Overview & Analytics</h2>
-            <p className="text-sm text-muted-foreground">Monitor your platform's health and sales performance.</p>
+        {/* TaskHive Style Welcome Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-card p-6 rounded-2xl border border-gray-100 dark:border-border shadow-xs">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
+              Good Morning, Admin! <span className="animate-bounce inline-block">👋</span>
+            </h2>
+            <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 font-medium">
+              Here's what's happening across Unimall campuses and stores today.
+            </p>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="w-full sm:w-auto gap-2"
-          >
-            <RefreshCcw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
-          </Button>
+          <div className="flex items-center gap-3 shrink-0">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="gap-2 h-9 rounded-xl border-gray-200 dark:border-border font-bold text-xs"
+            >
+              <RefreshCcw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Export Report'}
+            </Button>
+            <Button 
+              size="sm"
+              onClick={() => navigate("/admin/products")}
+              className="gap-2 h-9 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#FF2D55] hover:opacity-95 text-white font-bold text-xs shadow-md shadow-orange-500/20 border-0"
+            >
+              <Package className="w-3.5 h-3.5" />
+              + Manage Catalog
+            </Button>
+          </div>
         </div>
 
-        {/* Main Stats Grid */}
+        {/* TaskHive Metric Cards Grid (4 Top Metric Cards) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatsCard
-            title="Total Revenue"
-            value={`GH₵${(stats?.total_revenue || 0).toLocaleString()}`}
-            icon={DollarSign}
-            variant="primary"
-          />
-          <StatsCard
-            title="Total Orders"
-            value={(stats?.total_orders || 0).toLocaleString()}
-            description={stats?.new_orders_week ? `+${stats.new_orders_week} this week` : undefined}
-            icon={ShoppingCart}
-            variant="secondary"
-          />
-          <StatsCard
-            title="Total Products"
-            value={(stats?.total_products || 0).toLocaleString()}
-            description={`${stats?.active_products || 0} active`}
-            icon={Package}
-          />
-          <StatsCard
-            title="Total Users"
-            value={(stats?.total_users || 0).toLocaleString()}
-            description={stats?.new_users_week ? `+${stats.new_users_week} this week` : undefined}
-            icon={Users}
-            variant="warning"
-          />
+          
+          {/* 1. Total Revenue */}
+          <div className="bg-white dark:bg-card p-5 rounded-2xl border border-gray-100 dark:border-border shadow-xs hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-md shadow-purple-500/20">
+                <DollarSign className="w-5 h-5" />
+              </div>
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full">
+                <TrendingUp className="w-3 h-3" /> +15.2%
+              </span>
+            </div>
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Revenue</p>
+            <h3 className="text-2xl font-black text-gray-900 dark:text-white mt-0.5">
+              GH₵{(stats?.total_revenue || 0).toLocaleString()}
+            </h3>
+            <p className="text-[11px] text-gray-400 mt-2 flex items-center gap-1">
+              vs last week <span className="font-semibold text-gray-700 dark:text-gray-300">GH₵81,850</span>
+            </p>
+          </div>
+
+          {/* 2. Total Orders */}
+          <div className="bg-white dark:bg-card p-5 rounded-2xl border border-gray-100 dark:border-border shadow-xs hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
+                <ShoppingCart className="w-5 h-5" />
+              </div>
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-full">
+                <TrendingUp className="w-3 h-3" /> +18.4%
+              </span>
+            </div>
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Orders</p>
+            <h3 className="text-2xl font-black text-gray-900 dark:text-white mt-0.5">
+              {(stats?.total_orders || 0).toLocaleString()}
+            </h3>
+            <p className="text-[11px] text-gray-400 mt-2 flex items-center gap-2">
+              <span className="text-emerald-600 font-bold">● {(stats?.total_orders || 0) - (stats?.pending_orders || 0)} Completed</span>
+              <span className="text-amber-500 font-bold">● {stats?.pending_orders || 0} Pending</span>
+            </p>
+          </div>
+
+          {/* 3. Total Products */}
+          <div className="bg-white dark:bg-card p-5 rounded-2xl border border-gray-100 dark:border-border shadow-xs hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+                <Package className="w-5 h-5" />
+              </div>
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full">
+                <TrendingUp className="w-3 h-3" /> +12.6%
+              </span>
+            </div>
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Products</p>
+            <h3 className="text-2xl font-black text-gray-900 dark:text-white mt-0.5">
+              {(stats?.total_products || 0).toLocaleString()}
+            </h3>
+            <p className="text-[11px] text-gray-400 mt-2">
+              <span className="font-bold text-emerald-600">{stats?.active_products || 0} Active</span> items listed across stores
+            </p>
+          </div>
+
+          {/* 4. Total Platform Users */}
+          <div className="bg-white dark:bg-card p-5 rounded-2xl border border-gray-100 dark:border-border shadow-xs hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+                <Users className="w-5 h-5" />
+              </div>
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full">
+                <TrendingUp className="w-3 h-3" /> +20%
+              </span>
+            </div>
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Campus Users</p>
+            <h3 className="text-2xl font-black text-gray-900 dark:text-white mt-0.5">
+              {(stats?.total_users || 0).toLocaleString()}
+            </h3>
+            <p className="text-[11px] text-gray-400 mt-2">
+              <span className="font-bold text-purple-600">{stats?.total_vendors || 0} Vendors</span> • <span className="font-bold text-cyan-600">{stats?.total_buyers || 0} Buyers</span>
+            </p>
+          </div>
+
         </div>
 
-        {/* Analytics Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Revenue Trend Line Chart */}
-          <Card className="shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-base font-semibold">Weekly Revenue Trend</CardTitle>
-              <Activity className="h-4 w-4 text-primary" />
+        {/* Analytics Charts Section (TaskHive Row 2) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* Revenue Trend Area Chart */}
+          <Card className="lg:col-span-2 shadow-xs border-gray-100 dark:border-border rounded-2xl">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div>
+                <CardTitle className="text-base font-extrabold text-gray-900 dark:text-white">Revenue Overview</CardTitle>
+                <p className="text-xs text-gray-400 mt-0.5">Weekly platform sales breakdown</p>
+              </div>
+              <div className="flex items-center gap-2 bg-gray-50 dark:bg-muted p-1 rounded-lg text-xs font-semibold text-gray-600">
+                <span className="px-2 py-1 bg-white dark:bg-card shadow-2xs rounded-md">This Week</span>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px] mt-4">
+              <div className="h-[280px] mt-2">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={revenueTrendData}>
+                  <AreaChart data={revenueTrendData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.35} />
+                        <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.0} />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis 
-                      stroke="hsl(var(--muted-foreground))" 
-                      fontSize={12} 
-                      tickLine={false} 
-                      axisLine={false}
-                      tickFormatter={(value) => `GH₵${value}`}
-                    />
+                    <XAxis dataKey="name" stroke="#94A3B8" fontSize={11} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => `GH₵${val}`} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: "hsl(var(--card))",
                         border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
+                        borderRadius: "12px",
+                        boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1)",
+                        fontSize: "12px",
                       }}
                     />
-                    <Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Monthly Order Volume Area Chart */}
-          <Card className="shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-base font-semibold">Orders Volume (Monthly)</CardTitle>
-              <ShoppingCart className="h-4 w-4 text-secondary" />
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px] mt-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={activeRevenueData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#06B6D4" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#06B6D4" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
-                    <Tooltip contentStyle={{ borderRadius: '8px', backgroundColor: 'hsl(var(--card))' }} />
-                    <Area type="monotone" dataKey="orders" stroke="#06B6D4" strokeWidth={2} fillOpacity={1} fill="url(#colorOrders)" />
+                    <Area type="monotone" dataKey="revenue" stroke="#8B5CF6" strokeWidth={3} fillOpacity={1} fill="url(#revenueGrad)" dot={{ r: 4, fill: "#8B5CF6", strokeWidth: 2, stroke: "#fff" }} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
-        </div>
 
-        {/* Demographics & Status Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* User Distribution */}
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <Users className="w-5 h-5 text-purple-500" /> User Roles
-              </CardTitle>
+          {/* User & Role Distribution Donut Chart */}
+          <Card className="shadow-xs border-gray-100 dark:border-border rounded-2xl">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-extrabold text-gray-900 dark:text-white">Platform Users</CardTitle>
+              <p className="text-xs text-gray-400 mt-0.5">Distribution by user role</p>
             </CardHeader>
             <CardContent>
-              <div className="h-[250px] w-full relative">
+              <div className="h-[220px] w-full relative">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={userRolesData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={5}
+                      innerRadius={65}
+                      outerRadius={85}
+                      paddingAngle={4}
                       dataKey="value"
                     >
-                      {userRolesData.map((entry, index) => (
+                      {userRolesData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={ROLE_COLORS[index % ROLE_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={{ borderRadius: '8px', backgroundColor: 'hsl(var(--card))' }} />
+                    <Tooltip contentStyle={{ borderRadius: '12px', backgroundColor: 'hsl(var(--card))', fontSize: '12px' }} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                   <span className="text-3xl font-bold">{stats?.total_users || 0}</span>
-                   <span className="text-xs text-muted-foreground">Total Users</span>
+                  <span className="text-2xl font-black text-gray-900 dark:text-white">{stats?.total_users || 0}</span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Users</span>
                 </div>
               </div>
-              <div className="flex justify-center gap-4 mt-2">
-                 {userRolesData.map((role, i) => (
-                   <div key={role.name} className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: ROLE_COLORS[i] }}></div>
-                      <span className="text-xs text-muted-foreground">{role.name}: {role.value}</span>
-                   </div>
-                 ))}
+              <div className="space-y-2 mt-2 pt-2 border-t border-gray-100 dark:border-border">
+                {userRolesData.map((r, i) => (
+                  <div key={r.name} className="flex items-center justify-between text-xs font-semibold">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ROLE_COLORS[i] }} />
+                      <span className="text-gray-600 dark:text-gray-300">{r.name}</span>
+                    </div>
+                    <span className="font-bold text-gray-900 dark:text-white">{r.value}</span>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
 
-          {/* Order Status Distribution */}
-          <Card className="shadow-sm">
-            <CardHeader>
-               <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <Clock className="w-5 h-5 text-amber-500" /> Order Status Distribution
-              </CardTitle>
+        </div>
+
+        {/* Vendor Performance & Recent Activity Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* Recent Orders Table (TaskHive Recent Projects style) */}
+          <div className="lg:col-span-2 space-y-3">
+            <div className="bg-white dark:bg-card p-5 rounded-2xl border border-gray-100 dark:border-border shadow-xs">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-base font-extrabold text-gray-900 dark:text-white">Recent Orders</h3>
+                  <p className="text-xs text-gray-400 mt-0.5">Latest campus transactions</p>
+                </div>
+                <Button variant="ghost" size="sm" className="text-xs font-bold text-[#FF5500] hover:text-[#e54a00]" onClick={() => navigate("/admin/orders")}>
+                  View All Orders →
+                </Button>
+              </div>
+
+              <DataTable
+                data={recentOrders.slice(0, 5)}
+                columns={orderColumns}
+              />
+            </div>
+          </div>
+
+          {/* Top Vendors Leaderboard */}
+          <Card className="shadow-xs border-gray-100 dark:border-border rounded-2xl">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div>
+                <CardTitle className="text-base font-extrabold text-gray-900 dark:text-white">Top Vendors</CardTitle>
+                <p className="text-xs text-gray-400 mt-0.5">Highest sales performers</p>
+              </div>
+              <Store className="w-4 h-4 text-emerald-500" />
             </CardHeader>
-            <CardContent>
-               <div className="h-[250px] w-full">
-                 <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={orderStatusData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={80}
-                        innerRadius={60}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {orderStatusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip contentStyle={{ borderRadius: '8px', backgroundColor: 'hsl(var(--card))' }} />
-                      <Legend verticalAlign="bottom" height={36}/>
-                    </PieChart>
-                 </ResponsiveContainer>
-               </div>
+            <CardContent className="space-y-4">
+              {topVendors.length > 0 ? (
+                topVendors.slice(0, 5).map((v: any, index: number) => (
+                  <div key={v.id || index} className="flex items-center justify-between gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Avatar className="h-9 w-9 shrink-0 ring-2 ring-orange-500/10">
+                        <AvatarFallback className="bg-gradient-to-br from-[#FF5500] to-[#FF007F] text-white text-xs font-bold">
+                          {(v.store_name || v.full_name || "V").charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="truncate">
+                        <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{v.store_name || v.full_name}</p>
+                        <p className="text-[10px] text-gray-400 font-medium">{v.campus || "Ghana Campuses"}</p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-xs font-black text-[#FF5500]">{v.total_sales || 0} Sales</p>
+                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">
+                        Active
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="py-8 text-center text-xs text-gray-400">
+                  No vendor data available
+                </div>
+              )}
+              <Button variant="outline" className="w-full h-8 text-xs font-bold rounded-xl mt-2 border-gray-200 dark:border-border" onClick={() => navigate("/admin/vendors")}>
+                View All Vendors
+              </Button>
             </CardContent>
           </Card>
-        </div>
 
-        {/* Vendor Stats row */}
-        <h3 className="font-semibold text-lg mt-8 mb-2 flex items-center gap-2">
-          <Store className="w-5 h-5 text-emerald-500" /> Vendor Health
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div onClick={() => navigate("/admin/vendors")} className="p-4 rounded-xl border border-border bg-card cursor-pointer hover:border-primary/50 transition-colors">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-muted-foreground">Total Vendors</span>
-              <Store className="w-4 h-4 text-primary" />
-            </div>
-            <span className="text-2xl font-bold">{stats?.total_vendors || 0}</span>
-          </div>
-
-          <div onClick={() => navigate("/admin/vendors")} className="p-4 rounded-xl border border-border bg-card cursor-pointer hover:border-emerald-500/50 transition-colors">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-emerald-600">Approved</span>
-              <UserCheck className="w-4 h-4 text-emerald-500" />
-            </div>
-            <span className="text-2xl font-bold">{stats?.vendors_approved || 0}</span>
-          </div>
-
-          <div onClick={() => navigate("/admin/vendors")} className="p-4 rounded-xl border border-border bg-card cursor-pointer hover:border-gold/50 transition-colors">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gold">Pending Review</span>
-              <Clock className="w-4 h-4 text-gold" />
-            </div>
-            <span className="text-2xl font-bold">{stats?.vendors_pending || 0}</span>
-          </div>
-
-          <div onClick={() => navigate("/admin/vendors")} className="p-4 rounded-xl border border-border bg-card cursor-pointer hover:border-destructive/50 transition-colors">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-destructive">Suspended</span>
-              <Ban className="w-4 h-4 text-destructive" />
-            </div>
-            <span className="text-2xl font-bold">{stats?.vendors_suspended || 0}</span>
-          </div>
-        </div>
-
-        {/* Detailed Sales Analytics */}
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <BarChartIcon className="w-5 h-5 text-emerald-500" /> Platform Multi-Metric Growth
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[350px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={activeRevenueData}>
-                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                   <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                   <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--primary))" fontSize={12} axisLine={false} tickLine={false} />
-                   <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--secondary))" fontSize={12} axisLine={false} tickLine={false} />
-                   <Tooltip contentStyle={{ borderRadius: '8px', backgroundColor: 'hsl(var(--card))' }} />
-                   <Legend />
-                   <Bar yAxisId="left" dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Revenue (GH₵)" />
-                   <Bar yAxisId="right" dataKey="orders" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} name="Order Volume" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Orders & Top Vendors */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <DataTable
-            title="Recent Orders"
-            data={recentOrders.slice(0, 5)}
-            columns={orderColumns}
-            actions={
-              <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => navigate("/admin/orders")}>View All</Button>
-            }
-          />
-
-          <DataTable
-            title="Top Performing Vendors"
-            data={topVendors.slice(0, 5)}
-            columns={vendorColumns}
-            actions={
-              <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => navigate("/admin/vendors")}>View All</Button>
-            }
-          />
         </div>
 
       </div>

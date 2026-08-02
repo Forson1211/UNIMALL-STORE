@@ -13,6 +13,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 
+interface VendorData {
+  user_id?: string;
+  id?: string;
+  store_name?: string;
+  full_name?: string;
+  banner_url?: string;
+  avatar_url?: string;
+  store_description?: string;
+  campus?: string;
+  rating?: number;
+  phone?: string;
+  verified?: boolean;
+  category?: string;
+  created_at?: string;
+  [key: string]: unknown;
+}
+
 const VendorStore = () => {
   const { id } = useParams<{ id: string }>();
   const { addItem } = useCart();
@@ -21,7 +38,7 @@ const VendorStore = () => {
   const [isFollowing, setIsFollowing] = useState(false);
 
   // Fetch vendor profile
-  const { data: vendor, isLoading: loadingVendor, error } = useQuery({
+  const { data: vendor, isLoading: loadingVendor, error } = useQuery<VendorData>({
     queryKey: ["vendor-profile", id],
     queryFn: async () => {
       // Find the profile for this vendor
@@ -33,7 +50,7 @@ const VendorStore = () => {
 
       if (error) {
         // Fallback: search in mockVendors if we need to show mock data
-        const mockVendors = [
+        const mockVendors: VendorData[] = [
           { 
             user_id: "1", 
             store_name: "TechHub", 
@@ -75,13 +92,13 @@ const VendorStore = () => {
         if (mock) return mock;
         throw error;
       }
-      return data;
+      return data as VendorData;
     },
     enabled: !!id,
   });
 
   // Fetch vendor products
-  const { data: products = [], isLoading: loadingProducts } = useQuery({
+  const { data: products = [], isLoading: loadingProducts } = useQuery<any[]>({
     queryKey: ["vendor-store-products", id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -90,7 +107,7 @@ const VendorStore = () => {
         .eq("vendor_id", id);
       
       if (error) throw error;
-      return data || [];
+      return (data || []) as any[];
     },
     enabled: !!id,
   });

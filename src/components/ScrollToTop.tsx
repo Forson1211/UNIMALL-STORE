@@ -6,7 +6,15 @@ const ScrollToTop = () => {
   const { pathname, hash } = useLocation();
   const { siteName } = useSiteSettingsContext();
 
-  // Scroll to top or anchor logic
+  // Disable browser scroll restoration so page always loads at top on refresh
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+    window.scrollTo(0, 0);
+  }, []);
+
+  // Scroll to top or anchor logic on route change
   useEffect(() => {
     if (hash) {
       const id = window.setTimeout(() => {
@@ -17,6 +25,7 @@ const ScrollToTop = () => {
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [pathname, hash]);
+
 
   // Centralized Page Title updater
   useEffect(() => {

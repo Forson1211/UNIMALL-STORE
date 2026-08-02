@@ -167,7 +167,7 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
   const collapsed = state === "collapsed";
   const { role } = useAuth();
   const menuItems = type === 'admin' ? adminMenuItems : vendorMenuItems;
-  const { siteName, logoUrl } = useSiteSettingsContext();
+  const { siteName, logoUrl, sidebarLogoUrl, footerLogoUrl } = useSiteSettingsContext();
 
   const isActive = (path: string) => {
     if (path === `/${type}`) {
@@ -217,49 +217,65 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
   };
 
   return (
-    <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon" data-state={state}>
-      <SidebarHeader className="border-b border-sidebar-border p-4">
-        <Link to="/" className="flex items-center" onClick={handleMobileClick}>
+    <Sidebar className={`${collapsed ? "w-16" : "w-64"} bg-[#0B132B] text-slate-300 border-r border-slate-800/80 transition-all duration-300`} collapsible="icon" data-state={state}>
+      {/* Header / Brand Logo */}
+      <SidebarHeader className="h-16 flex items-center justify-start border-b border-slate-800/80 p-0 px-4 bg-[#0B132B] shrink-0">
+        <Link to="/" className="flex items-center group pl-2.5" onClick={handleMobileClick}>
           {collapsed ? (
-            <img src={logoUrl || "/LOGO.png"} alt={siteName} className="w-10 h-10 rounded-md object-contain bg-white border border-gray-100" />
-          ) : (
-            <div className="flex flex-col items-start gap-1">
-              <img src={logoUrl || "/LOGO.png"} alt={siteName} className="h-10 w-auto object-contain" />
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-0.5">{type} Portal</span>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF5500] to-[#FF007F] p-0.5 flex items-center justify-center shadow-lg shadow-orange-500/20">
+              <div className="w-full h-full bg-[#0B132B] rounded-[10px] flex items-center justify-center">
+                <img src={sidebarLogoUrl || footerLogoUrl || "/FOOTER LOGO.png"} alt={siteName} className="w-6 h-6 object-contain" />
+              </div>
             </div>
+          ) : (
+            <img 
+              src={sidebarLogoUrl || footerLogoUrl || "/FOOTER LOGO.png"} 
+              alt={siteName || "UNIMALL"} 
+              className="h-8 md:h-9 w-auto max-w-[165px] object-contain drop-shadow-md transition-transform hover:scale-[1.02]" 
+            />
           )}
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="p-2" ref={contentRef}>
-        <SidebarGroup>
-          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
-            Menu
-          </SidebarGroupLabel>
+      {/* Main Navigation Content */}
+      <SidebarContent className="p-0 px-4 py-3 bg-[#0B132B] space-y-4 no-scrollbar" ref={contentRef}>
+        <SidebarGroup className="p-0">
+          {!collapsed && (
+            <SidebarGroupLabel className="text-[10px] font-extrabold tracking-widest text-slate-400 uppercase p-0 px-2.5 mb-2">
+              NAVIGATION
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {menuItems.map((item) => {
                 const access = hasAccess(item);
+                const active = isActive(item.url);
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
                       asChild={access}
-                      isActive={isActive(item.url)}
+                      isActive={active}
                       tooltip={collapsed ? (access ? item.title : `${item.title} (Locked)`) : undefined}
                       onClick={access ? handleMobileClick : undefined}
-                      className={!access ? "opacity-50 cursor-not-allowed" : ""}
+                      className={`w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-xs font-semibold transition-colors duration-150 ${
+                        active
+                          ? "bg-gradient-to-r from-[#FF5500] to-[#FF2D55] !text-white data-[active=true]:!text-white shadow-lg shadow-orange-500/25 font-bold"
+                          : access
+                          ? "text-slate-300 hover:text-white hover:bg-slate-800/60"
+                          : "opacity-40 cursor-not-allowed text-slate-500"
+                      }`}
                       disabled={!access}
                     >
                       {access ? (
-                        <Link to={item.url} className="flex items-center gap-3 w-full">
-                          <item.icon className="w-5 h-5 shrink-0" />
-                          {!collapsed && <span className="flex-1">{item.title}</span>}
+                        <Link to={item.url} className={`flex items-center gap-3 w-full ${active ? "!text-white" : ""}`}>
+                          <item.icon className={`w-4 h-4 shrink-0 ${active ? "!text-white" : ""}`} />
+                          {!collapsed && <span className={`flex-1 ${active ? "!text-white" : ""}`}>{item.title}</span>}
                         </Link>
                       ) : (
-                        <div className="flex items-center gap-3 w-full text-muted-foreground">
-                          <item.icon className="w-5 h-5 shrink-0" />
+                        <div className="flex items-center gap-3 w-full text-slate-500">
+                          <item.icon className="w-4 h-4 shrink-0" />
                           {!collapsed && <span className="flex-1">{item.title}</span>}
-                          {!collapsed && <Lock className="w-3.5 h-3.5 text-muted-foreground/60" />}
+                          {!collapsed && <Lock className="w-3.5 h-3.5 text-slate-600" />}
                         </div>
                       )}
                     </SidebarMenuButton>
@@ -269,31 +285,53 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Promo / Upgrade Card Widget at Sidebar Bottom (TaskHive Style) */}
+        {!collapsed && (
+          <div className="mt-6 p-4 rounded-2xl bg-gradient-to-br from-slate-900 via-[#161f36] to-[#0d1527] border border-slate-800 text-white relative overflow-hidden shadow-xl">
+            <div className="absolute -right-3 -bottom-3 w-20 h-20 bg-[#FF5500]/10 rounded-full blur-xl pointer-events-none" />
+            <div className="flex items-center gap-2 mb-2">
+              <span className="p-1.5 rounded-lg bg-[#FF5500]/20 text-[#FF5500]">
+                <Zap className="w-4 h-4 fill-[#FF5500]" />
+              </span>
+              <span className="text-xs font-bold text-white">Campus Pro Hub</span>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed mb-3">
+              Real-time analytics & multi-campus store monitoring.
+            </p>
+            <Link to="/admin/site-customization">
+              <Button size="sm" className="w-full h-8 text-xs font-bold bg-gradient-to-r from-[#FF5500] to-[#FF2D55] hover:opacity-90 text-white shadow-md border-0 rounded-lg">
+                Manage Platform
+              </Button>
+            </Link>
+          </div>
+        )}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-2">
+      {/* Sidebar Footer */}
+      <SidebarFooter className="border-t border-slate-800/80 p-3 bg-[#0B132B]">
         <Button
           variant="ghost"
           size="icon"
           onClick={toggleSidebar}
-          className="w-full flex items-center justify-center mb-2"
+          className="w-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800/60 mb-2 h-8 rounded-lg"
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </Button>
-        <SidebarMenu>
+        <SidebarMenu className="space-y-1">
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={collapsed ? "Back to Store" : undefined} onClick={handleMobileClick}>
-              <Link to="/" className="flex items-center gap-3 text-muted-foreground">
-                <ShoppingBag className="w-5 h-5 shrink-0" />
-                {!collapsed && <span>Back to Store</span>}
+            <SidebarMenuButton asChild tooltip={collapsed ? "Back to Store" : undefined} onClick={handleMobileClick} className="text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-xl">
+              <Link to="/" className="flex items-center gap-3">
+                <ShoppingBag className="w-4 h-4 shrink-0" />
+                {!collapsed && <span className="text-xs font-medium">Back to Store</span>}
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={collapsed ? "Logout" : undefined} onClick={handleMobileClick}>
-              <Link to="/login" className="flex items-center gap-3 text-destructive">
-                <LogOut className="w-5 h-5 shrink-0" />
-                {!collapsed && <span>Logout</span>}
+            <SidebarMenuButton asChild tooltip={collapsed ? "Logout" : undefined} onClick={handleMobileClick} className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-xl">
+              <Link to="/login" className="flex items-center gap-3">
+                <LogOut className="w-4 h-4 shrink-0" />
+                {!collapsed && <span className="text-xs font-bold">Logout</span>}
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

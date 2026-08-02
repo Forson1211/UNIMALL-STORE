@@ -6,6 +6,9 @@ interface SiteSettingsContextValue {
     siteName: string;
     siteTagline: string;
     logoUrl: string;
+    authLogoUrl: string;
+    sidebarLogoUrl: string;
+    footerLogoUrl: string;
     faviconUrl: string;
     heroBackgroundUrl: string;
     heroOverlayOpacity: number;
@@ -22,6 +25,32 @@ interface SiteSettingsContextValue {
     darkModeEnabled: boolean;
     primaryColor: string;
     secondaryColor: string;
+    // Announcement Bar & Header Features
+    announcementEnabled: boolean;
+    announcementText: string;
+    announcementLink: string;
+    supportPhone: string;
+    supportEmail: string;
+    // Hero & Storefront
+    heroTitle: string;
+    heroSubtitle: string;
+    heroCtaText: string;
+    heroCtaLink: string;
+    // Social Links & Footer
+    facebookUrl: string;
+    instagramUrl: string;
+    twitterUrl: string;
+    whatsappNumber: string;
+    copyrightText: string;
+    // SEO & Social Share
+    seoMetaTitle: string;
+    seoMetaDescription: string;
+    ogImageUrl: string;
+    // Mobile & Header Toggles
+    stickyNavbarEnabled: boolean;
+    mobileBottomBarEnabled: boolean;
+    showSearchInHeader: boolean;
+
     isLoading: boolean;
     updatePreviewSettings: (settings: Partial<SiteSettingsContextValue>) => void;
     // Expose database methods
@@ -35,6 +64,9 @@ const SiteSettingsContext = createContext<SiteSettingsContextValue>({
     siteName: "Unimall",
     siteTagline: "Your Campus Marketplace",
     logoUrl: "",
+    authLogoUrl: "",
+    sidebarLogoUrl: "",
+    footerLogoUrl: "",
     faviconUrl: "",
     heroBackgroundUrl: "",
     heroOverlayOpacity: 0.5,
@@ -51,6 +83,26 @@ const SiteSettingsContext = createContext<SiteSettingsContextValue>({
     darkModeEnabled: false,
     primaryColor: "#f97316",
     secondaryColor: "#ea580c",
+    announcementEnabled: true,
+    announcementText: "⚡ Free campus delivery on student orders over GH₵ 100!",
+    announcementLink: "/products",
+    supportPhone: "+233 24 123 4567",
+    supportEmail: "support@unimall.edu.gh",
+    heroTitle: "Ghana's #1 Campus Marketplace",
+    heroSubtitle: "Buy and sell safely across university campuses with instant mobile money checkout",
+    heroCtaText: "Explore Campus Deals",
+    heroCtaLink: "/products",
+    facebookUrl: "",
+    instagramUrl: "",
+    twitterUrl: "",
+    whatsappNumber: "+233241234567",
+    copyrightText: "© 2026 Unimall Shop Ghana. All rights reserved.",
+    seoMetaTitle: "Unimall — Ghana University Campus Store",
+    seoMetaDescription: "Buy and sell electronics, books, fashion & dorm gear across Ghana campuses.",
+    ogImageUrl: "",
+    stickyNavbarEnabled: true,
+    mobileBottomBarEnabled: true,
+    showSearchInHeader: true,
     isLoading: true,
     updatePreviewSettings: () => { },
     settings: null,
@@ -80,6 +132,9 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
     const siteName = getValue("site_name", "Unimall", "siteName");
     const siteTagline = getValue("site_tagline", "Your Campus Marketplace", "siteTagline");
     const logoUrl = getValue("logo_url", "", "logoUrl");
+    const authLogoUrl = getValue("auth_logo_url", "", "authLogoUrl");
+    const sidebarLogoUrl = getValue("sidebar_logo_url", "", "sidebarLogoUrl");
+    const footerLogoUrl = getValue("footer_logo_url", "", "footerLogoUrl");
     const faviconUrl = getValue("favicon_url", "", "faviconUrl");
     const heroBackgroundUrl = getValue("hero_background_url", "", "heroBackgroundUrl");
     const heroOverlayOpacity = getValue("hero_overlay_opacity", 0.5, "heroOverlayOpacity");
@@ -100,6 +155,36 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
 
     const animationsEnabled = getValue("animations_enabled", true, "animationsEnabled");
     const darkModeEnabled = getValue("dark_mode_enabled", false, "darkModeEnabled");
+
+    // Announcement & Header
+    const announcementEnabled = getValue("announcement_enabled", true, "announcementEnabled");
+    const announcementText = getValue("announcement_text", "⚡ Free campus delivery on student orders over GH₵ 100!", "announcementText");
+    const announcementLink = getValue("announcement_link", "/products", "announcementLink");
+    const supportPhone = getValue("support_phone", "+233 24 123 4567", "supportPhone");
+    const supportEmail = getValue("support_email", "support@unimall.edu.gh", "supportEmail");
+
+    // Hero & Storefront
+    const heroTitle = getValue("hero_title", "Ghana's #1 Campus Marketplace", "heroTitle");
+    const heroSubtitle = getValue("hero_subtitle", "Buy and sell safely across university campuses with instant mobile money checkout", "heroSubtitle");
+    const heroCtaText = getValue("hero_cta_text", "Explore Campus Deals", "heroCtaText");
+    const heroCtaLink = getValue("hero_cta_link", "/products", "heroCtaLink");
+
+    // Social Links & Footer
+    const facebookUrl = getValue("facebook_url", "", "facebookUrl");
+    const instagramUrl = getValue("instagram_url", "", "instagramUrl");
+    const twitterUrl = getValue("twitter_url", "", "twitterUrl");
+    const whatsappNumber = getValue("whatsapp_number", "+233241234567", "whatsappNumber");
+    const copyrightText = getValue("copyright_text", "© 2026 Unimall Shop Ghana. All rights reserved.", "copyrightText");
+
+    // SEO & Social Share
+    const seoMetaTitle = getValue("seo_meta_title", "Unimall — Ghana University Campus Store", "seoMetaTitle");
+    const seoMetaDescription = getValue("seo_meta_description", "Buy and sell electronics, books, fashion & dorm gear across Ghana campuses.", "seoMetaDescription");
+    const ogImageUrl = getValue("og_image_url", "", "ogImageUrl");
+
+    // Mobile & Header Toggles
+    const stickyNavbarEnabled = getValue("sticky_navbar_enabled", true, "stickyNavbarEnabled");
+    const mobileBottomBarEnabled = getValue("mobile_bottom_bar_enabled", true, "mobileBottomBarEnabled");
+    const showSearchInHeader = getValue("show_search_in_header", true, "showSearchInHeader");
 
     // Log whenever key values change
     useEffect(() => {
@@ -247,6 +332,9 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
         siteName,
         siteTagline,
         logoUrl,
+        authLogoUrl,
+        sidebarLogoUrl,
+        footerLogoUrl,
         faviconUrl,
         heroBackgroundUrl,
         heroOverlayOpacity,
@@ -263,6 +351,26 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
         darkModeEnabled,
         primaryColor,
         secondaryColor,
+        announcementEnabled,
+        announcementText,
+        announcementLink,
+        supportPhone,
+        supportEmail,
+        heroTitle,
+        heroSubtitle,
+        heroCtaText,
+        heroCtaLink,
+        facebookUrl,
+        instagramUrl,
+        twitterUrl,
+        whatsappNumber,
+        copyrightText,
+        seoMetaTitle,
+        seoMetaDescription,
+        ogImageUrl,
+        stickyNavbarEnabled,
+        mobileBottomBarEnabled,
+        showSearchInHeader,
         isLoading,
         updatePreviewSettings,
         settings,
@@ -270,11 +378,16 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
         resetSettings,
         getSetting,
     }), [
-        siteName, siteTagline, logoUrl, faviconUrl, heroBackgroundUrl, heroOverlayOpacity,
+        siteName, siteTagline, logoUrl, authLogoUrl, sidebarLogoUrl, footerLogoUrl, faviconUrl, heroBackgroundUrl, heroOverlayOpacity,
         accentColor, backgroundColor, headerBgColor, footerBgColor, footerTextColor,
         borderRadius, fontFamily, fontSize, containerMaxWidth,
         animationsEnabled, darkModeEnabled, primaryColor, secondaryColor,
-        isLoading, updatePreviewSettings, settings, updateSettings, getSetting // resetSettings is constant/dummy so technically optional but good practice
+        announcementEnabled, announcementText, announcementLink, supportPhone, supportEmail,
+        heroTitle, heroSubtitle, heroCtaText, heroCtaLink,
+        facebookUrl, instagramUrl, twitterUrl, whatsappNumber, copyrightText,
+        seoMetaTitle, seoMetaDescription, ogImageUrl,
+        stickyNavbarEnabled, mobileBottomBarEnabled, showSearchInHeader,
+        isLoading, updatePreviewSettings, settings, updateSettings, getSetting
     ]);
 
     return (

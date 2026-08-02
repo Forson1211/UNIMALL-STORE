@@ -15,7 +15,7 @@ const QuickNav = () => {
         {/* Select Campus dropdown trigger */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="shrink-0 w-[230px] flex items-center justify-between px-4 h-full bg-[#FF5500] text-white font-bold text-sm hover:bg-[#e54a00] transition-colors whitespace-nowrap outline-none border-none">
+            <button className="shrink-0 w-[180px] flex items-center justify-between px-4 h-full bg-[#FF5500] text-white font-bold text-sm hover:bg-[#e54a00] transition-colors whitespace-nowrap outline-none border-none">
               <span className="flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 fill-white/20" />
                 {searchParams.get("campus") ? `Campus: ${searchParams.get("campus")}` : "Select Campus"}
@@ -43,29 +43,31 @@ const QuickNav = () => {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Distinct quick-links — NOT categories */}
-        {[
-          { label: "⚡ Flash Sales",     path: "/products#featured-products", highlight: true  },
-          { label: "New Arrivals",        path: "/products#just-arrived",      highlight: false },
-          { label: "Vendors",             path: "/vendors",                    highlight: false },
-          { label: "How It Works",        path: "/how-it-works",               highlight: false },
-          { label: "News & Blog",         path: "/news",                       highlight: false },
-          { label: "About Us",            path: "/about",                      highlight: false },
-          { label: "Sell on Unimall",     path: "/vendor",                     highlight: false },
-          { label: "Track My Order",      path: "/account/orders",             highlight: false },
-        ].map((link) => (
-          <Link
-            key={link.label}
-            to={link.path}
-            className={`shrink-0 px-4 h-full flex items-center text-sm font-bold border-r border-gray-100 transition-colors whitespace-nowrap last:border-0
-              ${link.highlight
-                ? "text-[#FF5500] hover:text-[#e54a00]"
-                : "text-gray-600 hover:text-[#FF5500]"
-              }`}
-          >
-            {link.label}
-          </Link>
-        ))}
+        {/* Distinct quick-links — centered in remaining space */}
+        <div className="flex-1 flex items-center justify-center">
+          {[
+            { label: "⚡ Flash Sales",     path: "/products#featured-products", highlight: true  },
+            { label: "New Arrivals",        path: "/products#just-arrived",      highlight: false },
+            { label: "Vendors",             path: "/vendors",                    highlight: false },
+            { label: "How It Works",        path: "/how-it-works",               highlight: false },
+            { label: "News & Blog",         path: "/news",                       highlight: false },
+            { label: "About Us",            path: "/about",                      highlight: false },
+            { label: "Sell on Unimall",     path: "/vendor",                     highlight: false },
+            { label: "Track My Order",      path: "/account/orders",             highlight: false },
+          ].map((link) => (
+            <Link
+              key={link.label}
+              to={link.path}
+              className={`px-3 h-full flex items-center text-sm font-bold border-r border-gray-100 transition-colors whitespace-nowrap last:border-0
+                ${link.highlight
+                  ? "text-[#FF5500] hover:text-[#e54a00]"
+                  : "text-gray-600 hover:text-[#FF5500]"
+                }`}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   );

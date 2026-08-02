@@ -16,7 +16,7 @@ const Login = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  const { siteName } = useSiteSettingsContext();
+  const { siteName, logoUrl, authLogoUrl } = useSiteSettingsContext();
 
   useEffect(() => {
     if (!authLoading && user && role) {
@@ -83,7 +83,7 @@ const Login = () => {
           {/* Logo & Header */}
           <div className="text-center mb-10">
             <Link to="/" className="inline-flex items-center justify-center mb-8">
-              <img src="/AUTH LOGO.png" alt={siteName || "Unimall"} className="h-16 md:h-20 w-auto object-contain drop-shadow-xl" />
+              <img src={authLogoUrl || logoUrl || "/AUTH LOGO.png"} alt={siteName || "Unimall"} className="h-16 md:h-20 w-auto object-contain drop-shadow-xl" />
             </Link>
             <h1 className="text-3xl font-black text-gray-900 tracking-tighter mb-2">Welcome Back</h1>
             <p className="text-gray-500 font-medium text-sm">Sign in to your {siteName || "Unimall"} account</p>

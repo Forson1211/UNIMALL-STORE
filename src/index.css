@@ -116,12 +116,20 @@
 }
 
 /* 2. Prevent body from ever getting padding-right injected */
-html,
+/* IMPORTANT: overflow-x must be 'clip' (not 'hidden') on html/body.
+   overflow-x: hidden creates a new scroll container, which silently
+   breaks position: sticky on child elements (the navbar).
+   overflow-x: clip prevents horizontal scroll without that side effect. */
+html {
+  --removed-body-scroll-bar-size: 0px !important;
+  margin-right: 0px !important;
+  padding-right: 0px !important;
+}
 body {
   --removed-body-scroll-bar-size: 0px !important;
   margin-right: 0px !important;
   padding-right: 0px !important;
-  overflow-x: hidden !important;
+  overflow-x: clip;
 }
 
 /* 3. Same for when data-scroll-locked attribute is added */
@@ -437,34 +445,22 @@ body[data-scroll-locked] .sticky {
   }
 }
 
-/* ── Jumia-style page layout ── */
+/* ── Page layout & header alignment ── */
 body {
-  background-color: #f1f1f2 !important;
+  background-color: #ffffff;
 }
 
-@media (min-width: 1280px) {
-  #root {
-    position: relative;
-    max-width: 1280px;
-    margin-left: auto;
-    margin-right: auto;
-    background-color: #f1f1f2;
-    min-height: 100vh;
-  }
+#root {
+  width: 100%;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  min-height: 100vh;
+}
 
-  /* Override desktop centering when inside admin/vendor dashboards or login/signup */
-  #root.full-screen-dashboard,
-  #root.full-screen-auth {
-    max-width: 100% !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    box-shadow: none !important;
-  }
-
-  /* Sticky header stays within the boxed container */
-  header.sticky-header {
-    width: 100%;
-  }
+/* Sticky header spans 100% full width edge-to-edge */
+header.sticky-header {
+  width: 100%;
 }
 
 /* Break child element out of parent container width constraints to span 100vw */

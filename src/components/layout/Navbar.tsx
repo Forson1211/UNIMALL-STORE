@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   X, ShoppingCart, Store, Heart, ChevronDown, User, ShoppingBag,
-  Zap, Phone, Truck, Search, Menu, LogOut
+  Zap, Phone, Truck, Search, Menu, LogOut, HelpCircle, MessageSquare, MessageCircle
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -31,7 +31,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { user, profile, role, signOut } = useAuth();
   const { totalItems, openCart } = useCart();
-  const { siteName } = useSiteSettingsContext();
+  const { siteName, logoUrl, announcementEnabled, announcementText, supportPhone, whatsappNumber } = useSiteSettingsContext();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -45,9 +45,11 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", handleScroll);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
 
   useEffect(() => {
     document.body.classList.add("has-bottom-tabbar");
@@ -90,23 +92,23 @@ const Navbar = () => {
   return (
     <>
       {/* ── TIER 1: Top Announcement Bar (Desktop) ── */}
-      <div className="hidden md:block bg-[#FF5500] text-white text-xs">
-        <div className="max-w-[1280px] mx-auto px-4 flex items-center justify-between h-8">
-          <Link to="/vendor" className="flex items-center gap-1.5 font-bold hover:underline">
+      <div className="hidden md:block bg-gray-50 text-gray-600 text-xs border-b border-gray-200">
+        <div className="max-w-[1280px] mx-auto px-4 xl:px-0 flex items-center justify-between h-8">
+          <Link to="/vendor" className="flex items-center gap-1.5 font-bold text-gray-700 hover:text-[#FF5500] hover:underline transition-colors">
             <Store className="w-3.5 h-3.5" />
             Sell on {siteName || "Unimall"}
           </Link>
-          <div className="flex items-center gap-6 text-white/90">
-            <span className="flex items-center gap-1"><Zap className="w-3 h-3 fill-yellow-300 text-yellow-300" /> Flash Deals Daily</span>
+          <div className="flex items-center gap-6 text-gray-500">
+            <span className="flex items-center gap-1"><Zap className="w-3 h-3 fill-[#FF5500] text-[#FF5500]" /> Flash Deals Daily</span>
             <span className="flex items-center gap-1"><Truck className="w-3 h-3" /> Free Delivery over GH₵ 100</span>
             <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> 0302740642</span>
           </div>
         </div>
       </div>
 
-      {/* ── TIER 2: Main Header (Desktop + Mobile Header) ── */}
-      <header className={`sticky-header sticky top-0 z-40 w-full transition-all duration-300 ${scrolled ? "shadow-md" : ""} bg-white dark:bg-card border-b border-gray-200 dark:border-border`}>
-        <div className="max-w-[1280px] mx-auto px-4">
+      <header className={`sticky-header sticky top-0 z-40 w-full transition-shadow duration-300 ${scrolled ? "shadow-md" : ""} bg-white dark:bg-card border-b border-gray-200 dark:border-border`}>
+        {/* ── TIER 2: Main Header (Desktop + Mobile Header) ── */}
+        <div className="max-w-[1280px] mx-auto px-4 xl:px-0">
 
           {/* DESKTOP HEADER (md and up) */}
           <div className="hidden md:flex items-center justify-between gap-4 h-[68px]">
@@ -142,15 +144,61 @@ const Navbar = () => {
 
             {/* Right Actions */}
             <div className="flex items-center gap-2 lg:gap-4 shrink-0">
-              <Link to="/faqs" className="hidden lg:flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-50 dark:hover:bg-muted transition-colors text-sm text-gray-700 dark:text-foreground font-bold">
-                Help
-                <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-              </Link>
+              {/* Help Dropdown */}
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1.5 px-3 py-2 rounded hover:bg-gray-50 dark:hover:bg-muted transition-colors text-sm font-bold text-gray-700 dark:text-foreground group">
+                    <HelpCircle className="w-5 h-5 text-gray-700 dark:text-foreground stroke-[1.8]" />
+                    <span className="font-bold text-gray-700 dark:text-foreground">Help</span>
+                    <ChevronDown className="w-3.5 h-3.5 text-gray-400 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-72 rounded-none shadow-2xl border-gray-100 dark:border-border p-3 mt-1.5 bg-white dark:bg-card space-y-1 z-50">
+                  <Link to="/faqs" className="block px-3.5 py-2.5 rounded-none text-xs font-semibold text-gray-800 dark:text-gray-200 hover:bg-gray-100/80 dark:hover:bg-muted hover:text-[#FF5500] transition-colors">
+                    Help Center
+                  </Link>
+                  <Link to="/how-it-works" className="block px-3.5 py-2.5 rounded-none text-xs font-semibold text-gray-800 dark:text-gray-200 hover:bg-gray-100/80 dark:hover:bg-muted hover:text-[#FF5500] transition-colors">
+                    Place an Order
+                  </Link>
+                  <Link to="/how-it-works#payment" className="block px-3.5 py-2.5 rounded-none text-xs font-semibold text-gray-800 dark:text-gray-200 hover:bg-gray-100/80 dark:hover:bg-muted hover:text-[#FF5500] transition-colors">
+                    Pay for Your Order
+                  </Link>
+                  <Link to="/account/orders" className="block px-3.5 py-2.5 rounded-none text-xs font-semibold text-gray-800 dark:text-gray-200 hover:bg-gray-100/80 dark:hover:bg-muted hover:text-[#FF5500] transition-colors">
+                    Delivery Timelines & Track your order
+                  </Link>
+                  <Link to="/how-it-works#cancellation" className="block px-3.5 py-2.5 rounded-none text-xs font-semibold text-gray-800 dark:text-gray-200 hover:bg-gray-100/80 dark:hover:bg-muted hover:text-[#FF5500] transition-colors">
+                    Cancel an Order
+                  </Link>
+                  <Link to="/how-it-works#refunds" className="block px-3.5 py-2.5 rounded-none text-xs font-semibold text-gray-800 dark:text-gray-200 hover:bg-gray-100/80 dark:hover:bg-muted hover:text-[#FF5500] transition-colors">
+                    Returns & Refunds
+                  </Link>
+
+                  <DropdownMenuSeparator className="my-2 border-gray-100 dark:border-border" />
+
+                  {/* Help Action Buttons: Live Chat & WhatsApp */}
+                  <div className="space-y-2 pt-1">
+                    <Link to="/how-it-works" className="w-full bg-[#FF5500] hover:bg-[#e54a00] text-white font-bold h-10 rounded-none flex items-center justify-center gap-2 text-xs shadow-md shadow-orange-500/20 transition-all">
+                      <MessageSquare className="w-4 h-4 fill-white text-[#FF5500]" />
+                      <span>Live Chat</span>
+                    </Link>
+
+                    <a 
+                      href={whatsappNumber ? `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}` : "https://wa.me/233241234567"} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="w-full bg-white dark:bg-card hover:bg-green-50 dark:hover:bg-green-950/20 text-[#25D366] border-2 border-[#25D366] font-extrabold h-10 rounded-none flex items-center justify-center gap-2 text-xs transition-all"
+                    >
+                      <MessageCircle className="w-4.5 h-4.5 fill-[#25D366] text-white" />
+                      <span>WhatsApp</span>
+                    </a>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Cart */}
               <button
                 onClick={openCart}
-                className="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-50 dark:hover:bg-muted transition-colors relative"
+                className="flex items-center gap-2 px-3 py-2 rounded-none hover:bg-gray-50 dark:hover:bg-muted transition-colors relative"
               >
                 <MCBCartIcon count={totalItems} iconClassName="w-6 h-6 text-gray-800 dark:text-white" />
                 <span className="hidden md:block font-bold text-sm text-gray-700 dark:text-foreground">Cart</span>
@@ -159,7 +207,7 @@ const Navbar = () => {
               {/* Account Dropdown */}
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-50 dark:hover:bg-muted transition-colors group text-sm">
+                  <button className="flex items-center gap-2 px-3 py-2 rounded-none hover:bg-gray-50 dark:hover:bg-muted transition-colors group text-sm">
                     <User className="w-5 h-5 text-gray-700 dark:text-foreground stroke-[1.8]" />
                     <span className="font-bold text-gray-700 dark:text-foreground">
                       {user ? (profile?.full_name?.split(" ")[0] || "Account") : "My account"}
@@ -167,11 +215,11 @@ const Navbar = () => {
                     <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-64 rounded shadow-xl border-gray-100 dark:border-border p-2 mt-1">
+                <DropdownMenuContent align="end" className="w-64 rounded-none shadow-xl border-gray-100 dark:border-border p-2 mt-1">
                   {!user ? (
                     <div className="p-2 pb-3 border-b border-gray-100 dark:border-border mb-2">
                       <Link to="/login">
-                        <Button className="w-full bg-[#FF5500] hover:bg-[#e54a00] text-white font-bold h-10 rounded text-sm">
+                        <Button className="w-full bg-[#FF5500] hover:bg-[#e54a00] text-white font-bold h-10 rounded-none text-sm">
                           Sign In / Register
                         </Button>
                       </Link>
@@ -214,7 +262,7 @@ const Navbar = () => {
               </DropdownMenu>
 
               <Link to="/vendor">
-                <Button className="bg-[#FF5500] hover:bg-[#e54a00] text-white font-bold rounded text-xs px-4 h-9">
+                <Button className="bg-[#FF5500] hover:bg-[#e54a00] text-white font-bold rounded-none text-xs px-4 h-9">
                   SELL
                 </Button>
               </Link>
@@ -260,11 +308,15 @@ const Navbar = () => {
           }
         }}
       >
-        <SheetContent side="left" className="w-[72%] sm:w-[70%] max-w-[275px] p-0 bg-white dark:bg-card border-r border-gray-200 dark:border-border flex flex-col justify-between [&>button]:hidden">
+        <SheetContent
+          side="left"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          className="w-[72%] sm:w-[70%] max-w-[275px] p-0 bg-white dark:bg-card border-r border-gray-200 dark:border-border flex flex-col justify-between [&>button]:hidden"
+        >
           <div className="overflow-y-auto flex-1">
             {/* Top Search Input & Close Header Bar (MCB Rentals style) */}
             <div className="p-3 border-b border-gray-200 dark:border-border bg-white dark:bg-card flex items-center gap-2">
-              <form onSubmit={handleSearch} className="flex-1 relative flex items-center border border-gray-200 dark:border-border rounded bg-gray-50/70 dark:bg-muted px-3 h-10">
+              <form onSubmit={handleSearch} className="flex-1 relative flex items-center border border-gray-200 dark:border-border rounded-full bg-gray-50/70 dark:bg-muted px-3.5 h-10">
                 <input
                   type="text"
                   value={searchQuery}
@@ -291,8 +343,8 @@ const Navbar = () => {
               <button
                 onClick={() => setDrawerTab("menu")}
                 className={`py-3.5 text-center text-xs font-semibold uppercase tracking-wide transition-all relative ${drawerTab === "menu"
-                    ? "bg-[#EFEFEF] dark:bg-card text-gray-900 dark:text-foreground border-b-2 border-[#FF5500]"
-                    : "text-gray-500 dark:text-muted-foreground hover:text-gray-700"
+                  ? "bg-[#EFEFEF] dark:bg-card text-gray-900 dark:text-foreground border-b-2 border-[#FF5500]"
+                  : "text-gray-500 dark:text-muted-foreground hover:text-gray-700"
                   }`}
               >
                 MENU
@@ -300,8 +352,8 @@ const Navbar = () => {
               <button
                 onClick={() => setDrawerTab("categories")}
                 className={`py-3.5 text-center text-xs font-semibold uppercase tracking-wide transition-all relative ${drawerTab === "categories"
-                    ? "bg-[#EFEFEF] dark:bg-card text-gray-900 dark:text-foreground border-b-2 border-[#FF5500]"
-                    : "text-gray-500 dark:text-muted-foreground hover:text-gray-700"
+                  ? "bg-[#EFEFEF] dark:bg-card text-gray-900 dark:text-foreground border-b-2 border-[#FF5500]"
+                  : "text-gray-500 dark:text-muted-foreground hover:text-gray-700"
                   }`}
               >
                 CATEGORIES
@@ -410,7 +462,7 @@ const Navbar = () => {
                   const CatIcon = cat.icon;
                   return (
                     <Link
-                      key={cat.id}
+                      key={cat.label}
                       to={`/products?category=${encodeURIComponent(cat.label)}`}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="flex items-center gap-3 px-4 py-3.5 text-xs font-medium uppercase tracking-wide text-gray-700 dark:text-gray-300 hover:text-[#FF5500] transition-colors"
@@ -429,7 +481,7 @@ const Navbar = () => {
             <Link
               to="/vendor"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block w-full bg-[#FF5500] text-white text-center py-3 rounded font-bold text-xs uppercase tracking-wider shadow-md shadow-orange-500/20"
+              className="block w-full bg-[#FF5500] text-white text-center py-3 rounded-none font-bold text-xs uppercase tracking-wider shadow-md shadow-orange-500/20"
             >
               Sell on Unimall
             </Link>
