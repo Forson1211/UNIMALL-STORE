@@ -219,8 +219,8 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
   return (
     <Sidebar className={`${collapsed ? "w-16" : "w-64"} bg-[#0B132B] text-slate-300 border-r border-slate-800/80 transition-all duration-300`} collapsible="icon" data-state={state}>
       {/* Header / Brand Logo */}
-      <SidebarHeader className="h-16 flex items-center justify-start border-b border-slate-800/80 p-0 px-4 bg-[#0B132B] shrink-0">
-        <Link to="/" className="flex items-center group pl-2.5" onClick={handleMobileClick}>
+      <SidebarHeader className="h-16 flex items-center justify-start border-b border-slate-800/80 px-4 bg-[#0B132B] shrink-0">
+        <Link to="/" className="flex items-center justify-start group px-2.5 w-full" onClick={handleMobileClick}>
           {collapsed ? (
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF5500] to-[#FF007F] p-0.5 flex items-center justify-center shadow-lg shadow-orange-500/20">
               <div className="w-full h-full bg-[#0B132B] rounded-[10px] flex items-center justify-center">
@@ -231,7 +231,7 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
             <img 
               src={sidebarLogoUrl || footerLogoUrl || "/FOOTER LOGO.png"} 
               alt={siteName || "UNIMALL"} 
-              className="h-8 md:h-9 w-auto max-w-[165px] object-contain drop-shadow-md transition-transform hover:scale-[1.02]" 
+              className="h-10 md:h-11 w-auto max-w-[185px] object-contain object-left drop-shadow-md transition-transform hover:scale-[1.02]" 
             />
           )}
         </Link>

@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Search, Heart, ShoppingCart,
+  Search, Heart, ShoppingCart, ShoppingBag,
   SlidersHorizontal, ChevronRight, Package, ArrowRight,
-  Minus, Plus, Check
+  Minus, Plus, Check, Filter, ChevronDown
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
@@ -15,8 +15,6 @@ import { useQuery } from "@tanstack/react-query";
 import { productService, StorefrontProduct } from "@/services/productService";
 import ShopHeroCarousel from "@/components/shop/ShopHeroCarousel";
 import ShopQuickLinks from "@/components/shop/ShopQuickLinks";
-import ProductShowcaseSection from "@/components/shop/ProductShowcaseSection";
-import ShopCategoryBanners from "@/components/shop/ShopCategoryBanners";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 
 const categories = [
@@ -28,7 +26,6 @@ const sortOptions = ["Newest", "Price: Low to High", "Price: High to Low", "Most
 
 /* ── MCB Rentals Style Product Card ── */
 const MCBProductCard = ({ product }: { product: any }) => {
-  const [qty, setQty] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const { addItem } = useCart();
   const { toast } = useToast();
@@ -36,19 +33,17 @@ const MCBProductCard = ({ product }: { product: any }) => {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    for (let i = 0; i < qty; i++) {
-      addItem({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.image,
-        vendor: product.vendor,
-        vendorId: product.vendorId || "",
-      });
-    }
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      vendor: product.vendor,
+      vendorId: product.vendorId || "",
+    });
     toast({
       title: "Added to Cart",
-      description: `${qty}x ${product.name} added to your bag.`,
+      description: `${product.name} added to your bag.`,
     });
   };
 
@@ -67,90 +62,62 @@ const MCBProductCard = ({ product }: { product: any }) => {
   return (
     <Link
       to={`/products/${product.id}`}
-      className="group bg-white dark:bg-card border border-gray-200/80 dark:border-border rounded-xl p-3 flex flex-col justify-between hover:shadow-xl transition-all duration-300 relative h-full"
+      className="group flex flex-col bg-white dark:bg-card rounded-none border border-gray-200/80 dark:border-border p-2.5 hover:shadow-lg transition-all duration-300 relative h-full justify-between"
     >
       <div>
         {/* Top Image Box */}
-        <div className="relative aspect-square bg-gray-50/70 dark:bg-muted/30 rounded-lg p-3 flex items-center justify-center overflow-hidden mb-3">
+        <div className="relative aspect-square bg-gray-50/70 dark:bg-muted/30 rounded-none overflow-hidden mb-2">
           <img
             src={product.image}
             alt={product.name}
-            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
-          <button
-            type="button"
-            onClick={handleWishlist}
-            className={`absolute top-2 right-2 w-8 h-8 rounded-full bg-white dark:bg-card shadow-sm border border-gray-100 dark:border-border flex items-center justify-center transition-all ${
-              isWishlisted ? "text-red-500 bg-red-50" : "text-gray-400 hover:text-[#FF5500]"
-            }`}
-            aria-label="Wishlist"
-          >
-            <Heart className={`w-4 h-4 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`} />
-          </button>
         </div>
 
         {/* Product Title */}
-        <h3 className="font-bold text-xs md:text-sm text-gray-900 dark:text-foreground line-clamp-2 leading-snug hover:text-[#FF5500] transition-colors mb-1">
+        <h3 className="font-bold text-xs md:text-sm text-gray-900 dark:text-foreground line-clamp-1 leading-snug hover:text-[#FF5500] transition-colors mb-0.5">
           {product.name}
         </h3>
 
-        {/* Category / Vendor */}
-        <p className="text-[11px] text-gray-400 dark:text-muted-foreground font-medium mb-1.5 truncate">
-          {product.vendor || product.category || "Unimall"}
-        </p>
-
-        {/* Stock Status */}
-        <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mb-2">
-          <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-          <span>{inStock ? "In stock" : "Out of stock"}</span>
+        {/* Vendor & Stock Status Row */}
+        <div className="flex items-center justify-between text-[10px] text-gray-400 dark:text-muted-foreground font-medium mb-1.5">
+          <span className="truncate max-w-[65%]">{product.vendor || product.category || "Unimall"}</span>
+          <span className="flex items-center gap-0.5 font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+            <Check className="w-3 h-3 stroke-[2.5]" />
+            {inStock ? "In stock" : "Out of stock"}
+          </span>
         </div>
       </div>
 
-      {/* Price & MCB Pill Button Bar */}
-      <div className="mt-auto pt-1">
-        <p className="text-base md:text-lg font-black text-[#FF5500] tracking-tight">
+      {/* Bottom Price & Action Buttons Row (Sharp Edges) */}
+      <div className="flex items-center justify-between pt-1.5 mt-auto border-t border-gray-100 dark:border-border">
+        <span className="font-black text-xs sm:text-sm text-[#FF5500] tracking-tight">
           GH₵ {product.price.toLocaleString()}
-          {product.original_price && product.original_price > product.price && (
-            <span className="text-xs text-gray-400 line-through font-medium ml-2">
-              GH₵ {product.original_price.toLocaleString()}
-            </span>
-          )}
-        </p>
+        </span>
 
-        {/* Combined Pill Action Bar */}
-        <div className="mt-2.5 flex items-center bg-[#FF5500] hover:bg-[#e54a00] text-white rounded-full h-9 p-0.5 shadow-md shadow-orange-500/20 transition-colors w-full overflow-hidden">
-          {/* Quantity Selector inside Pill */}
-          <div
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            className="bg-black/20 dark:bg-black/40 rounded-full h-full px-1.5 flex items-center gap-0.5 text-xs font-bold shrink-0"
+        <div className="flex items-center gap-1">
+          {/* Wishlist Button (Sharp Square) */}
+          <button
+            type="button"
+            onClick={handleWishlist}
+            className={`w-7 h-7 rounded-none border border-gray-200/80 dark:border-border flex items-center justify-center transition-colors ${
+              isWishlisted
+                ? "bg-red-50 text-red-500 border-red-100"
+                : "bg-gray-50/80 dark:bg-muted/80 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-muted hover:text-[#FF5500]"
+            }`}
+            aria-label="Wishlist"
           >
-            <button
-              type="button"
-              onClick={() => setQty((q) => Math.max(1, q - 1))}
-              className="w-4.5 h-4.5 rounded-full flex items-center justify-center hover:bg-white/20 active:scale-90 transition-all text-white"
-              aria-label="Decrease quantity"
-            >
-              <Minus className="w-2.5 h-2.5 stroke-[2.5]" />
-            </button>
-            <span className="w-3 text-center font-black select-none text-[11px] text-white">{qty}</span>
-            <button
-              type="button"
-              onClick={() => setQty((q) => q + 1)}
-              className="w-4.5 h-4.5 rounded-full flex items-center justify-center hover:bg-white/20 active:scale-90 transition-all text-white"
-              aria-label="Increase quantity"
-            >
-              <Plus className="w-2.5 h-2.5 stroke-[2.5]" />
-            </button>
-          </div>
+            <Heart className={`w-3.5 h-3.5 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`} />
+          </button>
 
-          {/* Buy Now / Add to Cart Action Label */}
+          {/* Cart Button (Sharp Square) */}
           <button
             type="button"
             onClick={handleAddToCart}
-            className="group/btn flex-1 text-center font-extrabold text-[10px] sm:text-xs uppercase tracking-wider text-white h-full flex items-center justify-center px-1 truncate"
+            className="w-7 h-7 rounded-none bg-[#FF5500] hover:bg-[#e54a00] text-white flex items-center justify-center transition-colors"
+            aria-label="Add to Cart"
           >
-            <span className="group-hover/btn:hidden">BUY NOW</span>
-            <span className="hidden group-hover/btn:inline">ADD TO CART</span>
+            <ShoppingCart className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
@@ -160,10 +127,17 @@ const MCBProductCard = ({ product }: { product: any }) => {
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [localSearch, setLocalSearch] = useState(searchParams.get("search") || "");
-  const [sortBy, setSortBy] = useState("Newest");
+  const [sortBy, setSortBy] = useState("newest");
+  const [priceRange, setPriceRange] = useState<string>("all");
+  const [minPrice, setMinPrice] = useState<string>("");
+  const [maxPrice, setMaxPrice] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Collapsible accordion states
+  const [catOpen, setCatOpen] = useState(true);
+  const [priceOpen, setPriceOpen] = useState(true);
+  const [campusOpen, setCampusOpen] = useState(true);
 
   const searchQuery = searchParams.get("search") || "";
   const categoryFilter = searchParams.get("category") || "All";
@@ -177,7 +151,7 @@ const Products = () => {
     queryFn: () => productService.getProducts({ category: categoryFilter, search: searchQuery }),
   });
 
-  // Map of vendor names to their campus location (fallback to Legon)
+  // Map of vendor names to their campus location
   const VENDOR_CAMPUS_MAP: Record<string, string> = {
     "techhub": "Legon",
     "bookworm": "KNUST",
@@ -189,12 +163,50 @@ const Products = () => {
     "artvibes": "UPSA"
   };
 
-  const filteredProducts = products.filter(product => {
-    if (campusFilter === "All") return true;
-    const vendorName = (product.vendor || "").toLowerCase();
-    const vendorCampus = VENDOR_CAMPUS_MAP[vendorName] || "Legon";
-    return vendorCampus.toLowerCase() === campusFilter.toLowerCase();
-  });
+  const processedProducts = useMemo(() => {
+    let list = [...products];
+
+    // 1. Campus filter
+    if (campusFilter !== "All") {
+      list = list.filter(product => {
+        const vendorName = (product.vendor || "").toLowerCase();
+        const vendorCampus = VENDOR_CAMPUS_MAP[vendorName] || "Legon";
+        return vendorCampus.toLowerCase() === campusFilter.toLowerCase();
+      });
+    }
+
+    // 2. Preset Price Range
+    if (priceRange === "below-200") {
+      list = list.filter(p => p.price < 200);
+    } else if (priceRange === "200-500") {
+      list = list.filter(p => p.price >= 200 && p.price <= 500);
+    } else if (priceRange === "500-800") {
+      list = list.filter(p => p.price >= 500 && p.price <= 800);
+    } else if (priceRange === "800-1000") {
+      list = list.filter(p => p.price >= 800 && p.price <= 1000);
+    } else if (priceRange === "1000-plus") {
+      list = list.filter(p => p.price > 1000);
+    }
+
+    // 3. Custom min/max price
+    if (minPrice) {
+      list = list.filter(p => p.price >= parseFloat(minPrice));
+    }
+    if (maxPrice) {
+      list = list.filter(p => p.price <= parseFloat(maxPrice));
+    }
+
+    // 4. Sorting
+    if (sortBy === "price-low") {
+      list.sort((a, b) => a.price - b.price);
+    } else if (sortBy === "price-high") {
+      list.sort((a, b) => b.price - a.price);
+    } else if (sortBy === "rating") {
+      list.sort((a, b) => (b.rating || 5) - (a.rating || 5));
+    }
+
+    return list;
+  }, [products, campusFilter, priceRange, minPrice, maxPrice, sortBy]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -214,117 +226,96 @@ const Products = () => {
     setSidebarOpen(false);
   };
 
-  const handleAddToCart = (product: StorefrontProduct, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      vendor: product.vendor,
-      vendorId: product.vendor_id,
-    });
-    toast({ title: "Added to cart", description: `${product.name} added to your cart.` });
-  };
-
   const activeCategory = categories.find(c => c.value === categoryFilter) || categories[0];
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5]">
+    <div className="min-h-screen bg-[#f5f5f5] dark:bg-background">
       <Navbar />
 
       <main className="pb-20">
-        {/* Curated Shop Sections */}
+        {/* Curated Shop Top Header */}
         <div className="container mx-auto px-4 pt-4 md:pt-6">
           <ShopHeroCarousel />
           <ShopQuickLinks />
-          <ProductShowcaseSection
-            id="featured-products"
-            title="Featured Products"
-            sortBy="rating"
-            promo={{
-              title: "Trending Now",
-              subtitle: "Top rated picks from campus vendors.",
-              cta: "Explore",
-              gradient: "bg-gradient-to-br from-gray-900 to-gray-700",
-            }}
-          />
-          <ProductShowcaseSection
-            id="just-arrived"
-            title="Just Arrived"
-            sortBy="created_at"
-            promo={{
-              title: "Just Dropped",
-              subtitle: "New listings added by vendors every day.",
-              cta: "See New",
-              gradient: "bg-gradient-to-br from-primary to-secondary",
-            }}
-          />
-          <ShopCategoryBanners />
         </div>
 
-        {/* Top Header Section */}
-        <div id="all-products" className="bg-white border-b border-gray-100 mb-6 py-4 scroll-mt-24">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight uppercase">{activeCategory.label}</h1>
-                <p className="text-xs md:text-sm text-gray-400 font-bold mt-1 uppercase tracking-widest">
-                  {isLoading ? "Fetching catalog..." : `${filteredProducts.length} products available`}
-                </p>
+        {/* ── MAIN PRODUCT CATALOG & FILTER AREA ── */}
+        <div id="all-products" className="container mx-auto px-4 py-6 scroll-mt-24">
+          
+          {/* Top Filter Header Bar (Matching Reference Screenshot) */}
+          <div className="bg-white dark:bg-card border border-gray-200/80 dark:border-border p-4 mb-6 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-none">
+            {/* Left: Breadcrumbs & Results Count */}
+            <div>
+              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-muted-foreground font-medium mb-1">
+                <Link to="/" className="hover:text-primary transition-colors">Categories</Link>
+                <ChevronRight className="w-3 h-3 text-gray-400" />
+                <span className="font-bold text-gray-900 dark:text-foreground">{activeCategory.label}</span>
               </div>
+              <p className="text-xs text-gray-400 font-semibold">
+                {isLoading ? "Loading items..." : `Showing all ${processedProducts.length} items results`}
+              </p>
+            </div>
 
-              <div className="flex items-center gap-2">
-                {/* Search Field */}
-                <form onSubmit={handleSearch} className="relative flex-1 md:w-64">
-                  <input
-                    type="text"
-                    placeholder="Search in category..."
-                    value={localSearch}
-                    onChange={(e) => setLocalSearch(e.target.value)}
-                    className="w-full h-10 pl-4 pr-10 border border-gray-200 rounded-none text-sm outline-none focus:border-primary"
-                  />
-                  <button type="submit" className="absolute right-0 top-0 h-10 w-10 flex items-center justify-center text-gray-400 hover:text-primary">
-                    <Search className="w-4 h-4" />
-                  </button>
-                </form>
+            {/* Right: Search, Filter Toggle & Sort Dropdown */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Instant Search Bar */}
+              <form onSubmit={handleSearch} className="relative flex-1 md:w-64">
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={localSearch}
+                  onChange={(e) => setLocalSearch(e.target.value)}
+                  className="w-full h-9 pl-9 pr-4 border border-gray-200 dark:border-border rounded-none text-xs outline-none focus:border-[#FF5500] bg-gray-50/50 dark:bg-muted/40"
+                />
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              </form>
 
-                <button
-                  className="lg:hidden h-10 px-4 border border-gray-200 rounded-none flex items-center gap-2 text-xs font-black uppercase tracking-widest"
-                  onClick={() => setSidebarOpen(true)}
-                >
-                  <SlidersHorizontal className="w-4 h-4" /> Filters
-                </button>
-              </div>
+              {/* Sort By Dropdown */}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="h-9 px-3 border border-gray-200 dark:border-border bg-white dark:bg-card text-xs font-bold text-gray-700 dark:text-foreground rounded-none outline-none focus:border-[#FF5500] cursor-pointer"
+              >
+                <option value="newest">Sort By: Newest</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="rating">Top Rated</option>
+              </select>
+
+              {/* Mobile Filter Toggle */}
+              <button
+                className="lg:hidden h-9 px-4 border border-gray-200 dark:border-border rounded-none flex items-center gap-2 text-xs font-bold uppercase tracking-wider bg-white dark:bg-card text-gray-800 dark:text-foreground"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <Filter className="w-3.5 h-3.5 text-[#FF5500]" /> Filters
+              </button>
             </div>
           </div>
-        </div>
-
-        <div className="container mx-auto px-4">
 
           <div className="flex flex-col lg:flex-row gap-6">
 
-            {/* ── SIDEBAR ── */}
-            {/* Mobile Drawer */}
+            {/* ── LEFT FILTER SIDEBAR ── */}
             <aside className={`
               fixed lg:static inset-0 z-50 lg:z-0 lg:w-64 xl:w-72 flex-shrink-0
               ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
               transition-transform duration-300
             `}>
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-black/40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+              {/* Mobile Backdrop */}
+              <div className="absolute inset-0 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />
 
-              {/* Sidebar Content */}
-              <div className="relative w-72 lg:w-full h-full bg-white lg:bg-transparent overflow-y-auto lg:overflow-visible">
-                <div className="lg:sticky lg:top-24 flex flex-col gap-4">
-
-                  {/* Categories Card */}
-                  <div className="bg-white rounded-none border border-border/40 shadow-sm overflow-hidden">
-                    <div className="px-5 py-4 border-b border-gray-100">
-                      <h3 className="text-xs font-black uppercase tracking-[0.15em] text-gray-400">Browse Categories</h3>
-                    </div>
-                    <div className="py-2">
+              <div className="relative w-72 lg:w-full h-full bg-white dark:bg-card lg:bg-transparent overflow-y-auto lg:overflow-visible p-4 lg:p-0 space-y-4">
+                
+                {/* 1. Categories Accordion Box */}
+                <div className="bg-white dark:bg-card border border-gray-200/80 dark:border-border rounded-none shadow-2xs overflow-hidden">
+                  <button 
+                    onClick={() => setCatOpen(!catOpen)}
+                    className="w-full px-4 py-3 border-b border-gray-100 dark:border-border flex items-center justify-between text-xs font-bold text-gray-900 dark:text-foreground hover:bg-gray-50/50"
+                  >
+                    <span>Categories</span>
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${catOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {catOpen && (
+                    <div className="p-2 space-y-0.5">
                       {categories.map((cat) => {
                         const Icon = cat.icon;
                         const isActive = categoryFilter === cat.value || (cat.value === "All" && !categoryFilter);
@@ -332,93 +323,171 @@ const Products = () => {
                           <button
                             key={cat.value}
                             onClick={() => handleCategoryChange(cat.value)}
-                            className={`w-full flex items-center gap-3 px-5 py-3 text-left transition-all group ${isActive
-                                ? "bg-primary text-white"
-                                : "text-gray-600 hover:bg-gray-50 hover:text-primary"
-                              }`}
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-all text-xs rounded-none ${
+                              isActive
+                                ? "bg-[#FF5500] text-white font-bold"
+                                : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-muted hover:text-[#FF5500]"
+                            }`}
                           >
-                            <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? "text-white" : "text-gray-400 group-hover:text-primary"}`} />
-                            <span className="text-base font-black flex-1">{cat.label}</span>
-                            <ChevronRight className={`w-4 h-4 transition-transform ${isActive ? "translate-x-0" : "translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-50"}`} />
+                            <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-gray-400"}`} />
+                            <span className="flex-1 truncate">{cat.label}</span>
                           </button>
                         );
                       })}
                     </div>
-                  </div>
-
-                  {/* Price Filter Card */}
-                  <div className="bg-white rounded-none border border-border/40 shadow-sm p-5">
-                    <h3 className="text-xs font-black uppercase tracking-[0.15em] text-gray-400 mb-5">Price Range</h3>
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="relative flex-1">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">Min</span>
-                        <input type="number" className="w-full h-10 pl-10 pr-2 border border-gray-200 rounded-none text-sm outline-none focus:border-primary" />
-                      </div>
-                      <span className="text-gray-300">—</span>
-                      <div className="relative flex-1">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">Max</span>
-                        <input type="number" className="w-full h-10 pl-10 pr-2 border border-gray-200 rounded-none text-sm outline-none focus:border-primary" />
-                      </div>
-                    </div>
-                    <button className="w-full h-12 bg-primary text-white text-xs font-black uppercase tracking-widest rounded-none hover:bg-black transition-colors shadow-lg shadow-primary/20">
-                      Apply Filters
-                    </button>
-                  </div>
-
-                  {/* Student Deal Banner */}
-                  <div className="bg-primary p-6 rounded-none relative overflow-hidden group cursor-pointer">
-                    <div className="relative z-10">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-white/70 mb-2">Exclusive Offer</p>
-                      <h4 className="text-xl font-black text-white leading-tight uppercase mb-4 tracking-tighter">Student <br /> Deals Only</h4>
-                      <div className="flex items-center text-[10px] font-black uppercase tracking-widest text-white border-b border-white/40 pb-1 w-fit">
-                        Discover Now <ArrowRight className="w-3.5 h-3.5 ml-2" />
-                      </div>
-                    </div>
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 -translate-y-1/2 translate-x-1/2 rotate-45 transition-transform group-hover:rotate-[60deg]" />
-                  </div>
+                  )}
                 </div>
+
+                {/* 2. Product Price Ranges Accordion Box */}
+                <div className="bg-white dark:bg-card border border-gray-200/80 dark:border-border rounded-none shadow-2xs p-4 space-y-4">
+                  <button 
+                    onClick={() => setPriceOpen(!priceOpen)}
+                    className="w-full flex items-center justify-between border-b border-gray-100 dark:border-border pb-2 text-xs font-bold text-gray-900 dark:text-foreground"
+                  >
+                    <span>Product Price</span>
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${priceOpen ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {priceOpen && (
+                    <>
+                      {/* Radio Price Options */}
+                      <div className="space-y-2 text-xs font-medium text-gray-700 dark:text-gray-300">
+                        {[
+                          { id: "all", label: "All Price" },
+                          { id: "below-200", label: "Below GH₵ 200" },
+                          { id: "200-500", label: "GH₵ 200 - GH₵ 500" },
+                          { id: "500-800", label: "GH₵ 500 - GH₵ 800" },
+                          { id: "800-1000", label: "GH₵ 800 - GH₵ 1,000" },
+                          { id: "1000-plus", label: "GH₵ 1,000+" },
+                        ].map((opt) => (
+                          <label key={opt.id} className="flex items-center gap-2.5 cursor-pointer hover:text-[#FF5500] transition-colors">
+                            <input
+                              type="radio"
+                              name="priceRange"
+                              checked={priceRange === opt.id}
+                              onChange={() => setPriceRange(opt.id)}
+                              className="accent-[#FF5500] w-3.5 h-3.5 cursor-pointer"
+                            />
+                            <span>{opt.label}</span>
+                          </label>
+                        ))}
+                      </div>
+
+                      {/* Custom Price Range Inputs */}
+                      <div className="pt-2 border-t border-gray-100 dark:border-border space-y-2">
+                        <p className="text-[11px] font-bold text-gray-900 dark:text-foreground">Custom Price Range:</p>
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex-1">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">GH₵</span>
+                            <input
+                              type="number"
+                              placeholder="Min"
+                              value={minPrice}
+                              onChange={(e) => setMinPrice(e.target.value)}
+                              className="w-full h-8 pl-9 pr-2 border border-gray-200 dark:border-border rounded-none text-xs outline-none focus:border-[#FF5500] bg-gray-50/50 dark:bg-muted/40"
+                            />
+                          </div>
+                          <span className="text-gray-400 text-xs">—</span>
+                          <div className="relative flex-1">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">GH₵</span>
+                            <input
+                              type="number"
+                              placeholder="Max"
+                              value={maxPrice}
+                              onChange={(e) => setMaxPrice(e.target.value)}
+                              className="w-full h-8 pl-9 pr-2 border border-gray-200 dark:border-border rounded-none text-xs outline-none focus:border-[#FF5500] bg-gray-50/50 dark:bg-muted/40"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Apply Button */}
+                      <button 
+                        onClick={() => setSidebarOpen(false)}
+                        className="w-full h-10 bg-[#FF5500] hover:bg-[#e54a00] text-white text-xs font-bold uppercase tracking-wider rounded-none transition-colors shadow-md shadow-orange-500/20"
+                      >
+                        Apply Filter
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* 3. Campus Location Accordion Box */}
+                <div className="bg-white dark:bg-card border border-gray-200/80 dark:border-border rounded-none shadow-2xs p-4 space-y-3">
+                  <button 
+                    onClick={() => setCampusOpen(!campusOpen)}
+                    className="w-full flex items-center justify-between border-b border-gray-100 dark:border-border pb-2 text-xs font-bold text-gray-900 dark:text-foreground"
+                  >
+                    <span>Campus Location</span>
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${campusOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {campusOpen && (
+                    <div className="space-y-1.5 text-xs font-medium text-gray-700 dark:text-gray-300">
+                      {["All", "Legon", "KNUST", "UCC", "UPSA"].map((campus) => (
+                        <button
+                          key={campus}
+                          onClick={() => {
+                            setSearchParams(prev => {
+                              if (campus === "All") prev.delete("campus");
+                              else prev.set("campus", campus);
+                              return prev;
+                            });
+                          }}
+                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-none text-left transition-colors ${
+                            (searchParams.get("campus") || "All") === campus
+                              ? "bg-orange-50 dark:bg-orange-950/30 text-[#FF5500] font-bold"
+                              : "hover:bg-gray-50 dark:hover:bg-muted"
+                          }`}
+                        >
+                          <span>{campus} Campus</span>
+                          {(searchParams.get("campus") || "All") === campus && <Check className="w-3.5 h-3.5 text-[#FF5500]" />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
               </div>
             </aside>
 
-            {/* ── PRODUCTS GRID ── */}
+            {/* ── PRODUCTS GRID MAIN DISPLAY ── */}
             <div className="flex-1 min-w-0">
               {isLoading ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                   {[...Array(8)].map((_, i) => (
                     <div key={i} className="bg-white rounded-none border border-gray-100 overflow-hidden animate-pulse">
                       <div className="aspect-square bg-gray-100" />
-                      <div className="p-4 space-y-2">
+                      <div className="p-3 space-y-2">
                         <div className="h-3 bg-gray-100 w-1/2" />
                         <div className="h-4 bg-gray-100 w-3/4" />
                       </div>
                     </div>
                   ))}
                 </div>
-              ) : filteredProducts.length === 0 ? (
-                <div className="bg-white border border-gray-100 flex flex-col items-center justify-center py-32 text-center">
-                  <div className="w-20 h-20 bg-gray-50 rounded-none flex items-center justify-center mb-6">
-                    <Search className="w-8 h-8 text-gray-200" />
+              ) : processedProducts.length === 0 ? (
+                <div className="bg-white dark:bg-card border border-gray-200/80 dark:border-border p-12 text-center rounded-none">
+                  <div className="w-16 h-16 bg-orange-50 dark:bg-orange-950/30 text-[#FF5500] rounded-none flex items-center justify-center mx-auto mb-4">
+                    <Search className="w-7 h-7" />
                   </div>
-                  <h3 className="text-xl font-black text-gray-900 uppercase mb-2">No products found</h3>
-                  <p className="text-gray-400 font-bold text-sm mb-8">Try adjusting your filters or search keywords.</p>
-                  <Button onClick={() => setSearchParams({})} className="rounded-none bg-primary hover:bg-black font-black uppercase tracking-widest px-8">
+                  <h3 className="text-base font-extrabold text-gray-900 dark:text-foreground mb-1">No products match your filter</h3>
+                  <p className="text-xs text-gray-400 font-medium mb-6">Try clearing your price range or category search.</p>
+                  <Button 
+                    onClick={() => {
+                      setSearchParams({});
+                      setPriceRange("all");
+                      setMinPrice("");
+                      setMaxPrice("");
+                    }} 
+                    className="rounded-none bg-[#FF5500] hover:bg-[#e54a00] font-bold text-xs px-6 h-9 uppercase tracking-wider"
+                  >
                     Reset All Filters
                   </Button>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {filteredProducts.map((product) => (
+                  {processedProducts.map((product) => (
                     <MCBProductCard key={product.id} product={product} />
                   ))}
-                </div>
-              )}
-
-              {/* Bottom Load More */}
-              {filteredProducts.length > 0 && (
-                <div className="mt-8 flex justify-center">
-                  <button className="h-16 px-16 bg-white border-2 border-gray-200 text-gray-800 font-black text-sm uppercase tracking-[0.2em] hover:border-primary hover:text-primary transition-all rounded-none">
-                    Load More Products
-                  </button>
                 </div>
               )}
             </div>

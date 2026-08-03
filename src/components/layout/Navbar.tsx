@@ -24,6 +24,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [drawerTab, setDrawerTab] = useState<"menu" | "categories">("menu");
   const searchWrapperRef = useRef<HTMLDivElement>(null);
@@ -50,32 +51,44 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-
   useEffect(() => {
     document.body.classList.add("has-bottom-tabbar");
     return () => document.body.classList.remove("has-bottom-tabbar");
   }, []);
 
-  // Listen to mobile menu toggle events from BottomTabBar or header
+  // Listen to mobile menu & search toggle events from BottomTabBar or header
   useEffect(() => {
     const handleToggle = () => setIsMobileMenuOpen((prev) => !prev);
     const handleOpen = () => setIsMobileMenuOpen(true);
     const handleClose = () => setIsMobileMenuOpen(false);
 
+    const handleSearchOpen = () => setIsMobileSearchOpen(true);
+    const handleSearchClose = () => setIsMobileSearchOpen(false);
+    const handleSearchToggle = () => setIsMobileSearchOpen((prev) => !prev);
+
     window.addEventListener("toggle-mobile-menu", handleToggle);
     window.addEventListener("open-mobile-menu", handleOpen);
     window.addEventListener("close-mobile-menu", handleClose);
+
+    window.addEventListener("open-mobile-search", handleSearchOpen);
+    window.addEventListener("close-mobile-search", handleSearchClose);
+    window.addEventListener("toggle-mobile-search", handleSearchToggle);
 
     return () => {
       window.removeEventListener("toggle-mobile-menu", handleToggle);
       window.removeEventListener("open-mobile-menu", handleOpen);
       window.removeEventListener("close-mobile-menu", handleClose);
+
+      window.removeEventListener("open-mobile-search", handleSearchOpen);
+      window.removeEventListener("close-mobile-search", handleSearchClose);
+      window.removeEventListener("toggle-mobile-search", handleSearchToggle);
     };
   }, []);
 
-  // Close drawer when route changes
+  // Close drawer and search overlay when route changes
   useEffect(() => {
     setIsMobileMenuOpen(false);
+    setIsMobileSearchOpen(false);
   }, [location.pathname]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -84,6 +97,7 @@ const Navbar = () => {
       navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
       setShowSuggestions(false);
       setIsMobileMenuOpen(false);
+      setIsMobileSearchOpen(false);
     }
   };
 
@@ -285,14 +299,35 @@ const Navbar = () => {
               <img src="/LOGO.png" alt={siteName || "Unimall"} className="h-8 w-auto object-contain" />
             </Link>
 
-            {/* Right: Cart Button with Badge */}
-            <button
-              onClick={openCart}
-              className="relative p-1.5 -mr-1.5 text-gray-700 dark:text-foreground hover:text-[#FF5500] transition-colors focus:outline-none"
-              aria-label="View Shopping Cart"
-            >
-              <MCBCartIcon count={totalItems} iconClassName="w-5 h-5 text-gray-800 dark:text-white" />
-            </button>
+            {/* Right: Cart Button & Profile Avatar (Aligned flush with right edge) */}
+            <div className="flex items-center gap-2.5 shrink-0 -mr-1">
+              {/* Cart Button */}
+              <button
+                onClick={openCart}
+                className="relative flex items-center justify-center p-0.5 text-gray-700 dark:text-foreground hover:text-[#FF5500] transition-colors focus:outline-none"
+                aria-label="View Shopping Cart"
+              >
+                <MCBCartIcon count={totalItems} iconClassName="w-5 h-5 text-gray-800 dark:text-white" />
+              </button>
+
+              {/* Profile Avatar */}
+              <Link
+                to={user ? "/account" : "/login"}
+                className="relative flex items-center justify-center p-0.5 text-gray-700 dark:text-foreground hover:text-[#FF5500] transition-colors shrink-0"
+                aria-label="Account"
+              >
+                {user ? (
+                  <Avatar className="h-7 w-7 shrink-0 aspect-square border border-gray-200 dark:border-border">
+                    {profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt={profile?.full_name || "User"} />}
+                    <AvatarFallback className="bg-[#FF5500] text-white font-black text-[11px] flex items-center justify-center">
+                      {profile?.full_name?.charAt(0) || user.email?.charAt(0).toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <User className="w-5.5 h-5.5 text-gray-800 dark:text-white stroke-[1.8] shrink-0" />
+                )}
+              </Link>
+            </div>
           </div>
 
         </div>
@@ -497,6 +532,85 @@ const Navbar = () => {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* ── MOBILE SEARCH OVERLAY CARD (Sharp Container, Rounded Bar & Chips) ── */}
+      {isMobileSearchOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex flex-col md:hidden animate-in fade-in duration-200 p-3 pt-4">
+          <div className="bg-white dark:bg-card p-4 rounded-none shadow-2xl border border-gray-200 dark:border-border space-y-4">
+            {/* Top Search Input Row with Orange Pill Submit Button */}
+            <form onSubmit={handleSearch} className="relative flex items-center h-11 w-full rounded-full border border-gray-300 dark:border-border bg-white dark:bg-card pl-10 pr-1.5 focus-within:border-[#FF5500] transition-colors">
+              <Search className="w-4 h-4 absolute left-3.5 text-gray-700 dark:text-gray-300 pointer-events-none stroke-[2.2]" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                placeholder="Search products, brands and categories"
+                className="w-full h-full bg-transparent text-xs outline-none text-gray-800 dark:text-foreground placeholder-gray-400 font-normal pr-2"
+              />
+              {searchQuery ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="mr-2 text-gray-400 hover:text-gray-600 p-1"
+                  aria-label="Clear search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              ) : null}
+              <button
+                type="submit"
+                className="h-8 px-4 rounded-full bg-[#FF5500] hover:bg-[#e54a00] text-white font-bold text-xs shadow-xs transition-colors shrink-0 flex items-center justify-center"
+              >
+                Search
+              </button>
+            </form>
+
+            {/* Trending Searches Section */}
+            {!searchQuery && (
+              <div className="space-y-2.5 pt-1">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                  TRENDING SEARCHES
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {["rice cookers", "power banks", "watch", "jeans", "laptop", "iPhone 15", "sneakers"].map((term) => (
+                    <button
+                      key={term}
+                      type="button"
+                      onClick={() => {
+                        setSearchQuery(term);
+                        navigate(`/products?search=${encodeURIComponent(term)}`);
+                        setIsMobileSearchOpen(false);
+                      }}
+                      className="bg-gray-100/90 dark:bg-muted text-gray-700 dark:text-gray-200 text-xs font-normal px-3.5 py-1.5 rounded-full hover:bg-orange-50 hover:text-[#FF5500] dark:hover:bg-orange-950/30 transition-colors"
+                    >
+                      {term}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Live Search Suggestions (When typing) */}
+            {searchQuery.trim().length > 0 && (
+              <div className="pt-1 max-h-[60vh] overflow-y-auto">
+                <SearchSuggestions
+                  query={searchQuery}
+                  onNavigate={() => {
+                    setShowSuggestions(false);
+                    setIsMobileSearchOpen(false);
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Tap outside overlay to dismiss */}
+          <div className="flex-1" onClick={() => setIsMobileSearchOpen(false)} />
+        </div>
+      )}
     </>
   );
 };

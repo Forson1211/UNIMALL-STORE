@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ShoppingCart, Flame, ChevronRight, Monitor, Smartphone, Shirt, Home as HomeIcon,
-  Heart, Check, Minus, Plus
+  Heart, Check, Minus, Plus, ShoppingBag
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
@@ -11,7 +11,6 @@ import { productService } from "@/services/productService";
 
 /* ─────────────────── MCB Rentals Style Product Card ─────────────────── */
 const ProductCard = ({ product, discountPct }: { product: any; discountPct?: number }) => {
-  const [qty, setQty] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const { addItem } = useCart();
   const { toast } = useToast();
@@ -25,19 +24,17 @@ const ProductCard = ({ product, discountPct }: { product: any; discountPct?: num
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    for (let i = 0; i < qty; i++) {
-      addItem({
-        id: product.id || product.product_id,
-        name: product.name || product.product_name,
-        price: product.discount_price || product.price,
-        image: product.image || product.image_url,
-        vendor: product.vendor || product.vendor_name || "Unimall",
-        vendorId: product.vendor_id || "",
-      });
-    }
+    addItem({
+      id: product.id || product.product_id,
+      name: product.name || product.product_name,
+      price: product.discount_price || product.price,
+      image: product.image || product.image_url,
+      vendor: product.vendor || product.vendor_name || "Unimall",
+      vendorId: product.vendor_id || "",
+    });
     toast({
       title: "Added to Cart",
-      description: `${qty}x ${product.name || product.product_name} added to your bag.`,
+      description: `${product.name || product.product_name} added to your bag.`,
     });
   };
 
@@ -56,95 +53,67 @@ const ProductCard = ({ product, discountPct }: { product: any; discountPct?: num
   return (
     <Link
       to={`/products/${product.id || product.product_id}`}
-      className="group flex flex-col bg-white dark:bg-card rounded-xl border border-gray-200/80 dark:border-border p-3 hover:shadow-xl transition-all duration-300 relative h-full justify-between"
+      className="group flex flex-col bg-white dark:bg-card rounded-none border border-gray-200/80 dark:border-border p-2.5 hover:shadow-lg transition-all duration-300 relative h-full justify-between"
     >
       <div>
         {/* Top Image Box */}
-        <div className="relative aspect-square bg-gray-50/70 dark:bg-muted/30 rounded-lg p-3 flex items-center justify-center overflow-hidden mb-3">
+        <div className="relative aspect-square bg-gray-50/70 dark:bg-muted/30 rounded-none overflow-hidden mb-2">
           <img
             src={product.image || product.image_url}
             alt={product.name || product.product_name}
-            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
           {resolvedDiscountPct > 0 && (
-            <div className="absolute top-2 left-2 bg-[#FF5500] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-xs">
+            <div className="absolute top-1.5 left-1.5 bg-[#FF5500] text-white text-[9px] font-black px-1.5 py-0.5 rounded-none">
               -{resolvedDiscountPct}%
             </div>
           )}
-          <button
-            type="button"
-            onClick={handleWishlist}
-            className={`absolute top-2 right-2 w-8 h-8 rounded-full bg-white dark:bg-card shadow-sm border border-gray-100 dark:border-border flex items-center justify-center transition-all ${
-              isWishlisted ? "text-red-500 bg-red-50" : "text-gray-400 hover:text-[#FF5500]"
-            }`}
-            aria-label="Wishlist"
-          >
-            <Heart className={`w-4 h-4 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`} />
-          </button>
         </div>
 
         {/* Product Title */}
-        <h3 className="font-bold text-xs md:text-sm text-gray-900 dark:text-foreground line-clamp-2 leading-snug hover:text-[#FF5500] transition-colors mb-1">
+        <h3 className="font-bold text-xs md:text-sm text-gray-900 dark:text-foreground line-clamp-1 leading-snug hover:text-[#FF5500] transition-colors mb-0.5">
           {product.name || product.product_name}
         </h3>
 
-        {/* Vendor Tag */}
-        <p className="text-[11px] text-gray-400 dark:text-muted-foreground font-medium mb-1.5 truncate">
-          {product.vendor || product.vendor_name || "Unimall"}
-        </p>
-
-        {/* Stock Status */}
-        <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mb-2">
-          <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-          <span>{inStock ? "In stock" : "Out of stock"}</span>
+        {/* Vendor & Stock Status Row */}
+        <div className="flex items-center justify-between text-[10px] text-gray-400 dark:text-muted-foreground font-medium mb-1.5">
+          <span className="truncate max-w-[65%]">{product.vendor || product.vendor_name || "Unimall"}</span>
+          <span className="flex items-center gap-0.5 font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+            <Check className="w-3 h-3 stroke-[2.5]" />
+            {inStock ? "In stock" : "Out of stock"}
+          </span>
         </div>
       </div>
 
-      {/* Price & MCB Pill Button Bar */}
-      <div className="mt-auto pt-1">
-        <p className="text-base md:text-lg font-black text-[#FF5500] tracking-tight">
+      {/* Bottom Price & Action Buttons Row (Sharp Edges) */}
+      <div className="flex items-center justify-between pt-1.5 mt-auto border-t border-gray-100 dark:border-border">
+        <span className="font-black text-xs sm:text-sm text-[#FF5500] tracking-tight">
           GH₵ {(product.discount_price || product.price)?.toLocaleString()}
-          {product.original_price && product.original_price > (product.discount_price || product.price) && (
-            <span className="text-xs text-gray-400 line-through font-medium ml-2">
-              GH₵ {product.original_price.toLocaleString()}
-            </span>
-          )}
-        </p>
+        </span>
 
-        {/* Combined Pill Action Bar */}
-        <div className="mt-2.5 flex items-center bg-[#FF5500] hover:bg-[#e54a00] text-white rounded-full h-9 p-0.5 shadow-md shadow-orange-500/20 transition-colors w-full overflow-hidden">
-          {/* Quantity Selector inside Pill */}
-          <div
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            className="bg-black/20 dark:bg-black/40 rounded-full h-full px-1.5 flex items-center gap-0.5 text-xs font-bold shrink-0"
+        <div className="flex items-center gap-1">
+          {/* Wishlist Button (Sharp Square) */}
+          <button
+            type="button"
+            onClick={handleWishlist}
+            className={`w-7 h-7 rounded-none border border-gray-200/80 dark:border-border flex items-center justify-center transition-colors ${
+              isWishlisted
+                ? "bg-red-50 text-red-500 border-red-100"
+                : "bg-gray-50/80 dark:bg-muted/80 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-muted hover:text-[#FF5500]"
+            }`}
+            aria-label="Wishlist"
           >
-            <button
-              type="button"
-              onClick={() => setQty((q) => Math.max(1, q - 1))}
-              className="w-4.5 h-4.5 rounded-full flex items-center justify-center hover:bg-white/20 active:scale-90 transition-all text-white"
-              aria-label="Decrease quantity"
-            >
-              <Minus className="w-2.5 h-2.5 stroke-[2.5]" />
-            </button>
-            <span className="w-3 text-center font-black select-none text-[11px] text-white">{qty}</span>
-            <button
-              type="button"
-              onClick={() => setQty((q) => q + 1)}
-              className="w-4.5 h-4.5 rounded-full flex items-center justify-center hover:bg-white/20 active:scale-90 transition-all text-white"
-              aria-label="Increase quantity"
-            >
-              <Plus className="w-2.5 h-2.5 stroke-[2.5]" />
-            </button>
-          </div>
+            <Heart className={`w-3.5 h-3.5 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`} />
+          </button>
 
-          {/* Buy Now / Add to Cart Action Label */}
+          {/* Cart Button (Sharp Square) */}
           <button
             type="button"
             onClick={handleAddToCart}
-            className="group/btn flex-1 text-center font-extrabold text-[10px] sm:text-xs uppercase tracking-wider text-white h-full flex items-center justify-center px-1 truncate"
+            className="w-7 h-7 rounded-none bg-[#FF5500] hover:bg-[#e54a00] text-white flex items-center justify-center transition-colors"
+            aria-label="Add to Cart"
           >
-            <span className="group-hover/btn:hidden">BUY NOW</span>
-            <span className="hidden group-hover/btn:inline">ADD TO CART</span>
+            <ShoppingCart className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

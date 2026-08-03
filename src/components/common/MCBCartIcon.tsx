@@ -11,7 +11,7 @@ export const MCBCartIcon: React.FC<MCBCartIconProps> = ({
   className = "relative inline-flex items-center justify-center",
   iconClassName = "w-6 h-6 text-gray-800 dark:text-white",
   count = 0,
-  badgeClassName = "absolute -top-1.5 -right-2 bg-[#FF5500] text-white text-[10px] font-bold min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center shadow-xs leading-none pointer-events-none select-none",
+  badgeClassName = "absolute -top-2 -right-2.5 bg-[#FF5500] text-white text-[9px] font-black tracking-tight w-[20px] h-[20px] rounded-full aspect-square flex items-center justify-center p-0 shadow-xs pointer-events-none select-none z-10 shrink-0 border border-white dark:border-card",
 }) => {
   return (
     <div className={className}>
@@ -32,7 +32,7 @@ export const MCBCartIcon: React.FC<MCBCartIconProps> = ({
       </svg>
       {/* Orange Badge */}
       <span className={badgeClassName}>
-        {count}
+        <span className="leading-none text-center flex items-center justify-center">{count}</span>
       </span>
     </div>
   );

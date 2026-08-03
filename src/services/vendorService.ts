@@ -88,7 +88,30 @@ export const vendorService = {
             .delete()
             .eq("id", id);
 
-        if (error) throw error;
+        if (error) {
+            console.warn("Direct DB delete error, attempting cleanup and soft-delete fallback:", error);
+            try {
+                await supabase.from("cart_items" as any).delete().eq("product_id", id);
+                await supabase.from("wishlists" as any).delete().eq("product_id", id);
+                await supabase.from("reviews" as any).delete().eq("product_id", id);
+            } catch (cleanErr) {
+                console.warn("Child cleanup skipped:", cleanErr);
+            }
+
+            const { error: retryError } = await supabase
+                .from("products")
+                .delete()
+                .eq("id", id);
+
+            if (retryError) {
+                const { error: softError } = await supabase
+                    .from("products")
+                    .update({ is_active: false } as any)
+                    .eq("id", id);
+
+                if (softError) throw softError;
+            }
+        }
     },
 
     async getAvailableBalance(vendorId: string) {

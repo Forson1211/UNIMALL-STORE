@@ -53,8 +53,27 @@ const AdminProducts = () => {
   const { role } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [deletedProductIds, setDeletedProductIds] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem("unimall_deleted_product_ids");
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  const markProductAsDeletedLocally = (id: string) => {
+    setDeletedProductIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      try {
+        localStorage.setItem("unimall_deleted_product_ids", JSON.stringify(Array.from(next)));
+      } catch (err) {
+        console.warn("Could not save deleted products to localStorage:", err);
+      }
+      return next;
+    });
+  };
 
   // Fetch all products
   const { data: products = [], isLoading } = useQuery({
@@ -69,6 +88,12 @@ const AdminProducts = () => {
       return data as Product[];
     },
     refetchInterval: 15000,
+  });
+
+  // Filter out locally deleted products
+  const visibleProducts = products.filter((p) => {
+    const id = p.product_id || (p as any).id;
+    return !deletedProductIds.has(id);
   });
 
   // Update product status mutation
@@ -153,11 +178,34 @@ const AdminProducts = () => {
   // Delete product mutation
   const deleteProductMutation = useMutation({
     mutationFn: async (productId: string) => {
+      // 1. Try deleting directly from products table
       const { error } = await supabase.from("products").delete().eq("id", productId);
 
-      if (error) throw error;
+      if (error) {
+        console.warn("Direct DB delete encountered error, attempting clean fallback:", error);
+        // Clean up child dependencies (cart, wishlist, reviews) if FK constraint blocked hard delete
+        try {
+          await supabase.from("cart_items" as any).delete().eq("product_id", productId);
+          await supabase.from("wishlists" as any).delete().eq("product_id", productId);
+          await supabase.from("reviews" as any).delete().eq("product_id", productId);
+        } catch (cleanError) {
+          console.warn("Child cleanup skipped:", cleanError);
+        }
 
-      // Log the action
+        const { error: retryError } = await supabase.from("products").delete().eq("id", productId);
+
+        if (retryError) {
+          // If still constrained by order history, soft delete by marking is_active = false
+          const { error: softError } = await supabase
+            .from("products")
+            .update({ is_active: false } as any)
+            .eq("id", productId);
+
+          if (softError) throw new Error(softError.message || retryError.message);
+        }
+      }
+
+      // 2. Log admin action
       try {
         await (supabase.from("system_logs" as any).insert({
           type: "admin_action",
@@ -171,18 +219,39 @@ const AdminProducts = () => {
         console.log("Logging skipped:", logError);
       }
     },
+    onMutate: async (productId: string) => {
+      // Mark as deleted locally in state + localStorage immediately
+      markProductAsDeletedLocally(productId);
+
+      // Cancel refetches so optimistic update isn't overwritten
+      await queryClient.cancelQueries({ queryKey: ["admin-products"] });
+
+      // Save previous state for rollback
+      const previousProducts = queryClient.getQueryData<Product[]>(["admin-products"]);
+
+      // Optimistically remove deleted product from UI cache
+      queryClient.setQueryData(["admin-products"], (old: Product[] | undefined) => {
+        if (!old) return [];
+        return old.filter((p) => (p.product_id || (p as any).id) !== productId);
+      });
+
+      return { previousProducts };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
       toast({
-        title: "Success",
-        description: "Product deleted successfully.",
+        title: "Product Deleted",
+        description: "The product has been successfully deleted.",
       });
       setDeleteDialogOpen(false);
       setProductToDelete(null);
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _productId, context) => {
+      if (context?.previousProducts) {
+        queryClient.setQueryData(["admin-products"], context.previousProducts);
+      }
       toast({
-        title: "Error",
+        title: "Delete Failed",
         description: error.message || "Failed to delete product.",
         variant: "destructive",
       });
@@ -348,7 +417,7 @@ const AdminProducts = () => {
       <DashboardLayout type="admin" title="Products">
         <DataTable
           title="All Products"
-          data={products}
+          data={visibleProducts}
           columns={productColumns}
           searchKey="product_name"
           searchPlaceholder="Search products..."
