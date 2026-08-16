@@ -62,6 +62,7 @@ import VendorSettings from "./pages/vendor/VendorSettings";
 import VendorCoupons from "./pages/vendor/VendorCoupons";
 import VendorReviews from "./pages/vendor/VendorReviews";
 import VendorNotifications from "./pages/vendor/VendorNotifications";
+import VendorFeaturePage from "./pages/vendor/VendorFeaturePage";
 
 // Buyer Account Pages
 import BuyerAccount from "./pages/account/BuyerAccount";
@@ -228,6 +229,21 @@ const App = () => (
                     <Route path="/vendor/products" element={
                       <ProtectedRoute allowedRoles={["vendor"]}>
                         <VendorProducts />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/vendor/catalog-health" element={
+                      <ProtectedRoute allowedRoles={["vendor"]}>
+                        <VendorFeaturePage feature="catalog" />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/vendor/sales-insights" element={
+                      <ProtectedRoute allowedRoles={["vendor"]}>
+                        <VendorFeaturePage feature="sales" />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/vendor/inventory" element={
+                      <ProtectedRoute allowedRoles={["vendor"]}>
+                        <VendorFeaturePage feature="inventory" />
                       </ProtectedRoute>
                     } />
                     <Route path="/vendor/orders" element={

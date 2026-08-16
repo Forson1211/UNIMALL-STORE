@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, MapPin, Star, ShieldCheck, TrendingUp, Users, ArrowRight, ChevronRight, Store } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -154,7 +155,9 @@ const VendorCard = ({ vendor }: { vendor: any }) => (
 );
 
 const Vendors = () => {
-  const { user, role } = useAuth();
+  const { user } = useAuth();
+  const { getSetting } = useSiteSettingsContext();
+  const vendorsCtaImageUrl = getSetting("vendors_cta_image_url", "https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=2000") as string;
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
@@ -306,7 +309,7 @@ const Vendors = () => {
           <div className="relative bg-gray-900 shadow-sm p-8 md:p-12 overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="absolute right-0 top-0 w-1/2 h-full opacity-10 pointer-events-none">
               <img 
-                src="https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=2000" 
+                src={vendorsCtaImageUrl} 
                 className="w-full h-full object-cover" 
                 alt=""
               />

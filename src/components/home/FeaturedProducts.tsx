@@ -5,6 +5,7 @@ import {
   Heart, Check, Minus, Plus, ShoppingBag
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { productService } from "@/services/productService";
@@ -156,7 +157,25 @@ const CategoryRow = ({ title, category, icon: Icon }: { title: string; category:
 };
 
 /* ─────────────────── Main Component ─────────────────── */
+const DEFAULT_STOREFRONT_TILES = [
+  { label: "Top Phones", src: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=600" },
+  { label: "Watches", src: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=600" },
+  { label: "Sneakers", src: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600" },
+  { label: "Cameras", src: "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?q=80&w=600" },
+];
+
+const DEFAULT_STOREFRONT_PROMOS = [
+  { title: "Electronics Showcase", subtitle: "Starting GH₵ 1,200", src: "https://images.unsplash.com/photo-1550009158-9ebf69173e03?q=80&w=1000&auto=format&fit=crop" },
+  { title: "Fashion Week Sale", subtitle: "Up to 60% OFF", src: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1000&auto=format&fit=crop" },
+];
+
 const FeaturedProducts = () => {
+  const { getSetting } = useSiteSettingsContext();
+  const configuredTiles = getSetting("storefront_tile_images", DEFAULT_STOREFRONT_TILES);
+  const configuredPromos = getSetting("storefront_promo_images", DEFAULT_STOREFRONT_PROMOS);
+  const storefrontTiles = Array.isArray(configuredTiles) && configuredTiles.length === DEFAULT_STOREFRONT_TILES.length ? configuredTiles : DEFAULT_STOREFRONT_TILES;
+  const storefrontPromos = Array.isArray(configuredPromos) && configuredPromos.length === DEFAULT_STOREFRONT_PROMOS.length ? configuredPromos : DEFAULT_STOREFRONT_PROMOS;
+
   const { data: deals = [], isLoading: loadingDeals } = useQuery({
     queryKey: ["homepage-deals"],
     queryFn: () => productService.getDeals(6),
@@ -206,12 +225,7 @@ const FeaturedProducts = () => {
 
         {/* ── PROMO BANNER TILES ── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {[
-            { src: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=600", label: "Top Phones" },
-            { src: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=600", label: "Watches" },
-            { src: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600", label: "Sneakers" },
-            { src: "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?q=80&w=600", label: "Cameras" },
-          ].map((tile, i) => (
+          {storefrontTiles.map((tile: { src: string; label: string }, i: number) => (
             <Link key={i} to="/products" className="relative aspect-square bg-white shadow-sm overflow-hidden group block">
               <img src={tile.src} alt={tile.label} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-black/30 flex items-end p-2">
@@ -223,32 +237,17 @@ const FeaturedProducts = () => {
 
         {/* ── PROMO BANNERS ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="relative aspect-[21/9] md:aspect-[3/1] bg-white shadow-sm overflow-hidden group cursor-pointer">
-            <img
-              src="https://images.unsplash.com/photo-1550009158-9ebf69173e03?q=80&w=1000&auto=format&fit=crop"
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              alt="Electronics Showcase"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-700/80 to-transparent flex items-center px-6">
-              <div>
-                <h3 className="text-white text-lg md:text-2xl font-black uppercase leading-tight">Electronics<br />Showcase</h3>
-                <p className="text-yellow-300 text-xs font-bold uppercase mt-1">Starting GH₵ 1,200</p>
+          {storefrontPromos.map((promo: { title: string; subtitle: string; src: string }, index: number) => (
+            <div key={promo.title} className="relative aspect-[21/9] md:aspect-[3/1] bg-white shadow-sm overflow-hidden group cursor-pointer">
+              <img src={promo.src} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt={promo.title} />
+              <div className={`absolute inset-0 ${index === 0 ? "bg-gradient-to-r from-blue-700/80" : "bg-gradient-to-r from-[#FF5500]/80"} to-transparent flex items-center px-6`}>
+                <div>
+                  <h3 className="text-white text-lg md:text-2xl font-black uppercase leading-tight">{promo.title}</h3>
+                  <p className="text-yellow-300 text-xs font-bold uppercase mt-1">{promo.subtitle}</p>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="relative aspect-[21/9] md:aspect-[3/1] bg-white shadow-sm overflow-hidden group cursor-pointer">
-            <img
-              src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1000&auto=format&fit=crop"
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              alt="Fashion Week Sale"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#FF5500]/80 to-transparent flex items-center px-6">
-              <div>
-                <h3 className="text-white text-lg md:text-2xl font-black uppercase leading-tight">Fashion<br />Week Sale</h3>
-                <p className="text-yellow-300 text-xs font-bold uppercase mt-1">Up to 60% OFF</p>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* ── TOP RATED ── */}
