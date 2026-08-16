@@ -76,7 +76,12 @@ const AdminProducts = () => {
   };
 
   // Fetch all products
-  const { data: products = [], isLoading } = useQuery({
+  const {
+    data: products = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery<Product[], Error>({
     queryKey: ["admin-products"],
     queryFn: async () => {
       const { data, error } = await (supabase
@@ -91,7 +96,10 @@ const AdminProducts = () => {
   });
 
   // Filter out locally deleted products
-  const visibleProducts = products.filter((p) => {
+  const safeProducts = Array.isArray(products) ? products : [];
+
+  // Keep the table resilient to older rows or nullable values returned by Supabase views.
+  const visibleProducts = safeProducts.filter((p) => {
     const id = p.product_id || (p as any).id;
     return !deletedProductIds.has(id);
   });
@@ -308,7 +316,7 @@ const AdminProducts = () => {
       key: "price",
       header: "Price",
       sortable: true,
-      render: (product: Product) => `GH₵${product.price.toFixed(2)}`,
+      render: (product: Product) => `GH₵${Number(product.price ?? 0).toFixed(2)}`,
     },
     {
       key: "stock_quantity",
@@ -317,7 +325,7 @@ const AdminProducts = () => {
       className: "hidden md:table-cell",
       render: (product: Product) => (
         <span className={product.stock_quantity < 10 ? "text-destructive font-medium" : ""}>
-          {product.stock_quantity}
+          {Number(product.stock_quantity ?? 0)}
         </span>
       ),
     },
@@ -406,6 +414,32 @@ const AdminProducts = () => {
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <p className="text-muted-foreground">Loading products...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (isError) {
+    return (
+      <DashboardLayout type="admin" title="Products">
+        <div className="flex min-h-[420px] items-center justify-center p-6">
+          <div className="max-w-lg border border-destructive/20 bg-destructive/5 p-8 text-center">
+            <Package className="mx-auto mb-4 h-10 w-10 text-destructive" />
+            <h2 className="text-xl font-semibold">Products could not be loaded</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              The admin product view is temporarily unavailable. Refresh the page or try again shortly.
+            </p>
+            {error?.message && (
+              <p className="mt-3 break-words text-xs text-destructive/80">{error.message}</p>
+            )}
+            <Button
+              className="mt-6"
+              onClick={() => queryClient.invalidateQueries({ queryKey: ["admin-products"] })}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Try again
+            </Button>
           </div>
         </div>
       </DashboardLayout>
