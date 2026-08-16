@@ -42,6 +42,13 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
+const HERO_SLIDE_DEFAULTS = [
+    { title: ["Shopping", "Spree"], subtitle: "Fresh Deals, Hot Prices", discount: "-45%", src: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop" },
+    { title: ["Campus", "Essentials"], subtitle: "Everything for the semester", discount: "-30%", src: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=2070&auto=format&fit=crop" },
+    { title: ["Fashion", "Week"], subtitle: "Look sharp for less", discount: "-60%", src: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070&auto=format&fit=crop" },
+    { title: ["Tech", "Deals"], subtitle: "Upgrade your gear", discount: "-40%", src: "https://images.unsplash.com/photo-1550009158-9ebf69173e03?q=80&w=2070&auto=format&fit=crop" },
+];
+
 const STOREFRONT_TILE_DEFAULTS = [
     { label: "Top Phones", src: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=600" },
     { label: "Watches", src: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=600" },
@@ -143,6 +150,7 @@ export default function SiteCustomization() {
     // Background State
     const [heroBackgroundUrl, setHeroBackgroundUrl] = useState("");
     const [heroOverlayOpacity, setHeroOverlayOpacity] = useState(0.5);
+    const [heroSlides, setHeroSlides] = useState(HERO_SLIDE_DEFAULTS);
     const [storefrontTiles, setStorefrontTiles] = useState(STOREFRONT_TILE_DEFAULTS);
     const [storefrontPromos, setStorefrontPromos] = useState(STOREFRONT_PROMO_DEFAULTS);
     const [vendorsCtaImageUrl, setVendorsCtaImageUrl] = useState("https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=2000");
@@ -226,6 +234,8 @@ export default function SiteCustomization() {
 
             setHeroBackgroundUrl(getSetting("hero_background_url", "") as string);
             setHeroOverlayOpacity(getSetting("hero_overlay_opacity", 0.5) as number);
+            const loadedHeroSlides = getSetting("hero_slider_images", HERO_SLIDE_DEFAULTS);
+            setHeroSlides(Array.isArray(loadedHeroSlides) && loadedHeroSlides.length === HERO_SLIDE_DEFAULTS.length ? loadedHeroSlides : HERO_SLIDE_DEFAULTS);
             const loadedTiles = getSetting("storefront_tile_images", STOREFRONT_TILE_DEFAULTS);
             const loadedPromos = getSetting("storefront_promo_images", STOREFRONT_PROMO_DEFAULTS);
             setStorefrontTiles(Array.isArray(loadedTiles) && loadedTiles.length === STOREFRONT_TILE_DEFAULTS.length ? loadedTiles : STOREFRONT_TILE_DEFAULTS);
@@ -342,6 +352,12 @@ export default function SiteCustomization() {
         }
     };
 
+    const handleHeroSliderUpload = async (file: File, index: number) => {
+        const url = await handleFileUpload(file, `hero_slider_${index}`);
+        if (!url) return;
+        setHeroSlides((current) => current.map((slide, slideIndex) => slideIndex === index ? { ...slide, src: url } : slide));
+    };
+
     const handleStorefrontImageUpload = async (file: File, kind: "tile" | "promo", index: number) => {
         const url = await handleFileUpload(file, `storefront_${kind}_${index}`);
         if (!url) return;
@@ -408,7 +424,7 @@ export default function SiteCustomization() {
         primaryColor, secondaryColor, accentColor, backgroundColor, headerBgColor, footerBgColor,
         borderRadius, fontFamily, fontSize, containerMaxWidth, darkModeEnabled,
         siteName, siteTagline, logoUrl, authLogoUrl, sidebarLogoUrl, footerLogoUrl, faviconUrl, heroBackgroundUrl, heroOverlayOpacity,
-        storefrontTiles, storefrontPromos, vendorsCtaImageUrl, campusDirectory,
+        heroSlides, storefrontTiles, storefrontPromos, vendorsCtaImageUrl, campusDirectory,
         announcementEnabled, announcementText, announcementLink, supportPhone, supportEmail,
         heroTitle, heroSubtitle, heroCtaText, heroCtaLink,
         facebookUrl, instagramUrl, twitterUrl, whatsappNumber, copyrightText,
@@ -451,6 +467,7 @@ export default function SiteCustomization() {
                 current_theme: { value: currentTheme, category: "theme" },
 
                 hero_background_url: { value: heroBackgroundUrl, category: "media" },
+                hero_slider_images: { value: heroSlides, category: "media" },
                 hero_overlay_opacity: { value: heroOverlayOpacity, category: "media" },
                 storefront_tile_images: { value: storefrontTiles, category: "storefront" },
                 storefront_promo_images: { value: storefrontPromos, category: "storefront" },
@@ -1134,6 +1151,30 @@ export default function SiteCustomization() {
                                                     }
                                                 }}
                                             />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4 p-5 rounded-2xl bg-gray-50/70 dark:bg-muted/40 border border-gray-200/80 dark:border-border">
+                                        <div>
+                                            <Label className="text-sm font-extrabold text-gray-900 dark:text-white">Homepage Slider Images</Label>
+                                            <p className="text-xs text-gray-400 mt-1">Replace the four rotating hero images shown at the top of the storefront homepage.</p>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {heroSlides.map((slide, index) => (
+                                                <div key={`${slide.title.join("-")}-${index}`} className="space-y-2">
+                                                    <div className="relative aspect-[2.05/1] overflow-hidden border border-gray-200 dark:border-border bg-white dark:bg-card">
+                                                        <img src={slide.src} alt={`${slide.title.join(" ")} slider preview`} className="w-full h-full object-cover" />
+                                                        <div className="absolute inset-0 bg-gradient-to-r from-black/65 to-transparent flex items-end px-4 py-3">
+                                                            <div><p className="text-sm font-black uppercase text-white">{slide.title.join(" ")}</p><p className="text-[10px] font-bold text-orange-200">{slide.subtitle} · {slide.discount}</p></div>
+                                                        </div>
+                                                        <span className="absolute top-2 right-2 bg-black/60 px-2 py-1 text-[10px] font-bold text-white">Slide {index + 1}</span>
+                                                    </div>
+                                                    <Label htmlFor={`hero-slider-${index}`} className="cursor-pointer inline-flex items-center justify-center gap-1.5 border border-gray-200 dark:border-border bg-white dark:bg-card px-3 py-2 text-[11px] font-bold text-gray-700 dark:text-gray-200 hover:border-[#FF5500] hover:text-[#FF5500]">
+                                                        <Upload className="w-3.5 h-3.5" /> Replace slider image
+                                                    </Label>
+                                                    <Input id={`hero-slider-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) void handleHeroSliderUpload(file, index); }} />
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
 
