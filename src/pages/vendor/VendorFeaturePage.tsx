@@ -31,7 +31,7 @@ export default function VendorFeaturePage({ feature }: { feature: Feature }) {
   const totalRevenue = orders.reduce((sum: number, order: any) => sum + Number(order.vendor_total ?? order.total ?? 0), 0);
   const recentRevenue = weeklySales.reduce((sum: number, week: any) => sum + Number(week.revenue ?? 0), 0);
   const readiness = products.length ? Math.round(((active + (products.length - missingImages)) / (products.length * 2)) * 100) : 0;
-  const topCategories = useMemo(() => Object.entries(products.reduce((acc: Record<string, number>, product: any) => { const key = product.category || "Other"; acc[key] = (acc[key] || 0) + 1; return acc; }, {})).sort(([, a], [, b]) => b - a).slice(0, 5), [products]);
+  const topCategories = useMemo(() => Object.entries(products.reduce((acc: Record<string, number>, product: any) => { const key = product.category || "Other"; acc[key] = (acc[key] || 0) + 1; return acc; }, {})).sort(([, a], [, b]) => Number(b) - Number(a)).slice(0, 5), [products]);
 
   const loading = productsLoading || ordersLoading;
   return (
@@ -56,7 +56,7 @@ export default function VendorFeaturePage({ feature }: { feature: Feature }) {
               {feature === "sales" && <div className="space-y-3">{weeklySales.length ? weeklySales.map((week: any) => <div key={week.week_start} className="flex items-center justify-between rounded-xl bg-slate-50 p-4"><span className="text-sm font-bold text-slate-700">Week of {new Date(week.week_start).toLocaleDateString()}</span><span className="font-black text-[#FF5500]">GH₵{Number(week.revenue || 0).toLocaleString()} · {week.orders || 0} orders</span></div>) : <Empty text="Weekly sales data will appear as orders come in." />}</div>}
               {feature === "inventory" && <div className="space-y-3">{inventoryIssues.length ? inventoryIssues.map((product: any) => <div key={product.id} className="flex items-center justify-between rounded-xl border border-amber-100 bg-amber-50/60 p-4"><div><p className="font-bold text-slate-900">{product.name}</p><p className="text-xs text-slate-500">{product.category || "Uncategorized"}</p></div><Badge className="bg-amber-100 text-amber-700">{Number(product.stock ?? 0) <= 0 ? "Out of stock" : `${product.stock} left`}</Badge></div>) : <Empty text="Your inventory is healthy. Keep your best sellers available." />}</div>}
             </CardContent></Card>
-            <div className="flex flex-wrap gap-3"><Button onClick={() => navigate("/vendor/products")} className="bg-[#FF5500] font-bold text-white hover:bg-[#e54a00]">Manage products</Button><Button variant="outline" onClick={() => navigate("/vendor/settings")} className="font-bold">Update store profile</Button></div>
+            <div className="flex flex-wrap gap-3"><Button onClick={() => navigate("/vendor/products")} className="bg-[#FF5500] font-bold text-white hover:bg-[#e54a00]">Manage products</Button><Button variant="outline" onClick={() => navigate("/vendor/profile")} className="font-bold">Update store profile</Button></div>
           </>
         )}
       </div>

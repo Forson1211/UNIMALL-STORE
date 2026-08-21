@@ -127,45 +127,47 @@ const Signup = () => {
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Full Name</label>
-                <div className="relative group">
-                   <User className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-[#FF5500] transition-colors" />
-                   <Input
-                    placeholder="John Doe"
-                    className="pl-14 h-14 rounded-none border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-4 focus:ring-[#FF5500]/5 transition-all font-medium"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Campus Email</label>
-                <div className="relative group">
-                   <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-[#FF5500] transition-colors" />
-                   <Input
-                    type="email"
-                    placeholder="you@uni.edu"
-                    className="pl-14 h-14 rounded-none border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-4 focus:ring-[#FF5500]/5 transition-all font-medium"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Full Name */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-0.5">Full Name</label>
+              <div className="relative group">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-[#FF5500] transition-colors" />
+                <Input
+                  placeholder="e.g. John Doe"
+                  className="pl-12 pr-4 h-13 rounded-none border-gray-200 bg-gray-50/70 focus:bg-white focus:ring-2 focus:ring-[#FF5500]/20 focus:border-[#FF5500] transition-all text-sm font-medium text-gray-900"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Password</label>
+            {/* Campus Email - Full Width with proper padding so long emails show completely */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-0.5">Campus Email Address</label>
               <div className="relative group">
-                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-[#FF5500] transition-colors" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-[#FF5500] transition-colors" />
+                <Input
+                  type="email"
+                  placeholder="e.g. yourname@st.ug.edu.gh or you@gmail.com"
+                  className="pl-12 pr-4 h-13 rounded-none border-gray-200 bg-gray-50/70 focus:bg-white focus:ring-2 focus:ring-[#FF5500]/20 focus:border-[#FF5500] transition-all text-sm font-medium text-gray-900 truncate-0"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-0.5">Password</label>
+              <div className="relative group">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-[#FF5500] transition-colors" />
                 <Input
                   type={showPassword ? "text" : "password"}
                   placeholder="Minimum 8 characters"
-                  className="pl-14 pr-14 h-14 rounded-none border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-4 focus:ring-[#FF5500]/5 transition-all font-medium"
+                  className="pl-12 pr-12 h-13 rounded-none border-gray-200 bg-gray-50/70 focus:bg-white focus:ring-2 focus:ring-[#FF5500]/20 focus:border-[#FF5500] transition-all text-sm font-medium text-gray-900"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -173,24 +175,28 @@ const Signup = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-300"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
+            {/* Store Name for Vendors */}
             {selectedRole === "vendor" && (
-              <div className="space-y-2 animate-fade-in">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Store Name</label>
+              <div className="space-y-1.5 animate-fade-in pt-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-0.5">Store / Business Name *</label>
+                  <span className="text-[9px] font-bold text-[#FF5500] uppercase tracking-wider">Appears on Public Store</span>
+                </div>
                 <div className="relative group">
-                  <Store className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-[#FF5500] transition-colors" />
+                  <Store className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-[#FF5500] transition-colors" />
                   <Input
-                    placeholder="Your campus shop name"
-                    className="pl-14 h-14 rounded-none border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-4 focus:ring-[#FF5500]/5 transition-all font-medium"
+                    placeholder="e.g. Apex Tech Hub, Nana's Bakery, campus shoes..."
+                    className="pl-12 pr-4 h-13 rounded-none border-gray-200 bg-gray-50/70 focus:bg-white focus:ring-2 focus:ring-[#FF5500]/20 focus:border-[#FF5500] transition-all text-sm font-bold text-gray-900"
                     value={storeName}
                     onChange={(e) => setStoreName(e.target.value)}
-                    required
+                    required={selectedRole === "vendor"}
                   />
                 </div>
               </div>

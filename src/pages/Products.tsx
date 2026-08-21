@@ -14,9 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { productService, StorefrontProduct } from "@/services/productService";
 import ShopHeroCarousel from "@/components/shop/ShopHeroCarousel";
-import ShopQuickLinks from "@/components/shop/ShopQuickLinks";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
-import { OraimoProductCard } from "@/components/home/FeaturedProducts";
+import { UnimallProductCard } from "@/components/home/UnimallProductCard";
 
 const categories = [
   { label: "All Products", value: "All", icon: Package },
@@ -49,6 +48,8 @@ const Products = () => {
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products", categoryFilter, searchQuery],
     queryFn: () => productService.getProducts({ category: categoryFilter, search: searchQuery }),
+    placeholderData: (prev) => prev || (categoryFilter === "All" && !searchQuery ? productService.getCachedProducts() : undefined),
+    staleTime: 1000 * 60 * 5,
   });
 
   // Map of vendor names to their campus location
@@ -96,14 +97,32 @@ const Products = () => {
       list = list.filter(p => p.price <= parseFloat(maxPrice));
     }
 
-    // 4. Sorting
-    if (sortBy === "price-low") {
-      list.sort((a, b) => a.price - b.price);
-    } else if (sortBy === "price-high") {
-      list.sort((a, b) => b.price - a.price);
-    } else if (sortBy === "rating") {
-      list.sort((a, b) => (b.rating || 5) - (a.rating || 5));
-    }
+    // 4. Sorting: Verified Vendors ALWAYS on top, followed by user sort preference / newest
+    const isProductVerified = (p: any) => {
+      if (p.is_pro || p.vendor_verified) return true;
+      const trusted = ["unimall store", "techhub", "styleco", "bookworm", "oraimo home", "studymart"];
+      return trusted.some((t) => (p.vendor || "").toLowerCase().includes(t));
+    };
+
+    list.sort((a, b) => {
+      const aVer = isProductVerified(a) ? 1 : 0;
+      const bVer = isProductVerified(b) ? 1 : 0;
+
+      // Verified vendor products ALWAYS on top
+      if (aVer !== bVer) {
+        return bVer - aVer;
+      }
+
+      if (sortBy === "price-low") {
+        return a.price - b.price;
+      } else if (sortBy === "price-high") {
+        return b.price - a.price;
+      } else if (sortBy === "rating") {
+        return (b.rating || 5) - (a.rating || 5);
+      } else {
+        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+      }
+    });
 
     return list;
   }, [products, campusFilter, priceRange, minPrice, maxPrice, sortBy]);
@@ -136,7 +155,6 @@ const Products = () => {
         {/* Curated Shop Top Header */}
         <div className="max-w-[1280px] mx-auto px-4 xl:px-0 pt-4 md:pt-6">
           <ShopHeroCarousel />
-          <ShopQuickLinks />
         </div>
 
         {/* ── MAIN PRODUCT CATALOG & FILTER AREA ── */}
@@ -384,7 +402,7 @@ const Products = () => {
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
                   {processedProducts.map((product) => (
-                    <OraimoProductCard key={product.id} product={product} />
+                    <UnimallProductCard key={product.id} product={product} />
                   ))}
                 </div>
               )}

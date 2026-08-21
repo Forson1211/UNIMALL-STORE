@@ -19,13 +19,13 @@ export function ProtectedRoute({
   const { user, role, vendorStatus, isLoading } = useAuth();
   const location = useLocation();
 
-  // Show loading while checking auth
-  if (isLoading) {
+  // Show loading while checking initial auth if not yet known
+  if (isLoading && !user && !role) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
+          <div className="w-10 h-10 border-3 border-[#FF5500] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm font-semibold text-muted-foreground">Loading...</p>
         </div>
       </div>
     );

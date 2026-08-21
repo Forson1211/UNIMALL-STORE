@@ -28,12 +28,18 @@ const DEFAULT_SETTINGS: Record<string, Json> = {
 };
 
 export function useSiteSettings() {
-    const [settings, setSettings] = useState<Record<string, Json>>(DEFAULT_SETTINGS);
-    const [isLoading, setIsLoading] = useState(true);
+    const [settings, setSettings] = useState<Record<string, Json>>(() => {
+        try {
+            const cached = localStorage.getItem("unimall_site_settings_cache");
+            return cached ? { ...DEFAULT_SETTINGS, ...JSON.parse(cached) } : DEFAULT_SETTINGS;
+        } catch {
+            return DEFAULT_SETTINGS;
+        }
+    });
+    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
 
     const fetchSettings = useCallback(async () => {
-        setIsLoading(true);
         const data = await withRetry(async () => {
             const { data, error } = await (supabase as any)
                 .from("site_settings")
@@ -48,6 +54,9 @@ export function useSiteSettings() {
                 settingsObj[setting.setting_key] = setting.setting_value;
             });
             setSettings(settingsObj);
+            try {
+                localStorage.setItem("unimall_site_settings_cache", JSON.stringify(settingsObj));
+            } catch (e) {}
             setError(null);
         } else {
             // DB unavailable — keep defaults, don't crash

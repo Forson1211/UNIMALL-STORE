@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { UnimallVerifiedBadge } from "@/components/common/UnimallVerifiedBadge";
 
 const mockVendors = [
   { 
@@ -104,10 +105,20 @@ const VendorCard = ({ vendor }: { vendor: any }) => (
 
     <div className="relative px-4 pb-4 flex-1 flex flex-col">
       {/* Avatar (Floating) */}
-      <div className="absolute -top-7 left-4 w-14 h-14 rounded-full bg-white p-0.5 shadow-md">
-        <div className="w-full h-full bg-[#FF5500] rounded-full flex items-center justify-center text-white text-lg font-black uppercase">
-          {vendor.avatar.substring(0, 1)}
-        </div>
+      <div className="absolute -top-7 left-4 w-14 h-14 rounded-full bg-white p-0.5 shadow-md overflow-hidden">
+        {vendor.avatar_url ? (
+          <img 
+            src={vendor.avatar_url} 
+            alt={vendor.name} 
+            className="w-full h-full rounded-full object-cover" 
+          />
+        ) : (
+          <div className="w-full h-full bg-[#FF5500] rounded-full flex items-center justify-center text-white text-lg font-black uppercase">
+            {typeof vendor.avatar === "string" && vendor.avatar.length > 0
+              ? vendor.avatar.charAt(0).toUpperCase()
+              : (vendor.name || "V").charAt(0).toUpperCase()}
+          </div>
+        )}
       </div>
 
       <div className="pt-8 flex-1 flex flex-col">
@@ -117,7 +128,7 @@ const VendorCard = ({ vendor }: { vendor: any }) => (
               {vendor.name}
             </h3>
             {vendor.verified && (
-              <ShieldCheck className="w-4 h-4 text-blue-500 shrink-0" />
+              <UnimallVerifiedBadge size={16} color="#FF5500" title="Verified Pro Merchant" />
             )}
           </div>
           <div className="flex items-center gap-0.5 bg-gray-50 px-1.5 py-0.5 rounded-none border border-gray-100 shrink-0">
@@ -155,7 +166,7 @@ const VendorCard = ({ vendor }: { vendor: any }) => (
 );
 
 const Vendors = () => {
-  const { user } = useAuth();
+  const { user, profile, role } = useAuth();
   const { getSetting } = useSiteSettingsContext();
   const vendorsCtaImageUrl = getSetting("vendors_cta_image_url", "https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=2000") as string;
   const [searchQuery, setSearchQuery] = useState("");
@@ -165,38 +176,90 @@ const Vendors = () => {
   const isAdmin = role === "admin";
   const showDashboard = user && (isVendor || isAdmin);
   const dashboardLink = isAdmin ? "/admin" : "/vendor";
-
+  
   const categories = ["All", "Food", "Electronics", "Fashion", "Books", "Stationery", "Sports"];
 
   // Fetch registered vendor profiles dynamically
   const { data: dbVendors = [], isLoading } = useQuery({
-    queryKey: ["vendors-list"],
+    queryKey: ["vendors-list", user?.id, profile?.store_name, profile?.avatar_url],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .not("store_name", "is", null);
-      if (error) throw error;
-      return data || [];
+      let profiles: any[] = [];
+      let vendorProductCounts: Record<string, number> = {};
+
+      // 1. Fetch real product counts per vendor
+      try {
+        const { data: prods } = await supabase
+          .from("products")
+          .select("vendor_id");
+        if (prods) {
+          prods.forEach((p: any) => {
+            if (p.vendor_id) {
+              vendorProductCounts[p.vendor_id] = (vendorProductCounts[p.vendor_id] || 0) + 1;
+            }
+          });
+        }
+      } catch (e) {}
+
+      // 2. Fetch profiles from database
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*");
+        if (!error && data) {
+          profiles = data;
+        }
+      } catch (e) {}
+
+      // 3. Include active user's local store profile if present
+      if (user?.id) {
+        const raw = localStorage.getItem(`unimall_vendor_profile_${user.id}`);
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            const idx = profiles.findIndex((p: any) => p.user_id === user.id || p.id === user.id);
+            if (idx >= 0) {
+              profiles[idx] = { ...profiles[idx], ...parsed };
+            } else if (parsed.store_name) {
+              profiles.unshift({ user_id: user.id, id: user.id, ...parsed });
+            }
+          } catch (err) {}
+        }
+      }
+
+      // Filter to only genuine registered vendor stores (having store_name or role==='vendor')
+      const realVendors = profiles.filter((p: any) => {
+        return Boolean(p.store_name?.trim() || p.role === "vendor" || p.is_vendor);
+      });
+
+      return realVendors.map((v: any) => {
+        const vId = v?.user_id || v?.id || "unknown";
+        const hasSubscribed = Boolean(
+          v?.is_pro || 
+          v?.is_subscribed ||
+          (v?.verified && v?.is_pro) || 
+          localStorage.getItem(`unimall_vendor_pro_${vId}`) === "true"
+        );
+        const prodCount = vendorProductCounts[vId] || (vId === user?.id ? (localStorage.getItem("unimall_vendor_prods_count") ? parseInt(localStorage.getItem("unimall_vendor_prods_count")!) : 0) : 0);
+
+        return {
+          id: vId,
+          name: v?.store_name || v?.full_name || "Campus Merchant",
+          banner: v?.banner_url || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=800",
+          avatar: (v?.store_name || v?.full_name || "V").charAt(0).toUpperCase(),
+          avatar_url: v?.avatar_url || null,
+          description: v?.store_description || "Official campus merchant storefront on Unimall.",
+          campus: v?.campus || "University Campus",
+          rating: 5.0,
+          products: prodCount,
+          verified: hasSubscribed,
+          is_pro: hasSubscribed,
+          category: v?.store_category || v?.category || "General"
+        };
+      });
     }
   });
 
-  // Combine database vendors and fallback mock vendors
-  const allVendors = [
-    ...(dbVendors || []).map((v: any) => ({
-      id: v?.user_id || v?.id || "unknown",
-      name: v?.store_name || v?.full_name || "Vendor Store",
-      banner: v?.banner_url || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=800",
-      avatar: (v?.store_name || v?.full_name || "V").charAt(0).toUpperCase(),
-      description: v?.store_description || "Welcome to our storefront! We offer premium quality items at competitive campus prices.",
-      campus: v?.campus || "University of Ghana",
-      rating: 4.8,
-      products: 10,
-      verified: true,
-      category: "General"
-    })),
-    ...mockVendors.filter(mv => !(dbVendors || []).some((dv: any) => dv?.store_name?.toLowerCase() === mv.name.toLowerCase()))
-  ];
+  const allVendors = dbVendors;
 
   // Filter vendors based on query and category selection
   const filteredVendors = allVendors.filter(vendor => {
@@ -211,8 +274,7 @@ const Vendors = () => {
     
     const matchesCategory = 
       selectedCategory === "All" || 
-      vendor?.category === selectedCategory || 
-      (selectedCategory === "General" && vendor?.category === "General");
+      vendor?.category?.toLowerCase() === selectedCategory.toLowerCase();
 
     return matchesSearch && matchesCategory;
   });

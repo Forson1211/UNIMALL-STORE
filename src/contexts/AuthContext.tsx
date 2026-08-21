@@ -51,34 +51,75 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [role, setRole] = useState<UserRole | null>(null);
-  const [vendorStatus, setVendorStatus] = useState<VendorStatus>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [profile, setProfile] = useState<Profile | null>(() => {
+    try {
+      const raw = localStorage.getItem("unimall_last_profile_cache");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [role, setRole] = useState<UserRole | null>(() => {
+    try {
+      return (localStorage.getItem("unimall_last_auth_role") as UserRole) || null;
+    } catch {
+      return null;
+    }
+  });
+  const [vendorStatus, setVendorStatus] = useState<VendorStatus>(() => {
+    try {
+      return (localStorage.getItem("unimall_last_vendor_status") as VendorStatus) || null;
+    } catch {
+      return null;
+    }
+  });
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const fetchProfile = async (userId: string) => {
     try {
-      console.log("Fetching profile for:", userId);
+      // 1. Check local cache first for instant zero-latency restoration on refresh
+      let localCache: any = null;
+      try {
+        const rawLocal = localStorage.getItem(`unimall_vendor_profile_${userId}`);
+        if (rawLocal) {
+          localCache = JSON.parse(rawLocal);
+          setProfile((prev) => ({
+            ...(prev || {}),
+            ...localCache,
+            user_id: userId,
+            id: userId,
+          } as any));
+        }
+      } catch (e) {}
 
       const profileData = await withRetry(async () => {
         const { data, error } = await supabase
           .from("profiles")
           .select("*")
-          .eq("user_id", userId)
-          .single();
+          .or(`user_id.eq.${userId},id.eq.${userId}`)
+          .maybeSingle();
         if (error && error.code !== "PGRST116") throw error;
         return data;
       }, null, { retries: 2, baseDelay: 1500 });
 
-      if (profileData) setProfile(profileData as any);
+      if (profileData || localCache) {
+        const merged = {
+          ...(profileData || {}),
+          ...(localCache || {}),
+          user_id: userId,
+          id: profileData?.id || userId,
+        };
+        setProfile(merged as any);
+        try {
+          localStorage.setItem("unimall_last_profile_cache", JSON.stringify(merged));
+        } catch (e) {}
+      }
 
       // Use TEXT-returning RPC so ALL roles (including staff) are returned correctly
       const roleData = await withRetry(async () => {
-        // First try the text-based RPC that supports all roles
         const { data, error } = await (supabase.rpc as any)("get_user_role_text", { _user_id: userId });
         if (error) {
-          // Fallback to original RPC (only returns admin/vendor/buyer)
           const { data: d2, error: e2 } = await supabase.rpc("get_user_role", { _user_id: userId });
           if (e2) throw e2;
           return d2;
@@ -88,15 +129,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (roleData) {
         setRole(roleData as UserRole);
+        try {
+          localStorage.setItem("unimall_last_auth_role", roleData);
+        } catch (e) {}
 
-        // Use SECURITY DEFINER RPC to bypass RLS on user_roles
-        const vendorStatus = await withRetry(async () => {
+        const vendorStatusResult = await withRetry(async () => {
           const { data, error } = await (supabase.rpc as any)("get_vendor_status", { _user_id: userId });
           if (error) throw error;
           return data;
         }, null, { retries: 2, baseDelay: 1500 });
 
-        setVendorStatus((vendorStatus as VendorStatus) ?? null);
+        const resolvedStatus = (vendorStatusResult as VendorStatus) ?? null;
+        setVendorStatus(resolvedStatus);
+        try {
+          if (resolvedStatus) {
+            localStorage.setItem("unimall_last_vendor_status", resolvedStatus);
+          }
+        } catch (e) {}
       }
     } catch (error) {
       console.error("Unexpected error in fetchProfile:", error);
@@ -116,6 +165,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setProfile(null);
           setRole(null);
           setVendorStatus(null);
+          try {
+            localStorage.removeItem("unimall_last_profile_cache");
+            localStorage.removeItem("unimall_last_auth_role");
+            localStorage.removeItem("unimall_last_vendor_status");
+          } catch (e) {}
         }
         setIsLoading(false);
       }
@@ -183,6 +237,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ) => {
     try {
       console.log("Attempting signUp for:", email, "with role:", userRole);
+      
+      // Save pending profile locally before signup
+      try {
+        localStorage.setItem("unimall_pending_signup_profile", JSON.stringify({
+          email: email.toLowerCase().trim(),
+          fullName,
+          storeName: storeName || fullName,
+          role: userRole,
+        }));
+      } catch (e) {}
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -191,7 +256,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           data: {
             full_name: fullName,
             role: userRole,
-            store_name: storeName,
+            store_name: storeName || fullName,
           },
         },
       });
@@ -203,9 +268,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       console.log("signUp success:", data);
 
+      if (data?.user?.id) {
+        const vendorCache = {
+          store_name: storeName || fullName,
+          full_name: fullName,
+          campus: "University of Ghana (Legon)",
+        };
+        try {
+          localStorage.setItem(`unimall_vendor_profile_${data.user.id}`, JSON.stringify(vendorCache));
+        } catch (e) {}
+
+        // Upsert to profiles table in Supabase
+        try {
+          await supabase.from("profiles").upsert({
+            user_id: data.user.id,
+            full_name: fullName,
+            store_name: storeName || fullName,
+            campus: "University of Ghana (Legon)",
+          });
+        } catch (e) {}
+      }
+
       toast({
         title: "Account created!",
-        description: "Please check your email to verify your account.",
+        description: "Please check your email to verify your account or sign in.",
       });
 
       return { error: null };
@@ -228,6 +314,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       console.log("signIn success:", data);
+
+      if (data?.user?.id) {
+        const metadata = data.user.user_metadata || {};
+        let pendingObj: any = null;
+        try {
+          const pending = localStorage.getItem("unimall_pending_signup_profile");
+          if (pending) pendingObj = JSON.parse(pending);
+        } catch (e) {}
+
+        const resolvedStore = metadata.store_name || (pendingObj?.email === email.toLowerCase().trim() ? pendingObj.storeName : null);
+        const resolvedName = metadata.full_name || (pendingObj?.email === email.toLowerCase().trim() ? pendingObj.fullName : null);
+
+        if (resolvedStore) {
+          const raw = localStorage.getItem(`unimall_vendor_profile_${data.user.id}`) || "{}";
+          try {
+            const existing = JSON.parse(raw);
+            localStorage.setItem(`unimall_vendor_profile_${data.user.id}`, JSON.stringify({
+              ...existing,
+              store_name: resolvedStore,
+              full_name: resolvedName || existing.full_name,
+            }));
+          } catch (e) {}
+
+          supabase.from("profiles").upsert({
+            user_id: data.user.id,
+            store_name: resolvedStore,
+            full_name: resolvedName,
+          }).then(() => {});
+        }
+
+        fetchProfile(data.user.id);
+      }
 
       toast({
         title: "Welcome back!",
@@ -257,18 +375,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       if (!user) throw new Error("No user logged in");
 
+      try {
+        const raw = localStorage.getItem(`unimall_vendor_profile_${user.id}`) || "{}";
+        const existing = JSON.parse(raw);
+        localStorage.setItem(`unimall_vendor_profile_${user.id}`, JSON.stringify({ ...existing, ...updates }));
+      } catch (e) {}
+
       const { error } = await supabase
         .from("profiles")
         .upsert({ user_id: user.id, ...updates });
 
-      if (error) throw error;
+      if (error) {
+        console.warn("Supabase upsert warning:", error);
+      }
 
       setProfile((prev) => {
         if (prev) {
           return { ...prev, ...updates };
         }
         return {
-          id: "",
+          id: user.id,
           user_id: user.id,
           full_name: null,
           avatar_url: null,

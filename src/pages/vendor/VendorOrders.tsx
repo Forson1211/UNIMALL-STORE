@@ -26,11 +26,12 @@ import {
 import { toast } from "sonner";
 
 const statusStyles: Record<string, string> = {
-  pending: "bg-gold/10 text-gold border-gold/20",
-  confirmed: "bg-primary/10 text-primary border-primary/20",
-  shipped: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  delivered: "bg-emerald/10 text-emerald-dark border-emerald/20",
-  cancelled: "bg-destructive/10 text-destructive border-destructive/20",
+  pending: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 font-bold",
+  processing: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 font-bold",
+  confirmed: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 font-bold",
+  shipped: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-300 font-bold",
+  delivered: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 font-bold",
+  cancelled: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 font-bold",
 };
 
 const VendorOrders = () => {

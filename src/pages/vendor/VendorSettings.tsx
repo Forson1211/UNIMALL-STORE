@@ -12,7 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { ArrowUpRight, CheckCircle, CreditCard, ShieldCheck, Sparkles, Upload, Smartphone, Landmark, Trash2, WalletCards } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowUpRight, CheckCircle, CreditCard, ShieldCheck, Sparkles, Upload, Smartphone, Landmark, Trash2, WalletCards, Store } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -235,7 +236,7 @@ const VendorSettings = () => {
           <div className="absolute -right-16 -top-20 h-56 w-56 border border-white/10 bg-white/[0.04]" />
           <div className="relative flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
             <div>
-              <div className="mb-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-orange-200"><Sparkles className="h-4 w-4" /> Seller workspace</div>
+              <div className="mb-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-orange-200"><Store className="h-4 w-4" /> Seller workspace</div>
               <h1 className="text-3xl font-black tracking-[-0.035em] sm:text-4xl">Earnings & settings</h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-200">Keep your campus storefront polished, your payouts ready, and your seller account secure.</p>
             </div>
@@ -248,291 +249,30 @@ const VendorSettings = () => {
           </div>
         </section>
 
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 border border-slate-200 bg-slate-100 p-1 sm:grid-cols-4">
-            <TabsTrigger className="py-2.5 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-[#FF5500] data-[state=active]:shadow-sm sm:text-sm" value="profile">Store Profile</TabsTrigger>
-            <TabsTrigger className="py-2.5 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-[#FF5500] data-[state=active]:shadow-sm sm:text-sm" value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger className="py-2.5 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-[#FF5500] data-[state=active]:shadow-sm sm:text-sm" value="payments">Payments</TabsTrigger>
-            <TabsTrigger className="py-2.5 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-[#FF5500] data-[state=active]:shadow-sm sm:text-sm" value="security">Security</TabsTrigger>
+        {/* ── Direct Shortcut to Store Profile ── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-orange-50 dark:bg-orange-950/20 border border-orange-200/80 dark:border-orange-900/40">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-[#FF5500] text-white flex items-center justify-center shrink-0 shadow-sm">
+              <Store className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white">Looking to customize your public storefront?</h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Edit your store logo, cover banner, description, and WhatsApp contact in the dedicated Store Profile page.</p>
+            </div>
+          </div>
+          <Link to="/vendor/profile">
+            <Button className="bg-[#FF5500] hover:bg-[#e54a00] text-white font-bold text-xs h-9 px-4 shrink-0 shadow-sm">
+              Go to Store Profile →
+            </Button>
+          </Link>
+        </div>
+
+        <Tabs defaultValue="payments" className="space-y-6">
+          <TabsList className="grid h-auto w-full grid-cols-3 gap-1 border border-slate-200 bg-slate-100 p-1">
+            <TabsTrigger className="py-2.5 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-[#FF5500] data-[state=active]:shadow-sm sm:text-sm" value="payments">Payments & Payouts</TabsTrigger>
+            <TabsTrigger className="py-2.5 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-[#FF5500] data-[state=active]:shadow-sm sm:text-sm" value="notifications">Notification Preferences</TabsTrigger>
+            <TabsTrigger className="py-2.5 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-[#FF5500] data-[state=active]:shadow-sm sm:text-sm" value="security">Account & Security</TabsTrigger>
           </TabsList>
-
-        <TabsContent value="profile">
-          <Card className="overflow-hidden border-slate-200 bg-white shadow-[0_16px_45px_rgba(15,23,42,0.08)]">
-            <CardHeader className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white px-6 py-6 sm:px-8">
-              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-                <div><p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#FF5500]">Public storefront</p><CardTitle className="mt-2 text-2xl font-black tracking-tight text-slate-950">Store Profile</CardTitle><CardDescription className="mt-1 text-sm text-slate-500">Shape the storefront students see when they discover your campus business.</CardDescription></div>
-                <div className="flex items-center gap-2 text-xs font-bold text-slate-500"><span className={`h-2 w-2 ${profile?.verified ? "bg-emerald-500" : "bg-amber-400"}`} />{profile?.verified ? "Verified profile" : "Profile under review"}</div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-8 p-6 sm:p-8">
-              {/* Store Avatar */}
-              <div className="flex items-center gap-6">
-                <Avatar className="h-24 w-24 border-4 border-orange-100 bg-orange-50 shadow-sm">
-                  {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt="Logo" className="w-full h-full object-cover" />
-                  ) : (
-                    <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
-                      {formData.storeName?.charAt(0) || "V"}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <div className="space-y-3">
-                  <div className="flex flex-wrap gap-2">
-                    <Button 
-                      variant="outline" 
-                      className="h-10 border-[#FF5500] font-bold text-[#FF5500] hover:bg-orange-50"
-                      onClick={() => document.getElementById('logo-upload')?.click()}
-                      disabled={loading}
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      {loading ? "Uploading..." : "Upload Logo"}
-                    </Button>
-                    <input 
-                      id="logo-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file || !user) return;
-                        
-                        setLoading(true);
-                        try {
-                          const fileExt = file.name.split('.').pop();
-                          const fileName = `${user.id}_logo_${Math.random()}.${fileExt}`;
-                          const filePath = `vendors/${fileName}`;
-
-                          const { error: uploadError } = await supabase.storage
-                            .from('site-assets')
-                            .upload(filePath, file);
-
-                          if (uploadError) throw uploadError;
-
-                          const { data: { publicUrl } } = supabase.storage
-                            .from('site-assets')
-                            .getPublicUrl(filePath);
-
-                          const { error: updateError } = await supabase
-                            .from('profiles')
-                            .update({ avatar_url: publicUrl } as any)
-                            .eq('user_id', user.id);
-
-                          if (updateError) throw updateError;
-                          
-                          await refreshProfile();
-                          toast.success("Logo updated successfully!");
-                        } catch (error: any) {
-                          toast.error(`Upload failed: ${error.message}`);
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                    />
-                    {profile?.avatar_url && (
-                      <Button 
-                        variant="ghost" 
-                        className="h-9 text-destructive hover:text-destructive"
-                        onClick={async () => {
-                          if (!user) return;
-                          setLoading(true);
-                          try {
-                            const { error } = await supabase
-                              .from('profiles')
-                              .update({ avatar_url: null } as any)
-                              .eq('user_id', user.id);
-                            if (error) throw error;
-                            await refreshProfile();
-                            toast.success("Logo removed");
-                          } catch (error: any) {
-                            toast.error(error.message);
-                          } finally {
-                            setLoading(false);
-                          }
-                        }}
-                      >
-                        Remove
-                      </Button>
-                    )}
-                  </div>
-                  <p className="text-xs leading-5 text-slate-500">Use a clear square logo so buyers can recognize your store at a glance. PNG or JPG, max 1MB.</p>
-                </div>
-              </div>
-
-              {/* Store Banner */}
-              <div className="space-y-3">
-                <Label>Store Banner</Label>
-                <div className="h-36 overflow-hidden border border-slate-200 bg-slate-50 shadow-inner sm:h-40">
-                  {profile?.banner_url ? (
-                    <img src={profile.banner_url} alt="Store banner" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#f8fafc_25%,#eef2f7_25%,#eef2f7_50%,#f8fafc_50%,#f8fafc_75%,#eef2f7_75%)] bg-[length:24px_24px] text-sm font-medium text-slate-500">
-                      No banner uploaded yet
-                    </div>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="outline"
-                    className="h-9"
-                    onClick={() => document.getElementById('banner-upload')?.click()}
-                    disabled={bannerLoading}
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    {bannerLoading ? "Uploading..." : "Upload Banner"}
-                  </Button>
-                  <input
-                    id="banner-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file || !user) return;
-
-                      setBannerLoading(true);
-                      try {
-                        const fileExt = file.name.split('.').pop();
-                        const fileName = `${user.id}_banner_${Math.random()}.${fileExt}`;
-                        const filePath = `vendors/${fileName}`;
-
-                        const { error: uploadError } = await supabase.storage
-                          .from('site-assets')
-                          .upload(filePath, file);
-
-                        if (uploadError) throw uploadError;
-
-                        const { data: { publicUrl } } = supabase.storage
-                          .from('site-assets')
-                          .getPublicUrl(filePath);
-
-                        const { error: updateError } = await supabase
-                          .from('profiles')
-                          .update({ banner_url: publicUrl } as any)
-                          .eq('user_id', user.id);
-
-                        if (updateError) throw updateError;
-
-                        await refreshProfile();
-                        toast.success("Banner updated successfully!");
-                      } catch (error: any) {
-                        toast.error(`Upload failed: ${error.message}`);
-                      } finally {
-                        setBannerLoading(false);
-                      }
-                    }}
-                  />
-                  {profile?.banner_url && (
-                    <Button
-                      variant="ghost"
-                      className="h-9 text-destructive hover:text-destructive"
-                      onClick={async () => {
-                        if (!user) return;
-                        setBannerLoading(true);
-                        try {
-                          const { error } = await supabase
-                            .from('profiles')
-                            .update({ banner_url: null } as any)
-                            .eq('user_id', user.id);
-                          if (error) throw error;
-                          await refreshProfile();
-                          toast.success("Banner removed");
-                        } catch (error: any) {
-                          toast.error(error.message);
-                        } finally {
-                          setBannerLoading(false);
-                        }
-                      }}
-                    >
-                      Remove
-                    </Button>
-                  )}
-                </div>
-                <p className="text-xs leading-5 text-slate-500">Shown at the top of your public store page. Recommended size: 1200 × 400px.</p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 pb-8">
-                {profile?.verified ? (
-                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    Verified Vendor
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-muted-foreground">
-                    Not yet verified
-                  </Badge>
-                )}
-                {profile?.rating != null && (
-                  <Badge variant="outline">★ {profile.rating.toFixed(1)}</Badge>
-                )}
-              </div>
-
-              <Separator />
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold text-slate-600" htmlFor="storeName">Store Name</Label>
-                  <Input
-                    id="storeName"
-                    value={formData.storeName}
-                    onChange={(e) => setFormData({ ...formData, storeName: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold text-slate-600" htmlFor="email">Contact Email (Linked to account)</Label>
-                  <Input id="email" type="email" value={formData.email} disabled />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs font-bold text-slate-600" htmlFor="description">Store Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                />
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="campus">Campus location <span className="text-[#FF5500]">*</span></Label>
-                  <Select value={formData.campus} onValueChange={(value) => setFormData({ ...formData, campus: value })}>
-                    <SelectTrigger id="campus"><SelectValue placeholder="Select the campus you serve" /></SelectTrigger>
-                    <SelectContent>
-                      {campusDirectory.map((campus) => <SelectItem key={campus.id} value={campus.name}>{campus.name}{campus.city ? ` · ${campus.city}` : ""}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">Buyers will see this location on your public store.</p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="category">Store Category</Label>
-                <Select value={formData.category} onValueChange={(val) => setFormData({ ...formData, category: val })}>
-                  <SelectTrigger id="category">
-                    <SelectValue placeholder="Select your store's primary category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRODUCT_CATEGORIES.map((cat) => (
-                      <SelectItem key={cat.label} value={cat.label}>{cat.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Separator />
-              <div className="flex flex-col justify-between gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center"><p className="text-xs leading-5 text-slate-500">Your changes update the public storefront after saving.</p><Button onClick={handleSave} disabled={loading} className="h-11 bg-[#FF5500] px-6 font-black text-white shadow-sm hover:bg-[#e54a00]">{loading ? "Saving..." : "Save Store Profile"}</Button></div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="notifications">
           <Card>

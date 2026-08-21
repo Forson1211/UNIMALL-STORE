@@ -3,88 +3,15 @@ import { Link } from "react-router-dom";
 import {
   Star, Zap, ShieldCheck, Truck, Sparkles, ChevronRight, ChevronLeft,
   ArrowRight, Flame, Layers, Radio, Briefcase, Wind,
-  Droplets, Clock, Mic, Sun, Feather, Headphones, Package
+  Droplets, Clock, Mic, Sun, Feather, Headphones, MessageCircle
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
-import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { productService, StorefrontProduct } from "@/services/productService";
-
-/* ─────────────────── Helper: Smart Icon Selector for Bullets ─────────────────── */
-const getFeatureIcon = (text: string, defaultIdx: number) => {
-  const lower = text.toLowerCase();
-  if (lower.includes("capacity") || lower.includes("carry") || lower.includes("bag") || lower.includes("pack")) return Briefcase;
-  if (lower.includes("breath") || lower.includes("cool") || lower.includes("air") || lower.includes("wind")) return Wind;
-  if (lower.includes("water") || lower.includes("liquid") || lower.includes("flush") || lower.includes("drop")) return Droplets;
-  if (lower.includes("durab") || lower.includes("time") || lower.includes("hour") || lower.includes("last") || lower.includes("60g")) return Clock;
-  if (lower.includes("power") || lower.includes("action") || lower.includes("fast") || lower.includes("charge")) return Zap;
-  if (lower.includes("ai") || lower.includes("voice") || lower.includes("mic") || lower.includes("translat") || lower.includes("prompt")) return Mic;
-  if (lower.includes("light") || lower.includes("effect") || lower.includes("glow") || lower.includes("sun") || lower.includes("infinite")) return Sun;
-  if (lower.includes("soft") || lower.includes("comfort") || lower.includes("insole") || lower.includes("feather") || lower.includes("sole")) return Feather;
-  if (lower.includes("layer") || lower.includes("compart") || lower.includes("design") || lower.includes("multi")) return Layers;
-  if (lower.includes("bud") || lower.includes("ear") || lower.includes("sound") || lower.includes("audio")) return Headphones;
-  return defaultIdx === 0 ? Radio : Layers;
-};
-
-/* ─────────────────── Helper: Generate 2 Key Feature Bullet Specs ─────────────────── */
-const getProductHighlights = (product: any): { icon: any; text: string }[] => {
-  const highlights: { icon: any; text: string }[] = [];
-
-  if (Array.isArray(product.features) && product.features.length > 0) {
-    product.features.slice(0, 2).forEach((feat: string, idx: number) => {
-      highlights.push({
-        icon: getFeatureIcon(feat, idx),
-        text: feat,
-      });
-    });
-  } else if (product.description) {
-    const lines = product.description
-      .split(/\r?\n|•|-|;/)
-      .map((s: string) => s.trim())
-      .filter((s: string) => s.length > 3 && s.length < 65);
-
-    if (lines.length >= 2) {
-      highlights.push({ icon: getFeatureIcon(lines[0], 0), text: lines[0] });
-      highlights.push({ icon: getFeatureIcon(lines[1], 1), text: lines[1] });
-    } else if (lines.length === 1) {
-      highlights.push({ icon: getFeatureIcon(lines[0], 0), text: lines[0] });
-      highlights.push({ icon: ShieldCheck, text: "Verified Student Guarantee" });
-    }
-  }
-
-  if (highlights.length === 0) {
-    const cat = (product.category || "").toLowerCase();
-    const name = (product.name || "").toLowerCase();
-
-    if (name.includes("carry") || name.includes("bag") || name.includes("backpack")) {
-      highlights.push({ icon: Briefcase, text: "wear of carry with large capacity" });
-      highlights.push({ icon: Layers, text: "breathable & waterproof multi compartment design" });
-    } else if (name.includes("flush") || name.includes("clean") || name.includes("toilet") || cat.includes("home")) {
-      highlights.push({ icon: Clock, text: "60g For Lasting Durability" });
-      highlights.push({ icon: Zap, text: "Dual Color & Dual Action Power" });
-    } else if (name.includes("bud") || name.includes("space") || name.includes("headphone") || name.includes("audio")) {
-      highlights.push({ icon: Mic, text: "AI Translation & Voice Prompt" });
-      highlights.push({ icon: Sun, text: "Infinite Light Effect" });
-    } else if (name.includes("slip") || name.includes("slide") || name.includes("shoe") || name.includes("eva") || name.includes("ripple")) {
-      highlights.push({ icon: Wind, text: "breathable & cool" });
-      highlights.push({ icon: Feather, text: "detachable insole soft & comfortable" });
-    } else if (cat.includes("phone") || cat.includes("tech") || cat.includes("electronic") || cat.includes("comput")) {
-      highlights.push({ icon: Zap, text: "High Performance & Tested" });
-      highlights.push({ icon: ShieldCheck, text: "Verified Student Warranty" });
-    } else if (cat.includes("fashion") || cat.includes("wear")) {
-      highlights.push({ icon: Sparkles, text: "Breathable & Ergonomic Comfort" });
-      highlights.push({ icon: Layers, text: "Durable All-Day Wear" });
-    } else {
-      highlights.push({ icon: ShieldCheck, text: "Verified Campus Merchant" });
-      highlights.push({ icon: Truck, text: "Instant Campus Pickup & Delivery" });
-    }
-  } else if (highlights.length === 1) {
-    highlights.push({ icon: ShieldCheck, text: "Verified Student Quality Guarantee" });
-  }
-
-  return highlights.slice(0, 2);
-};
+import { UnimallProductCard } from "./UnimallProductCard";
+import { UnimallVerifiedBadge } from "@/components/common/UnimallVerifiedBadge";
+export { UnimallProductCard };
 
 /* ─────────────────── Default Exact Reference Showcase Products ─────────────────── */
 const DEFAULT_SHOWCASE_PRODUCTS: (StorefrontProduct & { variants?: any[]; isNew?: boolean })[] = [
@@ -102,12 +29,13 @@ const DEFAULT_SHOWCASE_PRODUCTS: (StorefrontProduct & { variants?: any[]; isNew?
     ],
     rating: 4.8,
     reviews: 124,
-    vendor: "Unimall Store",
+    vendor: "MegaCarry Official",
     vendor_id: "v1",
     created_at: new Date().toISOString(),
     status: true,
     stock: 25,
     isNew: true,
+    is_pro: true,
   },
   {
     id: "prod-freshflush-2",
@@ -128,7 +56,7 @@ const DEFAULT_SHOWCASE_PRODUCTS: (StorefrontProduct & { variants?: any[]; isNew?
     created_at: new Date().toISOString(),
     status: true,
     stock: 50,
-    isNew: false, // Card 2 in screenshot has no New Arrival badge
+    isNew: false,
   },
   {
     id: "prod-spacebuds-3",
@@ -154,6 +82,7 @@ const DEFAULT_SHOWCASE_PRODUCTS: (StorefrontProduct & { variants?: any[]; isNew?
     status: true,
     stock: 18,
     isNew: true,
+    is_featured: true,
   },
   {
     id: "prod-ripplestep-4",
@@ -180,258 +109,92 @@ const DEFAULT_SHOWCASE_PRODUCTS: (StorefrontProduct & { variants?: any[]; isNew?
     stock: 40,
     isNew: true,
   },
-];
-
-/* ─────────────────── Exact Reference-Style Product Card ─────────────────── */
-export const OraimoProductCard = ({
-  product,
-  badgeType = "new",
-}: {
-  product: StorefrontProduct | any;
-  badgeType?: "new" | "bestseller" | "deal" | "none";
-}) => {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const { addItem } = useCart();
-  const { toast } = useToast();
-
-  const price = product.price || 0;
-  const originalPrice = product.original_price;
-  const hasDiscount = Boolean(originalPrice && originalPrice > price);
-
-  const idStr = String(product.id || "");
-  const rating = product.rating || (4.7 + ((idStr.charCodeAt(0) || 0) % 3) * 0.1);
-  const reviewsCount = product.reviews || (80 + ((idStr.charCodeAt(Math.max(0, idStr.length - 1)) || 0) % 150));
-  const highlights = getProductHighlights(product);
-
-  const displayImage = selectedImage || product.image || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600";
-
-  // Check if variant images or swatches exist
-  const variants = product.variants || (product.images && product.images.length > 1 ? product.images.map((img: string) => ({ image: img })) : null);
-
-  // Show "New Arrival" badge if badgeType === 'new' or product.isNew is true
-  const showNewBadge = (badgeType === "new" || product.isNew === true) && product.isNew !== false;
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: Number(product.price),
-      image: displayImage || product.image,
-      vendor: product.vendor || "Unimall",
-      vendorId: product.vendor_id || "",
-    });
-    toast({
-      title: "Added to Cart",
-      description: `${product.name} added to your cart.`,
-    });
-  };
-
-  return (
-    <div className="group flex flex-col justify-between h-full bg-transparent transition-all duration-300 relative">
-      <Link to={`/products/${product.id}`} className="block flex-1">
-        {/* ── 1. Top Image Box (Clean rounded light-gray container) ── */}
-        <div className="relative aspect-square bg-[#F7F8FA] dark:bg-muted/30 rounded-xl sm:rounded-2xl flex items-center justify-center p-3 sm:p-5 overflow-hidden">
-          
-          {/* Top-Left Pill Badge: "New Arrival" */}
-          {showNewBadge && (
-            <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-10">
-              <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-[9.5px] sm:text-[11px] font-bold bg-[#FF5500] text-white shadow-xs tracking-tight">
-                New Arrival
-              </span>
-            </div>
-          )}
-
-          {/* Top-Right Variant Thumbnails Stack */}
-          {variants && variants.length > 0 && (
-            <div 
-              className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10 flex flex-col gap-1 sm:gap-1.5"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {variants.slice(0, 3).map((v: any, idx: number) => {
-                const imgUrl = typeof v === "string" ? v : v.image;
-                const isSelected = selectedImage === imgUrl || (!selectedImage && idx === 0);
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setSelectedImage(imgUrl);
-                    }}
-                    onMouseEnter={() => setSelectedImage(imgUrl)}
-                    className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white dark:bg-card border ${
-                      isSelected ? "border-gray-900 dark:border-white ring-1 ring-black/10" : "border-gray-200 dark:border-border"
-                    } shadow-2xs overflow-hidden p-0.5 flex items-center justify-center cursor-pointer transition-all hover:scale-110`}
-                    title="Color variant"
-                  >
-                    {imgUrl ? (
-                      <img src={imgUrl} alt="variant" className="w-full h-full object-cover rounded-full" />
-                    ) : (
-                      <span className="w-full h-full rounded-full" style={{ backgroundColor: v.color || "#333" }} />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Main Centered Product Image */}
-          <div className="w-full h-full flex items-center justify-center">
-            <img
-              src={displayImage}
-              alt={product.name}
-              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
-              loading="lazy"
-            />
-          </div>
-
-          {/* Bottom-Left Floating Rating Pill: e.g. "4.8 ★ (124)" */}
-          <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 bg-white dark:bg-card/95 backdrop-blur-xs px-1.5 sm:px-2.5 py-0.5 rounded-md sm:rounded-lg shadow-xs border border-gray-100/60 dark:border-border/60 flex items-center gap-0.5 sm:gap-1">
-            <span className="font-bold text-[11px] sm:text-xs text-gray-900 dark:text-white">
-              {Number(rating).toFixed(1)}
-            </span>
-            <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-amber-400 text-amber-400" />
-            <span className="text-gray-400 dark:text-gray-400 text-[10px] sm:text-[11px] font-normal">
-              ({reviewsCount})
-            </span>
-          </div>
-        </div>
-
-        {/* ── 2. Product Title (2 lines on mobile, single line / 2 lines formatted cleanly) ── */}
-        <h3
-          className="font-semibold text-xs sm:text-[13.5px] text-gray-900 dark:text-foreground line-clamp-2 mt-2 sm:mt-3 mb-1.5 sm:mb-2 leading-snug min-h-[32px] sm:min-h-[36px] group-hover:text-[#FF5500] transition-colors"
-          title={product.name}
-        >
-          {product.name}
-        </h3>
-
-        {/* ── 3. Feature Bullet Highlights (2 Lines, No dividing line between bullets) ── */}
-        <div className="space-y-1 sm:space-y-1.5 mb-2 sm:mb-2.5">
-          {highlights.map((item, idx) => (
-            <div key={idx} className="flex items-center gap-1.5">
-              <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border border-gray-900 dark:border-gray-100 flex items-center justify-center shrink-0 text-gray-900 dark:text-gray-100">
-                <item.icon className="w-2 h-2 sm:w-2.5 sm:h-2.5 stroke-[2.2]" />
-              </span>
-              <span className="text-[10.5px] sm:text-xs text-gray-800 dark:text-gray-300 font-normal truncate leading-tight">
-                {item.text}
-              </span>
-            </div>
-          ))}
-        </div>
-      </Link>
-
-      {/* ── 4. Subtle Divider & Bottom Row (Price swaps with Learn More & Add to Cart on hover) ── */}
-      <div className="pt-1.5 sm:pt-2 border-t border-gray-100 dark:border-border/60 mt-auto relative min-h-[34px] sm:min-h-[38px] flex items-center">
-        {/* Default Price Row: Visible normally, smooth fade/slide out on hover */}
-        <div className="flex items-baseline gap-1.5 sm:gap-2 w-full transition-all duration-300 ease-out group-hover:opacity-0 group-hover:-translate-y-1.5 group-hover:pointer-events-none">
-          <span className="font-bold text-xs sm:text-base text-gray-900 dark:text-white tracking-tight">
-            ₵ {Number(price).toFixed(2)}
-          </span>
-          {hasDiscount && (
-            <span className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 line-through font-normal">
-              ₵ {Number(originalPrice).toFixed(2)}
-            </span>
-          )}
-        </div>
-
-        {/* Hover Action Buttons: "Learn More" & "Add to Cart" pills appearing dynamically on hover */}
-        <div className="absolute inset-x-0 bottom-0 top-1.5 sm:top-2 flex items-center gap-1 sm:gap-2 opacity-0 translate-y-1.5 group-hover:opacity-100 group-hover:translate-y-0 pointer-events-none group-hover:pointer-events-auto transition-all duration-300 ease-out invisible group-hover:visible">
-          <Link
-            to={`/products/${product.id}`}
-            className="flex-1 py-1 sm:py-1.5 px-1.5 sm:px-2 text-center rounded-full border border-black dark:border-white text-black dark:text-white bg-white dark:bg-card hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black text-[10px] sm:text-xs font-semibold transition-all duration-200 truncate"
-          >
-            Learn More
-          </Link>
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            className="flex-1 py-1 sm:py-1.5 px-1.5 sm:px-2 text-center rounded-full bg-[#111111] hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 text-white text-[10px] sm:text-xs font-semibold transition-all duration-200 shadow-xs truncate cursor-pointer"
-          >
-            Add to Cart
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/* ─────────────────── Top 4 High-Clarity Category Showcase Banners ─────────────────── */
-const CATEGORY_SHOWCASE = {
-  hero: {
-    title: "Audio",
-    link: "/products?category=Electronics",
-    // Studio-grade headphones, perfectly centered and crisp
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1400&auto=format&fit=crop&q=85",
+  {
+    id: "prod-watch4pro-5",
+    name: "Watch 4 Pro 1.43\" AMOLED Stainless Steel Smartwatch With Bluetooth Calling",
+    description: "Always-On Display • 100+ Sports Modes & Health Monitoring",
+    price: 420.00,
+    original_price: 480.00,
+    category: "Electronics",
+    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80",
+    features: [
+      "1.43\" Ultra HD AMOLED Display",
+      "Wireless Fast Charging & 7-Day Battery"
+    ],
+    rating: 4.9,
+    reviews: 87,
+    vendor: "TechHub",
+    vendor_id: "v3",
+    created_at: new Date().toISOString(),
+    status: true,
+    stock: 15,
+    isNew: true,
+    is_pro: true,
   },
-  tiles: [
-    {
-      title: "Power",
-      link: "/products?category=Electronics",
-      // Modern powerbank & fast charging gear
-      image: "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=800&auto=format&fit=crop&q=85",
-    },
-    {
-      title: "Smart & Office",
-      link: "/products?category=Electronics",
-      // Premium smartwatch / wearables
-      image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=85",
-    },
-    {
-      title: "Personal Care",
-      link: "/products?category=Health+%26+Beauty",
-      // Professional grooming clipper / wellness
-      image: "https://images.unsplash.com/photo-1621607512214-68297480165e?w=800&auto=format&fit=crop&q=85",
-    },
-  ],
-};
-
-const OraimoCategoryBanners = () => {
-  return (
-    <div className="space-y-3 sm:space-y-4">
-      {/* Top Wide Banner: Audio (Sharp Square Edges) */}
-      <Link
-        to={CATEGORY_SHOWCASE.hero.link}
-        className="group relative block w-full h-[150px] sm:h-[200px] md:h-[240px] rounded-none overflow-hidden shadow-xs border border-gray-100 dark:border-border/40 bg-gray-100 dark:bg-muted"
-      >
-        <img
-          src={CATEGORY_SHOWCASE.hero.image}
-          alt={CATEGORY_SHOWCASE.hero.title}
-          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
-          loading="lazy"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent pointer-events-none" />
-        <span className="absolute top-3.5 left-4 sm:top-5 sm:left-6 z-10 text-sm sm:text-base md:text-lg font-extrabold text-white tracking-wide drop-shadow-md">
-          {CATEGORY_SHOWCASE.hero.title}
-        </span>
-      </Link>
-
-      {/* 3 Prominent Sub-Category Cards Below (Sharp Square Edges) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        {CATEGORY_SHOWCASE.tiles.map((tile, idx) => (
-          <Link
-            key={idx}
-            to={tile.link}
-            className="group relative block w-full h-[110px] sm:h-[140px] md:h-[165px] rounded-none overflow-hidden shadow-xs border border-gray-100 dark:border-border/40 bg-gray-100 dark:bg-muted"
-          >
-            <img
-              src={tile.image}
-              alt={tile.title}
-              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent pointer-events-none" />
-            <span className="absolute top-3 left-3.5 sm:top-3.5 sm:left-4 z-10 text-xs sm:text-sm md:text-base font-extrabold text-white tracking-wide drop-shadow-md">
-              {tile.title}
-            </span>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-};
+  {
+    id: "prod-powermax-6",
+    name: "PowerMax 20000mAh 22.5W Two-Way Fast Charging Power Bank",
+    description: "Digital LED Power Display • Charge 3 Devices Simultaneously",
+    price: 180.00,
+    original_price: 210.00,
+    category: "Electronics",
+    image: "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=600&auto=format&fit=crop&q=80",
+    features: [
+      "22.5W High-Speed PD & QC 3.0",
+      "Flight Approved Heavy Duty Polymer"
+    ],
+    rating: 4.8,
+    reviews: 310,
+    vendor: "PowerMax Tech",
+    vendor_id: "v1",
+    created_at: new Date().toISOString(),
+    status: true,
+    stock: 30,
+    isNew: false,
+  },
+  {
+    id: "prod-campusfan-7",
+    name: "CampusPro Foldable Ultra-Quiet Rechargeable Desk & Bed Study Fan",
+    description: "4-Speed Wind Adjustment • 4000mAh Battery With Night Light",
+    price: 95.00,
+    original_price: 115.00,
+    category: "Home",
+    image: "https://images.unsplash.com/photo-1618941716939-553df3c6c278?w=600&auto=format&fit=crop&q=80",
+    features: [
+      "12-Hour Long Lasting Run Time",
+      "Whisper Quiet Brushless Motor"
+    ],
+    rating: 4.7,
+    reviews: 145,
+    vendor: "oraimo home",
+    vendor_id: "v2",
+    created_at: new Date().toISOString(),
+    status: true,
+    stock: 22,
+    isNew: true,
+  },
+  {
+    id: "prod-thermolock-8",
+    name: "ThermoLock 1000ml Double-Wall Vacuum Insulated Stainless Steel Bottle",
+    description: "24h Cold & 12h Hot Retention • Leakproof Straw & Chug Lid",
+    price: 85.00,
+    original_price: 100.00,
+    category: "Home",
+    image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&auto=format&fit=crop&q=80",
+    features: [
+      "18/8 Food Grade Stainless Steel",
+      "BPA Free Sweat-Proof Powder Coating"
+    ],
+    rating: 4.9,
+    reviews: 98,
+    vendor: "StyleCo",
+    vendor_id: "v4",
+    created_at: new Date().toISOString(),
+    status: true,
+    stock: 45,
+    isNew: false,
+  },
+];
 
 /* ─────────────────── New Arrivals Swiper Carousel ─────────────────── */
 const DEFAULT_NEW_ARRIVALS_PRODUCTS: (StorefrontProduct & { variants?: any[]; isNew?: boolean })[] = [
@@ -575,8 +338,8 @@ const DEFAULT_NEW_ARRIVALS_PRODUCTS: (StorefrontProduct & { variants?: any[]; is
     ],
     rating: 4.8,
     reviews: 124,
-    vendor: "Unimall Store",
-    vendor_id: "v-unimall",
+    vendor: "MegaCarry Official",
+    vendor_id: "v-megacarry",
     created_at: new Date().toISOString(),
     status: true,
     stock: 25,
@@ -584,11 +347,19 @@ const DEFAULT_NEW_ARRIVALS_PRODUCTS: (StorefrontProduct & { variants?: any[]; is
   },
 ];
 
-const NewArrivalsSwiper = ({ products }: { products: any[] }) => {
+/* ─────────────────── Product Swiper Carousel ─────────────────── */
+const ProductSwiperCarousel = ({ 
+  products, 
+  badgeType = "new" 
+}: { 
+  products: any[]; 
+  badgeType?: "new" | "pro" | "bestseller" 
+}) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   const totalItems = products.length;
   const totalDots = Math.min(Math.max(totalItems, 4), 10);
@@ -621,6 +392,31 @@ const NewArrivalsSwiper = ({ products }: { products: any[] }) => {
     }
   }, [products]);
 
+  // Automatic slide movement every 3.5 seconds
+  useEffect(() => {
+    if (isPaused || products.length <= 1) return;
+
+    const interval = setInterval(() => {
+      if (scrollRef.current) {
+        const container = scrollRef.current;
+        const maxScroll = container.scrollWidth - container.clientWidth;
+
+        if (container.scrollLeft >= maxScroll - 25) {
+          container.scrollTo({ left: 0, behavior: "smooth" });
+        } else {
+          const scrollStep = container.clientWidth >= 1024 
+            ? container.clientWidth / 4 
+            : container.clientWidth >= 640 
+              ? container.clientWidth / 3 
+              : container.clientWidth / 2;
+          container.scrollBy({ left: scrollStep, behavior: "smooth" });
+        }
+      }
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [isPaused, products]);
+
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
       const container = scrollRef.current;
@@ -645,29 +441,13 @@ const NewArrivalsSwiper = ({ products }: { products: any[] }) => {
   };
 
   return (
-    <div className="relative group/swiper">
-      {/* Left Navigation Arrow */}
-      <button
-        type="button"
-        onClick={() => scroll("left")}
-        aria-label="Scroll left"
-        disabled={!canScrollLeft}
-        className={`absolute -left-2 sm:-left-4 top-[38%] -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/90 dark:bg-card/90 backdrop-blur-xs shadow-md border border-gray-200/80 dark:border-border text-gray-800 dark:text-white flex items-center justify-center transition-all duration-200 hover:bg-white hover:scale-110 active:scale-95 disabled:opacity-0 disabled:pointer-events-none cursor-pointer`}
-      >
-        <ChevronLeft className="w-5 h-5 stroke-[2.2]" />
-      </button>
-
-      {/* Right Navigation Arrow */}
-      <button
-        type="button"
-        onClick={() => scroll("right")}
-        aria-label="Scroll right"
-        disabled={!canScrollRight}
-        className={`absolute -right-2 sm:-right-4 top-[38%] -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/90 dark:bg-card/90 backdrop-blur-xs shadow-md border border-gray-200/80 dark:border-border text-gray-800 dark:text-white flex items-center justify-center transition-all duration-200 hover:bg-white hover:scale-110 active:scale-95 disabled:opacity-0 disabled:pointer-events-none cursor-pointer`}
-      >
-        <ChevronRight className="w-5 h-5 stroke-[2.2]" />
-      </button>
-
+    <div 
+      className="relative group/swiper"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={() => setIsPaused(true)}
+      onTouchEnd={() => setIsPaused(false)}
+    >
       {/* Horizontal Smooth Scroll Track */}
       <div
         ref={scrollRef}
@@ -678,45 +458,263 @@ const NewArrivalsSwiper = ({ products }: { products: any[] }) => {
             key={product.id || idx}
             className="w-[calc(50%-6px)] sm:w-[calc(33.333%-14px)] lg:w-[calc(25%-18px)] shrink-0 snap-start"
           >
-            <OraimoProductCard product={product} badgeType="new" />
+            <UnimallProductCard product={product} badgeType={badgeType} />
           </div>
         ))}
       </div>
 
-      {/* Bottom Pagination Dots with Active Pill */}
-      <div className="flex items-center justify-center gap-1.5 sm:gap-2 mt-6">
-        {Array.from({ length: totalDots }).map((_, i) => (
-          <button
-            key={i}
-            onClick={() => scrollToDot(i)}
-            aria-label={`Go to slide ${i + 1}`}
-            className={`h-1 sm:h-1.5 transition-all duration-300 rounded-full ${
-              i === activeIndex
-                ? "w-5 sm:w-7 bg-[#FF5500]"
-                : "w-1.5 sm:w-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"
-            }`}
-          />
-        ))}
+      {/* Bottom Navigation Controls Bar */}
+      <div className="flex items-center justify-center gap-3 sm:gap-4 mt-6">
+        <button
+          type="button"
+          onClick={() => scroll("left")}
+          aria-label="Previous items"
+          disabled={!canScrollLeft}
+          className="w-8 h-8 rounded-full border border-gray-200 dark:border-border bg-white dark:bg-card hover:bg-gray-50 dark:hover:bg-muted flex items-center justify-center text-gray-700 dark:text-gray-300 disabled:opacity-30 disabled:pointer-events-none transition-all shadow-2xs cursor-pointer"
+        >
+          <ChevronLeft className="w-4 h-4 stroke-[2.2]" />
+        </button>
+
+        {/* Bottom Pagination Dots with Active Orange Pill */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {Array.from({ length: totalDots }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => scrollToDot(i)}
+              aria-label={`Go to slide ${i + 1}`}
+              className={`h-1 sm:h-1.5 transition-all duration-300 rounded-full cursor-pointer ${
+                i === activeIndex
+                  ? "w-5 sm:w-7 bg-[#FF5500]"
+                  : "w-1.5 sm:w-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"
+              }`}
+            />
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => scroll("right")}
+          aria-label="Next items"
+          disabled={!canScrollRight}
+          className="w-8 h-8 rounded-full border border-gray-200 dark:border-border bg-white dark:bg-card hover:bg-gray-50 dark:hover:bg-muted flex items-center justify-center text-gray-700 dark:text-gray-300 disabled:opacity-30 disabled:pointer-events-none transition-all shadow-2xs cursor-pointer"
+        >
+          <ChevronRight className="w-4 h-4 stroke-[2.2]" />
+        </button>
       </div>
     </div>
   );
 };
 
+/* ─────────────────── Default Exact Reference Pro Seller Products ─────────────────── */
+const DEFAULT_PRO_SELLER_PRODUCTS: (StorefrontProduct & { variants?: any[]; isNew?: boolean })[] = [
+  {
+    id: "pro-megacarry-1",
+    name: "MegaCarry Expandable Waterproof Travel Laptop Backpack",
+    description: "wear of carry with large capacity • breathable & waterproof multi compartment design",
+    price: 380.00,
+    original_price: 430.00,
+    category: "Fashion",
+    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop&q=80",
+    features: [
+      "wear of carry with large capacity",
+      "breathable & waterproof multi compartment design"
+    ],
+    rating: 4.9,
+    reviews: 124,
+    vendor: "MegaCarry Official",
+    vendor_id: "v1",
+    created_at: new Date().toISOString(),
+    status: true,
+    stock: 25,
+    isNew: true,
+    is_pro: true,
+  },
+  {
+    id: "pro-spacebuds-2",
+    name: "SpaceBuds 2 AI Smart 45hrs Playtime Noise Cancelling Earbuds",
+    description: "AI Translation & Voice Prompt • Infinite Light Effect",
+    price: 495.00,
+    original_price: 550.00,
+    category: "Electronics",
+    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&auto=format&fit=crop&q=80",
+    features: [
+      "AI Translation & Voice Prompt",
+      "Infinite Light Effect"
+    ],
+    rating: 4.9,
+    reviews: 129,
+    vendor: "TechHub",
+    vendor_id: "v3",
+    created_at: new Date().toISOString(),
+    status: true,
+    stock: 18,
+    isNew: true,
+    is_pro: true,
+  },
+  {
+    id: "pro-watch4pro-3",
+    name: "Watch 4 Pro 1.43\" AMOLED Stainless Steel Smartwatch With Bluetooth Calling",
+    description: "Always-On Display • 100+ Sports Modes & Health Monitoring",
+    price: 420.00,
+    original_price: 480.00,
+    category: "Electronics",
+    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80",
+    features: [
+      "1.43\" Ultra HD AMOLED Display",
+      "Wireless Fast Charging & 7-Day Battery"
+    ],
+    rating: 4.9,
+    reviews: 87,
+    vendor: "TechHub",
+    vendor_id: "v3",
+    created_at: new Date().toISOString(),
+    status: true,
+    stock: 15,
+    isNew: true,
+    is_pro: true,
+  },
+  {
+    id: "pro-powermax-4",
+    name: "PowerMax 20000mAh 22.5W Two-Way Fast Charging Power Bank",
+    description: "Digital LED Power Display • Charge 3 Devices Simultaneously",
+    price: 180.00,
+    original_price: 210.00,
+    category: "Electronics",
+    image: "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=600&auto=format&fit=crop&q=80",
+    features: [
+      "22.5W High-Speed PD & QC 3.0",
+      "Flight Approved Heavy Duty Polymer"
+    ],
+    rating: 4.8,
+    reviews: 310,
+    vendor: "PowerMax Tech",
+    vendor_id: "v1",
+    created_at: new Date().toISOString(),
+    status: true,
+    stock: 30,
+    isNew: false,
+    is_pro: true,
+  },
+  {
+    id: "pro-ripplestep-5",
+    name: "Ripplestep Soft Comfort EVA Slippers Ergonomic Slides",
+    description: "breathable & cool • detachable insole soft & comfortable",
+    price: 120.00,
+    original_price: 135.00,
+    category: "Fashion",
+    image: "https://images.unsplash.com/photo-1603808033192-082d6919d3e1?w=600&auto=format&fit=crop&q=80",
+    features: [
+      "breathable & cool",
+      "detachable insole soft & comfortable"
+    ],
+    rating: 4.8,
+    reviews: 201,
+    vendor: "StyleCo",
+    vendor_id: "v4",
+    created_at: new Date().toISOString(),
+    status: true,
+    stock: 40,
+    isNew: true,
+    is_pro: true,
+  },
+  {
+    id: "pro-campusfan-6",
+    name: "CampusPro Foldable Ultra-Quiet Rechargeable Desk & Bed Study Fan",
+    description: "4-Speed Wind Adjustment • 4000mAh Battery With Night Light",
+    price: 95.00,
+    original_price: 115.00,
+    category: "Home",
+    image: "https://images.unsplash.com/photo-1618941716939-553df3c6c278?w=600&auto=format&fit=crop&q=80",
+    features: [
+      "12-Hour Long Lasting Run Time",
+      "Whisper Quiet Brushless Motor"
+    ],
+    rating: 4.7,
+    reviews: 145,
+    vendor: "oraimo home",
+    vendor_id: "v2",
+    created_at: new Date().toISOString(),
+    status: true,
+    stock: 22,
+    isNew: true,
+    is_pro: true,
+  },
+  {
+    id: "pro-freshflush-7",
+    name: "FreshFlush Antibacterial Odor Eliminator Toilet Cleaner Rim Block",
+    description: "60g For Lasting Durability • Dual Color & Dual Action Power",
+    price: 40.00,
+    original_price: 50.00,
+    category: "Home",
+    image: "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=600&auto=format&fit=crop&q=80",
+    features: [
+      "60g For Lasting Durability",
+      "Dual Color & Dual Action Power"
+    ],
+    rating: 4.8,
+    reviews: 690,
+    vendor: "oraimo home",
+    vendor_id: "v2",
+    created_at: new Date().toISOString(),
+    status: true,
+    stock: 50,
+    isNew: false,
+    is_pro: true,
+  },
+  {
+    id: "pro-thermolock-8",
+    name: "ThermoLock 1000ml Double-Wall Vacuum Insulated Stainless Steel Bottle",
+    description: "24h Cold & 12h Hot Retention • Leakproof Straw & Chug Lid",
+    price: 85.00,
+    original_price: 100.00,
+    category: "Home",
+    image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&auto=format&fit=crop&q=80",
+    features: [
+      "18/8 Food Grade Stainless Steel",
+      "BPA Free Sweat-Proof Powder Coating"
+    ],
+    rating: 4.9,
+    reviews: 98,
+    vendor: "StyleCo",
+    vendor_id: "v4",
+    created_at: new Date().toISOString(),
+    status: true,
+    stock: 45,
+    isNew: false,
+    is_pro: true,
+  },
+];
+
 /* ─────────────────── Main Featured Showcase Component ─────────────────── */
 const FeaturedProducts = () => {
-  // Fetch Best Sellers
-  const { data: dbBestSellers = [], isLoading: loadingBestSellers } = useQuery({
-    queryKey: ["homepage-bestsellers"],
-    queryFn: () => productService.getProducts({ sortBy: "rating", sortOrder: "desc", limit: 8 }),
+  const cachedProducts = productService.getCachedProducts();
+
+  // Fetch Pro Sellers Products (5-Hour Deterministic Round-Robin Fair Rotation among Subscribed Vendors)
+  const { data: dbProSellers = [] } = useQuery({
+    queryKey: ["homepage-pro-sellers"],
+    queryFn: () => productService.getProSellersRotated(8),
+    initialData: DEFAULT_PRO_SELLER_PRODUCTS,
+    staleTime: 1000 * 60 * 5,
   });
 
-  // Fetch New Arrivals
-  const { data: dbNewArrivals = [], isLoading: loadingNewArrivals } = useQuery({
+  // Fetch Best Sellers (Automatically ranked by highest purchases & sales volume)
+  const { data: dbBestSellers = [] } = useQuery({
+    queryKey: ["homepage-bestsellers"],
+    queryFn: () => productService.getBestSellers(12),
+    initialData: cachedProducts.length > 0 ? cachedProducts.slice(0, 12) : DEFAULT_SHOWCASE_PRODUCTS,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // Fetch New Arrivals (instantly renders in 0ms from cache or showcase defaults)
+  const { data: dbNewArrivals = [] } = useQuery({
     queryKey: ["homepage-newarrivals"],
     queryFn: () => productService.getProducts({ sortBy: "created_at", sortOrder: "desc", limit: 12 }),
+    initialData: cachedProducts.length > 0 ? cachedProducts.slice(0, 12) : DEFAULT_NEW_ARRIVALS_PRODUCTS,
+    staleTime: 1000 * 60 * 5,
   });
 
   // Use database products if available, otherwise use default exact showcase products
+  const proSellers = dbProSellers.length > 0 ? dbProSellers : DEFAULT_PRO_SELLER_PRODUCTS;
   const bestSellers = dbBestSellers.length > 0 ? dbBestSellers : DEFAULT_SHOWCASE_PRODUCTS;
   const newArrivals = dbNewArrivals.length > 0 
     ? [...dbNewArrivals, ...DEFAULT_NEW_ARRIVALS_PRODUCTS] 
@@ -726,20 +724,37 @@ const FeaturedProducts = () => {
     <section className="py-8 md:py-16 bg-white dark:bg-background">
       <div className="max-w-[1280px] mx-auto px-4 xl:px-0 space-y-10 sm:space-y-14 md:space-y-16">
 
-        {/* ── 0. TOP COMPACT CATEGORY SHOWCASE (AUDIO / POWER / SMART / ETC) ── */}
-        <OraimoCategoryBanners />
+        {/* ── 0. PRO SELLERS SECTION (STRICTLY VERIFIED VENDORS ONLY WITH 5-HR ROTATION SWIPER) ── */}
+        <div id="pro-sellers" className="space-y-5 sm:space-y-6">
+          {/* Section Header */}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4 border-b border-gray-100 dark:border-border pb-3">
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <h2 className="text-xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight flex items-center gap-2 sm:gap-2.5">
+                <span>Pro Sellers</span>
+                <UnimallVerifiedBadge size={28} color="#FF5500" className="inline-block shrink-0 drop-shadow-xs" />
+              </h2>
+            </div>
+            <Link
+              to="/vendors"
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 hover:text-[#FF5500] transition-colors group"
+            >
+              See All Verified Vendors
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          {/* Product Swiper Carousel (Rotated Verified Pro Vendors) */}
+          <ProductSwiperCarousel products={proSellers} badgeType="pro" />
+        </div>
 
         {/* ── 1. BEST SELLERS SECTION ── */}
         <div id="best-sellers" className="space-y-5 sm:space-y-6">
           {/* Section Header */}
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4 border-b border-gray-100 dark:border-border pb-3">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-orange-50 dark:bg-orange-950/40 text-[#FF5500] text-[11px] sm:text-xs font-bold uppercase tracking-wider mb-1.5">
-                <Flame className="w-3.5 h-3.5 fill-[#FF5500]" />
-                Top Campus Picks
-              </div>
-              <h2 className="text-xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-                Best Sellers
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <h2 className="text-xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight flex items-center gap-2 sm:gap-2.5">
+                <span>Best Sellers</span>
+                <Zap className="w-6 h-6 sm:w-7 sm:h-7 fill-[#FF5500] text-[#FF5500] inline-block shrink-0 drop-shadow-xs" />
               </h2>
             </div>
             <Link
@@ -751,28 +766,16 @@ const FeaturedProducts = () => {
             </Link>
           </div>
 
-          {/* Product Grid (2 columns on mobile, 3 on tablet, 4 on desktop) */}
-          {loadingBestSellers && dbBestSellers.length === 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
-              {[1, 2, 3, 4].map((n) => (
-                <div key={n} className="bg-white dark:bg-card h-[320px] sm:h-[380px] animate-pulse space-y-3">
-                  <div className="aspect-square bg-gray-100 dark:bg-muted rounded-xl sm:rounded-2xl" />
-                  <div className="h-4 bg-gray-100 dark:bg-muted rounded w-3/4" />
-                  <div className="h-6 bg-gray-100 dark:bg-muted rounded w-full" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
-              {bestSellers.slice(0, 4).map((product, idx) => (
-                <OraimoProductCard 
-                  key={product.id || idx} 
-                  product={product} 
-                  badgeType={idx === 1 ? "none" : "new"} 
-                />
-              ))}
-            </div>
-          )}
+          {/* Product Grid (2 columns on mobile, 3 on tablet, 4 on desktop - Multiple Rows) */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
+            {bestSellers.slice(0, 8).map((product, idx) => (
+              <UnimallProductCard 
+                key={product.id || idx} 
+                product={product} 
+                badgeType="bestseller" 
+              />
+            ))}
+          </div>
         </div>
 
         {/* ── 2. PROMOTIONAL FEATURE BANNERS ── */}
@@ -834,13 +837,10 @@ const FeaturedProducts = () => {
         <div id="new-arrivals" className="space-y-5 sm:space-y-6">
           {/* Section Header */}
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4 border-b border-gray-100 dark:border-border pb-3">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-orange-50 dark:bg-orange-950/40 text-[#FF5500] text-[11px] sm:text-xs font-bold uppercase tracking-wider mb-1.5">
-                <Sparkles className="w-3.5 h-3.5 fill-[#FF5500]" />
-                Just Dropped
-              </div>
-              <h2 className="text-xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-                New Arrivals
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <h2 className="text-xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight flex items-center gap-2 sm:gap-2.5">
+                <span>New Arrivals</span>
+                <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 fill-[#FF5500] text-[#FF5500] inline-block shrink-0 drop-shadow-xs" />
               </h2>
             </div>
             <Link
@@ -853,19 +853,7 @@ const FeaturedProducts = () => {
           </div>
 
           {/* Swiper Carousel */}
-          {loadingNewArrivals && dbNewArrivals.length === 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
-              {[1, 2, 3, 4].map((n) => (
-                <div key={n} className="bg-white dark:bg-card h-[320px] sm:h-[380px] animate-pulse space-y-3">
-                  <div className="aspect-square bg-gray-100 dark:bg-muted rounded-xl sm:rounded-2xl" />
-                  <div className="h-4 bg-gray-100 dark:bg-muted rounded w-3/4" />
-                  <div className="h-6 bg-gray-100 dark:bg-muted rounded w-full" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <NewArrivalsSwiper products={newArrivals} />
-          )}
+          <ProductSwiperCarousel products={newArrivals} badgeType="new" />
         </div>
 
       </div>

@@ -14,6 +14,8 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import ScrollToTop from "@/components/ScrollToTop";
 import PageTransition from "@/components/PageTransition";
 import BottomTabBar from "@/components/layout/BottomTabBar";
+import CampusChatbot from "@/components/chat/CampusChatbot";
+import GlobalSiteLoader from "@/components/common/GlobalSiteLoader";
 
 import Index from "./pages/Index";
 import Products from "./pages/Products";
@@ -62,6 +64,7 @@ import VendorSettings from "./pages/vendor/VendorSettings";
 import VendorCoupons from "./pages/vendor/VendorCoupons";
 import VendorReviews from "./pages/vendor/VendorReviews";
 import VendorNotifications from "./pages/vendor/VendorNotifications";
+import VendorProfile from "./pages/vendor/VendorProfile";
 import VendorFeaturePage from "./pages/vendor/VendorFeaturePage";
 
 // Buyer Account Pages
@@ -96,6 +99,7 @@ const App = () => (
                   <CartDrawer />
                   <SearchDialog />
                   <ScrollToTop />
+                  <GlobalSiteLoader />
                   <PageTransition>
                   <Routes>
                     {/* Public Routes */}
@@ -104,6 +108,8 @@ const App = () => (
                     <Route path="/products/:id" element={<ProductDetail />} />
                     <Route path="/vendors" element={<Vendors />} />
                     <Route path="/vendors/:id" element={<VendorStore />} />
+                    <Route path="/vendor/store/:id" element={<VendorStore />} />
+                    <Route path="/store/:id" element={<VendorStore />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/about" element={<About />} />
@@ -266,6 +272,11 @@ const App = () => (
                         <VendorNotifications />
                       </ProtectedRoute>
                     } />
+                    <Route path="/vendor/profile" element={
+                      <ProtectedRoute allowedRoles={["vendor"]}>
+                        <VendorProfile />
+                      </ProtectedRoute>
+                    } />
                     <Route path="/vendor/settings" element={
                       <ProtectedRoute allowedRoles={["vendor"]}>
                         <VendorSettings />
@@ -277,6 +288,7 @@ const App = () => (
                   </Routes>
                   </PageTransition>
                   <BottomTabBar />
+                  <CampusChatbot />
                 </TooltipProvider>
               </SearchProvider>
             </CartProvider>

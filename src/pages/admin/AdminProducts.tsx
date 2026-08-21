@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 
+import { unpackProductMetadata } from "@/services/vendorService";
+
 interface Product {
   product_id: string;
   product_name: string;
@@ -44,15 +46,48 @@ interface Product {
 }
 
 const statusStyles: Record<string, string> = {
-  active: "bg-primary/10 text-primary border-primary/20",
+  active: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
   draft: "bg-muted text-muted-foreground border-muted",
+  out_of_stock: "bg-amber-500/10 text-amber-600 border-amber-500/20",
   inactive: "bg-destructive/10 text-destructive border-destructive/20",
+};
+
+const normalizeProduct = (p: any): Product => {
+  const unpacked = unpackProductMetadata(p);
+  const id = p.id || p.product_id || `prod-${Date.now()}`;
+  const name = p.name || p.product_name || "Untitled Product";
+  const price = Number(p.price || 0);
+  const stock = Number(p.stock !== undefined ? p.stock : (p.stock_quantity ?? 0));
+  const isActive = p.is_active !== undefined ? Boolean(p.is_active) : (p.status === "active");
+  const status = p.status || (isActive ? (stock > 0 ? "active" : "out_of_stock") : "inactive");
+  const vendorName = p.profiles?.full_name || p.vendor_name || p.vendor || "Vendor";
+  const vendorStore = p.profiles?.business_name || p.vendor_store || p.profiles?.full_name || "Store";
+  const imageUrl = p.image_url || p.image || (unpacked.images && unpacked.images[0]) || "";
+
+  return {
+    product_id: id,
+    product_name: name,
+    description: unpacked.description || p.description || "",
+    price,
+    stock_quantity: stock,
+    category: p.category || "General",
+    status,
+    vendor_id: p.vendor_id || "",
+    vendor_name: vendorName,
+    vendor_store: vendorStore,
+    total_sales: Number(p.total_sales || 0),
+    created_at: p.created_at || new Date().toISOString(),
+    image_url: imageUrl,
+    is_featured: Boolean(p.is_featured),
+  };
 };
 
 const AdminProducts = () => {
   const { role } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [deletedProductIds, setDeletedProductIds] = useState<Set<string>>(() => {
     try {
       const saved = localStorage.getItem("unimall_deleted_product_ids");
@@ -75,7 +110,7 @@ const AdminProducts = () => {
     });
   };
 
-  // Fetch all products
+  // Resilient multi-tier query for admin products
   const {
     data: products = [],
     isLoading,
@@ -84,24 +119,74 @@ const AdminProducts = () => {
   } = useQuery<Product[], Error>({
     queryKey: ["admin-products"],
     queryFn: async () => {
-      const { data, error } = await (supabase
-        .from("admin_products_view" as any)
-        .select("*")
-        .order("created_at", { ascending: false }) as any);
+      // 1. Try querying products table directly with profiles join
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select(`
+            *,
+            profiles:vendor_id (
+              full_name,
+              business_name
+            )
+          `)
+          .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data as Product[];
+        if (!error && Array.isArray(data) && data.length > 0) {
+          return data.map(normalizeProduct);
+        }
+      } catch (err) {
+        console.warn("Direct products table join query skipped, falling back:", err);
+      }
+
+      // 2. Try admin_products_view
+      try {
+        const { data: viewData, error: viewError } = await (supabase
+          .from("admin_products_view" as any)
+          .select("*")
+          .order("created_at", { ascending: false }) as any);
+
+        if (!viewError && Array.isArray(viewData) && viewData.length > 0) {
+          return viewData.map(normalizeProduct);
+        }
+      } catch (err) {
+        console.warn("admin_products_view query skipped:", err);
+      }
+
+      // 3. Try storefront_products_view
+      try {
+        const { data: storefrontData } = await (supabase
+          .from("storefront_products_view" as any)
+          .select("*") as any);
+
+        if (Array.isArray(storefrontData) && storefrontData.length > 0) {
+          return storefrontData.map(normalizeProduct);
+        }
+      } catch (err) {
+        console.warn("storefront_products_view fallback skipped:", err);
+      }
+
+      // 4. Default to standard products select
+      const { data: basicData, error: basicError } = await supabase
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (basicError) {
+        console.error("Basic products select error:", basicError);
+        return [];
+      }
+
+      return (basicData || []).map(normalizeProduct);
     },
     refetchInterval: 15000,
   });
 
   // Filter out locally deleted products
   const safeProducts = Array.isArray(products) ? products : [];
-
-  // Keep the table resilient to older rows or nullable values returned by Supabase views.
   const visibleProducts = safeProducts.filter((p) => {
     const id = p.product_id || (p as any).id;
-    return !deletedProductIds.has(id);
+    return id && !deletedProductIds.has(id);
   });
 
   // Update product status mutation
@@ -183,44 +268,77 @@ const AdminProducts = () => {
     toggleFeaturedMutation.mutate({ productId, isFeatured: !currentStatus });
   };
 
-  // Delete product mutation
+  // Delete product mutation (Soft delete so it leaves public site, but vendor sees "Deleted by Admin")
   const deleteProductMutation = useMutation({
     mutationFn: async (productId: string) => {
-      // 1. Try deleting directly from products table
-      const { error } = await supabase.from("products").delete().eq("id", productId);
+      // 1. Fetch current description to merge metadata
+      let cleanDesc = "";
+      let existingMeta: any = {};
+      try {
+        const { data: prodData } = await supabase
+          .from("products")
+          .select("description")
+          .eq("id", productId)
+          .single();
 
-      if (error) {
-        console.warn("Direct DB delete encountered error, attempting clean fallback:", error);
-        // Clean up child dependencies (cart, wishlist, reviews) if FK constraint blocked hard delete
-        try {
-          await supabase.from("cart_items" as any).delete().eq("product_id", productId);
-          await supabase.from("wishlists" as any).delete().eq("product_id", productId);
-          await supabase.from("reviews" as any).delete().eq("product_id", productId);
-        } catch (cleanError) {
-          console.warn("Child cleanup skipped:", cleanError);
+        if (prodData?.description) {
+          const metaMatch = prodData.description.match(/<!-- UNIMALL_META:([\s\S]*?)-->/);
+          if (metaMatch && metaMatch[1]) {
+            try {
+              existingMeta = JSON.parse(metaMatch[1]);
+            } catch (e) {}
+          }
+          cleanDesc = prodData.description.replace(/\n\n<!-- UNIMALL_META:[\s\S]*?-->/g, "").trim();
         }
-
-        const { error: retryError } = await supabase.from("products").delete().eq("id", productId);
-
-        if (retryError) {
-          // If still constrained by order history, soft delete by marking is_active = false
-          const { error: softError } = await supabase
-            .from("products")
-            .update({ is_active: false } as any)
-            .eq("id", productId);
-
-          if (softError) throw new Error(softError.message || retryError.message);
-        }
+      } catch (fetchErr) {
+        console.warn("Could not read product description for meta:", fetchErr);
       }
 
-      // 2. Log admin action
+      const updatedMeta = {
+        ...existingMeta,
+        status: "deleted_by_admin",
+        deleted_by: "admin",
+        deleted_at: new Date().toISOString(),
+        deleted_reason: "Removed by Marketplace Administrator",
+      };
+
+      const newDesc = `${cleanDesc}\n\n<!-- UNIMALL_META:${JSON.stringify(updatedMeta)} -->`;
+
+      // 2. Soft-delete in database: mark inactive and store deleted_by_admin status
+      const { error: updateError } = await supabase
+        .from("products")
+        .update({
+          is_active: false,
+          description: newDesc,
+        } as any)
+        .eq("id", productId);
+
+      if (updateError) {
+        console.warn("Primary soft-delete failed, applying fallback update:", updateError);
+        const { error: fallbackError } = await supabase
+          .from("products")
+          .update({ is_active: false } as any)
+          .eq("id", productId);
+        if (fallbackError) throw fallbackError;
+      }
+
+      // 3. Clean up active cart & wishlist items so buyers cannot checkout removed product
+      try {
+        await supabase.from("cart_items" as any).delete().eq("product_id", productId);
+        await supabase.from("wishlists" as any).delete().eq("product_id", productId);
+      } catch (cleanupErr) {
+        console.warn("Buyer cart/wishlist cleanup skipped:", cleanupErr);
+      }
+
+      // 4. Log admin action
       try {
         await (supabase.from("system_logs" as any).insert({
           type: "admin_action",
           source: "product_management",
-          message: "Admin deleted product",
+          message: "Admin removed product from marketplace (marked as deleted for vendor)",
           metadata: {
             product_id: productId,
+            action: "admin_soft_delete",
           },
         }));
       } catch (logError) {
@@ -446,22 +564,49 @@ const AdminProducts = () => {
     );
   }
 
+  const totalProducts = visibleProducts.length;
+  const activeProducts = visibleProducts.filter((p) => p.status === "active").length;
+  const outOfStockProducts = visibleProducts.filter((p) => p.status === "out_of_stock" || p.stock_quantity === 0).length;
+  const totalValue = visibleProducts.reduce((sum, p) => sum + (p.price * (p.stock_quantity || 1)), 0);
+
   return (
     <>
       <DashboardLayout type="admin" title="Products">
-        <DataTable
-          title="All Products"
-          data={visibleProducts}
-          columns={productColumns}
-          searchKey="product_name"
-          searchPlaceholder="Search products..."
-          actions={
-            <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["admin-products"] })}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
-            </Button>
-          }
-        />
+        <div className="space-y-6">
+          {/* Quick Metrics Bar */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="p-4 rounded-xl bg-white dark:bg-card border border-gray-200/80 dark:border-border shadow-2xs">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Products</p>
+              <p className="text-2xl font-black text-foreground mt-1">{totalProducts}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-white dark:bg-card border border-gray-200/80 dark:border-border shadow-2xs">
+              <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Active Listings</p>
+              <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">{activeProducts}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-white dark:bg-card border border-gray-200/80 dark:border-border shadow-2xs">
+              <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Out of Stock</p>
+              <p className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">{outOfStockProducts}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-white dark:bg-card border border-gray-200/80 dark:border-border shadow-2xs">
+              <p className="text-xs font-semibold text-[#FF5500] uppercase tracking-wider">Inventory Value</p>
+              <p className="text-2xl font-black text-[#FF5500] mt-1">₵{totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            </div>
+          </div>
+
+          <DataTable
+            title="All Products"
+            data={visibleProducts}
+            columns={productColumns}
+            searchKey="product_name"
+            searchPlaceholder="Search products..."
+            actions={
+              <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["admin-products"] })}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </Button>
+            }
+          />
+        </div>
       </DashboardLayout>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

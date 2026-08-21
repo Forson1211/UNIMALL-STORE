@@ -61,6 +61,36 @@ const STOREFRONT_PROMO_DEFAULTS = [
     { title: "Fashion Week Sale", subtitle: "Up to 60% OFF", src: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1000&auto=format&fit=crop" },
 ];
 
+const SHOP_SLIDE_DEFAULTS = [
+    {
+        eyebrow: "Unimall Marketplace Event",
+        title: "Hot Campus Deals",
+        highlight: "Up to 40% off",
+        subtitle: "Tech, fashion and essentials from verified student vendors.",
+        image: "https://images.unsplash.com/photo-1526170315870-ef6876b84782?q=80&w=1200&auto=format&fit=crop",
+        cta: "Shop Now",
+        ctaLink: "/products",
+    },
+    {
+        eyebrow: "New This Week",
+        title: "Fresh Vendor Drops",
+        highlight: "Just arrived",
+        subtitle: "Be first to grab the newest listings before they sell out.",
+        image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1200&auto=format&fit=crop",
+        cta: "See What's New",
+        ctaLink: "/products",
+    },
+    {
+        eyebrow: "Student Exclusive",
+        title: "Sell On Unimall",
+        highlight: "Start earning today",
+        subtitle: "Open your own storefront and reach thousands of students.",
+        image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=1200&auto=format&fit=crop",
+        cta: "Become a Vendor",
+        ctaLink: "/signup?role=vendor",
+    },
+];
+
 const CAMPUS_DIRECTORY_DEFAULTS = [
     { id: "ug", name: "University of Ghana", shortName: "UG", city: "Accra", active: true },
     { id: "knust", name: "Kwame Nkrumah University of Science and Technology", shortName: "KNUST", city: "Kumasi", active: true },
@@ -147,10 +177,11 @@ export default function SiteCustomization() {
     const [darkModeEnabled, setDarkModeEnabled] = useState(false);
     const [currentTheme, setCurrentTheme] = useState("default");
 
-    // Background State
+    // Background & Slides State
     const [heroBackgroundUrl, setHeroBackgroundUrl] = useState("");
     const [heroOverlayOpacity, setHeroOverlayOpacity] = useState(0.5);
     const [heroSlides, setHeroSlides] = useState(HERO_SLIDE_DEFAULTS);
+    const [shopSlides, setShopSlides] = useState(SHOP_SLIDE_DEFAULTS);
     const [storefrontTiles, setStorefrontTiles] = useState(STOREFRONT_TILE_DEFAULTS);
     const [storefrontPromos, setStorefrontPromos] = useState(STOREFRONT_PROMO_DEFAULTS);
     const [vendorsCtaImageUrl, setVendorsCtaImageUrl] = useState("https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=2000");
@@ -236,6 +267,8 @@ export default function SiteCustomization() {
             setHeroOverlayOpacity(getSetting("hero_overlay_opacity", 0.5) as number);
             const loadedHeroSlides = getSetting("hero_slider_images", HERO_SLIDE_DEFAULTS);
             setHeroSlides(Array.isArray(loadedHeroSlides) && loadedHeroSlides.length === HERO_SLIDE_DEFAULTS.length ? loadedHeroSlides : HERO_SLIDE_DEFAULTS);
+            const loadedShopSlides = getSetting("shop_slider_images", SHOP_SLIDE_DEFAULTS);
+            setShopSlides(Array.isArray(loadedShopSlides) && loadedShopSlides.length ? loadedShopSlides : SHOP_SLIDE_DEFAULTS);
             const loadedTiles = getSetting("storefront_tile_images", STOREFRONT_TILE_DEFAULTS);
             const loadedPromos = getSetting("storefront_promo_images", STOREFRONT_PROMO_DEFAULTS);
             setStorefrontTiles(Array.isArray(loadedTiles) && loadedTiles.length === STOREFRONT_TILE_DEFAULTS.length ? loadedTiles : STOREFRONT_TILE_DEFAULTS);
@@ -298,23 +331,30 @@ export default function SiteCustomization() {
 
             // Validate file
             if (!file) {
-                throw new Error("No file selected");
+                toast.error("Please select a file to upload");
+                return null;
             }
 
-            if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                throw new Error("File size must be less than 5MB");
+            // Check file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error("File size must be less than 5MB");
+                return null;
             }
 
-            // Generate unique filename
-            const fileExt = file.name.split('.').pop();
-            const timestamp = Date.now();
-            const fileName = `${type}_${timestamp}.${fileExt}`;
-            const filePath = `${fileName}`;
-
-            console.log(`📁 Uploading to site-assets/${filePath}`);
+            // Check file type
+            if (!file.type.startsWith('image/')) {
+                toast.error("Only image files are allowed");
+                return null;
+            }
 
             // Upload to Supabase Storage
-            const { error: uploadError } = await supabase.storage
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${type}_${Date.now()}.${fileExt}`;
+            const filePath = `${fileName}`;
+
+            console.log(`Uploading to bucket 'site-assets', path: ${filePath}`);
+
+            const { data: uploadData, error: uploadError } = await supabase.storage
                 .from('site-assets')
                 .upload(filePath, file, {
                     cacheControl: '3600',
@@ -356,6 +396,12 @@ export default function SiteCustomization() {
         const url = await handleFileUpload(file, `hero_slider_${index}`);
         if (!url) return;
         setHeroSlides((current) => current.map((slide, slideIndex) => slideIndex === index ? { ...slide, src: url } : slide));
+    };
+
+    const handleShopSliderUpload = async (file: File, index: number) => {
+        const url = await handleFileUpload(file, `shop_banner_${index}`);
+        if (!url) return;
+        setShopSlides((current) => current.map((slide, slideIndex) => slideIndex === index ? { ...slide, image: url } : slide));
     };
 
     const handleStorefrontImageUpload = async (file: File, kind: "tile" | "promo", index: number) => {
@@ -468,6 +514,7 @@ export default function SiteCustomization() {
 
                 hero_background_url: { value: heroBackgroundUrl, category: "media" },
                 hero_slider_images: { value: heroSlides, category: "media" },
+                shop_slider_images: { value: shopSlides, category: "media" },
                 hero_overlay_opacity: { value: heroOverlayOpacity, category: "media" },
                 storefront_tile_images: { value: storefrontTiles, category: "storefront" },
                 storefront_promo_images: { value: storefrontPromos, category: "storefront" },
@@ -1173,6 +1220,159 @@ export default function SiteCustomization() {
                                                         <Upload className="w-3.5 h-3.5" /> Replace slider image
                                                     </Label>
                                                     <Input id={`hero-slider-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) void handleHeroSliderUpload(file, index); }} />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Shop Page Banner Slides Editor */}
+                                    <div className="space-y-5 p-5 rounded-2xl bg-gray-50/70 dark:bg-muted/40 border border-gray-200/80 dark:border-border">
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div>
+                                                <Label className="text-sm font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
+                                                    Shop Catalog Banners & Event Carousel
+                                                    <span className="text-[10px] font-bold bg-[#FF5500]/10 text-[#FF5500] px-2 py-0.5 rounded-full">Products Page</span>
+                                                </Label>
+                                                <p className="text-xs text-gray-400 mt-1">
+                                                    Change all banner images, promotions, headline text, discounts, and CTA buttons on the shop catalog page.
+                                                </p>
+                                            </div>
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                onClick={() => setShopSlides((prev) => [
+                                                    ...prev,
+                                                    {
+                                                        eyebrow: "Special Campus Event",
+                                                        title: "Exclusive Sale",
+                                                        highlight: "Save up to 50%",
+                                                        subtitle: "Limited time deals from top campus vendors.",
+                                                        image: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?q=80&w=1200&auto=format&fit=crop",
+                                                        cta: "Shop Deals",
+                                                        ctaLink: "/products"
+                                                    }
+                                                ])}
+                                                className="bg-[#FF5500] hover:bg-[#e54a00] text-white font-bold text-xs h-8 rounded-xl shadow-2xs gap-1.5 shrink-0"
+                                            >
+                                                <Plus className="w-3.5 h-3.5" /> Add Slide
+                                            </Button>
+                                        </div>
+
+                                        <div className="space-y-6">
+                                            {shopSlides.map((slide, index) => (
+                                                <div key={index} className="p-4 rounded-xl bg-white dark:bg-card border border-gray-200 dark:border-border space-y-4 shadow-2xs">
+                                                    <div className="flex items-center justify-between border-b border-gray-100 dark:border-border pb-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="w-6 h-6 rounded-full bg-[#FF5500] text-white text-xs font-black flex items-center justify-center">
+                                                                {index + 1}
+                                                            </span>
+                                                            <span className="text-xs font-black uppercase text-gray-800 dark:text-gray-200">
+                                                                Banner Slide #{index + 1}: {slide.title || "Untitled"}
+                                                            </span>
+                                                        </div>
+                                                        {shopSlides.length > 1 && (
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => setShopSlides((prev) => prev.filter((_, i) => i !== index))}
+                                                                className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 h-7 px-2 text-xs font-bold gap-1"
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" /> Remove Slide
+                                                            </Button>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                                                        {/* Live Slide Preview & Image Upload */}
+                                                        <div className="lg:col-span-5 space-y-2">
+                                                            <div className="relative aspect-[2.4/1] rounded-none overflow-hidden bg-gradient-to-r from-orange-600 to-amber-600 border border-gray-200 dark:border-border shadow-xs">
+                                                                {slide.image && (
+                                                                    <img src={slide.image} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+                                                                )}
+                                                                <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-transparent p-3.5 flex flex-col justify-center">
+                                                                    <p className="text-[8px] font-black uppercase tracking-widest text-white/70">{slide.eyebrow}</p>
+                                                                    <p className="text-sm font-black uppercase text-white leading-tight">{slide.title}</p>
+                                                                    <p className="text-[10px] font-bold text-orange-200">{slide.highlight} <span className="text-white/60 font-medium">— {slide.subtitle}</span></p>
+                                                                    <span className="mt-2 inline-block w-max bg-white text-black px-2.5 py-0.5 text-[9px] font-black uppercase">{slide.cta}</span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="flex gap-2">
+                                                                <Label htmlFor={`shop-slider-${index}`} className="cursor-pointer flex-1 inline-flex items-center justify-center gap-1.5 border border-gray-200 dark:border-border bg-gray-50 dark:bg-muted px-3 py-2 text-xs font-bold text-gray-700 dark:text-gray-200 hover:border-[#FF5500] hover:text-[#FF5500] transition-colors">
+                                                                    <Upload className="w-3.5 h-3.5" /> Upload Image File
+                                                                </Label>
+                                                                <Input
+                                                                    id={`shop-slider-${index}`}
+                                                                    type="file"
+                                                                    accept="image/*"
+                                                                    className="hidden"
+                                                                    onChange={(e) => {
+                                                                        const file = e.target.files?.[0];
+                                                                        if (file) void handleShopSliderUpload(file, index);
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Text Fields */}
+                                                        <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[11px] font-bold text-gray-600 dark:text-gray-400">Eyebrow Tag</Label>
+                                                                <Input
+                                                                    value={slide.eyebrow || ""}
+                                                                    placeholder="e.g. Unimall Marketplace Event"
+                                                                    onChange={(e) => setShopSlides((prev) => prev.map((s, i) => i === index ? { ...s, eyebrow: e.target.value } : s))}
+                                                                    className="h-8 text-xs rounded-none bg-gray-50 dark:bg-muted"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[11px] font-bold text-gray-600 dark:text-gray-400">Headline Title</Label>
+                                                                <Input
+                                                                    value={slide.title || ""}
+                                                                    placeholder="e.g. Hot Campus Deals"
+                                                                    onChange={(e) => setShopSlides((prev) => prev.map((s, i) => i === index ? { ...s, title: e.target.value } : s))}
+                                                                    className="h-8 text-xs rounded-none bg-gray-50 dark:bg-muted font-bold"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[11px] font-bold text-gray-600 dark:text-gray-400">Highlight / Discount</Label>
+                                                                <Input
+                                                                    value={slide.highlight || ""}
+                                                                    placeholder="e.g. Up to 40% off"
+                                                                    onChange={(e) => setShopSlides((prev) => prev.map((s, i) => i === index ? { ...s, highlight: e.target.value } : s))}
+                                                                    className="h-8 text-xs rounded-none bg-gray-50 dark:bg-muted"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[11px] font-bold text-gray-600 dark:text-gray-400">Button CTA Text</Label>
+                                                                <Input
+                                                                    value={slide.cta || ""}
+                                                                    placeholder="e.g. Shop Now"
+                                                                    onChange={(e) => setShopSlides((prev) => prev.map((s, i) => i === index ? { ...s, cta: e.target.value } : s))}
+                                                                    className="h-8 text-xs rounded-none bg-gray-50 dark:bg-muted"
+                                                                />
+                                                            </div>
+                                                            <div className="sm:col-span-2 space-y-1">
+                                                                <Label className="text-[11px] font-bold text-gray-600 dark:text-gray-400">Subtitle Description</Label>
+                                                                <Input
+                                                                    value={slide.subtitle || ""}
+                                                                    placeholder="e.g. Tech, fashion and essentials from verified student vendors."
+                                                                    onChange={(e) => setShopSlides((prev) => prev.map((s, i) => i === index ? { ...s, subtitle: e.target.value } : s))}
+                                                                    className="h-8 text-xs rounded-none bg-gray-50 dark:bg-muted"
+                                                                />
+                                                            </div>
+                                                            <div className="sm:col-span-2 space-y-1">
+                                                                <Label className="text-[11px] font-bold text-gray-600 dark:text-gray-400">Image URL (Direct link or upload above)</Label>
+                                                                <Input
+                                                                    value={slide.image || ""}
+                                                                    placeholder="https://images.unsplash.com/..."
+                                                                    onChange={(e) => setShopSlides((prev) => prev.map((s, i) => i === index ? { ...s, image: e.target.value } : s))}
+                                                                    className="h-8 text-xs rounded-none bg-gray-50 dark:bg-muted font-mono"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>

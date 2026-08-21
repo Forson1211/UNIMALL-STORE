@@ -1,23 +1,15 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ShoppingBag, Facebook, Twitter, Instagram, Youtube, ExternalLink, ShieldCheck, Globe, ChevronDown, Menu } from "lucide-react";
+import { ShoppingBag, Facebook, Twitter, Instagram, Youtube, ExternalLink, ShieldCheck, Globe } from "lucide-react";
 import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 const Footer = () => {
   const { siteName, logoUrl, footerLogoUrl } = useSiteSettingsContext();
   const { user, role } = useAuth();
   const [footerNews, setFooterNews] = useState<any[]>([]);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isVendor = role === "vendor";
   const isAdmin = role === "admin";
@@ -321,115 +313,6 @@ const Footer = () => {
           </div>
         </div>
       </footer>
-
-      {/* ── Mobile: floating "More" button, opens a drawer with everything ── */}
-      <button
-        onClick={() => setMobileMenuOpen(true)}
-        aria-label="More"
-        className="lg:hidden fixed right-4 z-40 w-12 h-12 rounded-full text-white shadow-[0_8px_24px_-4px_rgba(0,0,0,0.4)] flex items-center justify-center active:scale-95 transition-transform"
-        style={{ bottom: "calc(6.5rem + env(safe-area-inset-bottom))", backgroundColor: "hsl(var(--footer-background))" }}
-      >
-        <Menu className="w-5 h-5" />
-      </button>
-
-      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-        <SheetContent
-          side="bottom"
-          className="lg:hidden h-[85vh] overflow-y-auto rounded-none border-t-0 p-0 [&>button]:hidden"
-          style={footerVars}
-        >
-          <div className="px-5 pt-6 pb-10">
-            {/* Brand & Socials */}
-            <div className="flex items-center justify-between mb-6">
-              <Link to="/" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
-                <img src={footerLogoUrl || logoUrl || "/FOOTER LOGO.png"} alt={siteName} className="h-9 w-auto object-contain" />
-              </Link>
-              <div className="flex items-center gap-4">
-                {[
-                  { Icon: Facebook, label: "Facebook" },
-                  { Icon: Instagram, label: "Instagram" },
-                  { Icon: Twitter, label: "Twitter" },
-                  { Icon: Youtube, label: "Youtube" }
-                ].map(({ Icon, label }, idx) => (
-                  <a key={idx} href="#" className="opacity-70" aria-label={`Follow us on ${label}`}>
-                    <Icon className="w-5 h-5" />
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            {/* Link sections */}
-            <Accordion type="single" collapsible className="w-full border-t border-white/10">
-              {sections.map((section, idx) => (
-                <AccordionItem key={idx} value={`item-${idx}`} className="border-b border-white/10">
-                  <AccordionTrigger className="text-base font-bold py-4 hover:no-underline">
-                    {section.title}
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <ul className="space-y-2 pb-4">
-                      {section.links.map((link, lIdx) => (
-                        <li key={lIdx}>
-                          <Link
-                            to={link.path}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="text-sm opacity-70 block py-1.5 focus:text-white"
-                            aria-label={(link as any).aria}
-                          >
-                            {link.name}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-
-            {/* Trust badges */}
-            <div className="flex flex-wrap items-center gap-4 mt-6 pt-6 border-t border-white/10">
-              <div className="bg-white/[0.03] backdrop-blur-md border border-white/10 rounded-full px-4 py-1.5 flex items-center gap-2.5">
-                <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
-                  <ShieldCheck className="w-3.5 h-3.5 text-green-400" />
-                </div>
-                <span className="text-xs font-bold tracking-[0.1em] uppercase text-white/90">Verified Merchant</span>
-              </div>
-              <div className="flex items-center gap-4 opacity-80">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" className="h-4 w-auto" />
-                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="MasterCard" className="h-6 w-auto" />
-              </div>
-            </div>
-
-            {/* App badges */}
-            <div className="flex flex-row items-center gap-3 mt-6">
-              <a href="#" className="flex-1 h-11 bg-black border border-white/20 px-4 flex items-center justify-center gap-2">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/3/31/Apple_logo_white.svg" alt="Apple" className="w-3.5" />
-                <div className="text-left text-white">
-                  <p className="text-[9px] leading-none opacity-60 uppercase">Download on the</p>
-                  <p className="text-[13px] font-bold leading-none">App Store</p>
-                </div>
-              </a>
-              <a href="#" className="flex-1 h-11 bg-black border border-white/20 px-4 flex items-center justify-center gap-2">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/Google_Play_Arrow_logo.svg" alt="Google Play" className="w-4" />
-                <div className="text-left text-white">
-                  <p className="text-[9px] leading-none opacity-60 uppercase">Get it on</p>
-                  <p className="text-[13px] font-bold leading-none">Google Play</p>
-                </div>
-              </a>
-            </div>
-
-            {/* Legal & credit */}
-            <div className="flex flex-col items-center gap-3 mt-6 pt-6 border-t border-white/10 text-center">
-              <p className="text-xs opacity-60">© 2010-{new Date().getFullYear()} {siteName} LLC. All rights reserved.</p>
-              <div className="flex items-center gap-1.5 text-xs font-bold tracking-[0.1em] uppercase text-white/40">
-                <span>Developed by</span>
-                <a href="#" className="text-primary/90">Forson</a>
-                <span>and</span>
-                <a href="#" className="text-primary/90">Abraham</a>
-              </div>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
     </>
   );
 };

@@ -33,10 +33,10 @@ export function DashboardLayout({ children, type, title, userName, userRole }: D
     };
   }, []);
 
-  if (isLoading) {
+  if (isLoading && !role) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-3 border-[#FF5500] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
