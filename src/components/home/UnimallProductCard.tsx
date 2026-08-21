@@ -85,6 +85,14 @@ export const getProductHighlights = (product: any): { icon: any; text: string }[
   return highlights.slice(0, 2);
 };
 
+/* ─────────────────── Helper: Restrict Product Title to Max 8 Words ─────────────────── */
+export const formatProductTitle = (name: string, maxWords = 8): string => {
+  if (!name) return "";
+  const words = name.trim().split(/\s+/);
+  if (words.length <= maxWords) return name;
+  return words.slice(0, maxWords).join(" ");
+};
+
 /* ─────────────────── Unimall Reference-Style Product Card ─────────────────── */
 export const UnimallProductCard = ({
   product,
@@ -155,24 +163,26 @@ export const UnimallProductCard = ({
 
   return (
     <div className="group flex flex-col justify-between h-full bg-transparent transition-all duration-300 relative">
-      <Link to={`/products/${product.id}`} className="block flex-1">
+      <Link 
+        to={`/products/${product.id}`} 
+        onClick={() => {
+          try {
+            sessionStorage.setItem(`unimall_active_product_${product.id}`, JSON.stringify(product));
+          } catch (e) {}
+        }}
+        className="block flex-1"
+      >
         {/* ── 1. Top Image Box (Clean flat container, no rounded light-gray peeking) ── */}
         <div className="relative aspect-square bg-transparent dark:bg-muted/10 rounded-none flex items-center justify-center overflow-hidden border border-gray-100 dark:border-border/60">
           
-          {/* Top-Left Pill Badge: "PRO SELLER" / "BEST SELLER (⚡)" / "New Arrival" */}
-          {badgeType === "pro" || (badgeType !== "bestseller" && (product.is_pro || (product.vendor_id && localStorage.getItem(`unimall_vendor_pro_${product.vendor_id}`) === "true"))) ? (
-            <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-10">
-              <span className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 rounded-none text-[9px] sm:text-[10px] font-black bg-gradient-to-r from-amber-500 via-orange-500 to-[#FF5500] text-white shadow-xs tracking-tight">
-                <ShieldCheck className="w-3 h-3 fill-white/20 stroke-[2.5]" /> PRO SELLER
-              </span>
-            </div>
-          ) : badgeType === "bestseller" ? (
+          {/* Top-Left Pill Badge: "BEST SELLER (⚡)" / "New Arrival" */}
+          {badgeType === "bestseller" ? (
             <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-10">
               <span className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 rounded-none text-[9px] sm:text-[10px] font-black bg-[#FF5500] text-white shadow-xs tracking-tight">
                 <Zap className="w-3 h-3 fill-white text-white" /> BEST SELLER
               </span>
             </div>
-          ) : showNewBadge ? (
+          ) : (showNewBadge || isWithin7Days || badgeType === "new" || product.isNew === true) ? (
             <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-10">
               <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-none text-[9.5px] sm:text-[11px] font-bold bg-[#FF5500] text-white shadow-xs tracking-tight">
                 New Arrival
@@ -237,12 +247,12 @@ export const UnimallProductCard = ({
           </div>
         </div>
 
-        {/* ── 2. Product Title (2 lines on mobile, single line / 2 lines formatted cleanly) ── */}
+        {/* ── 2. Product Title (Restricted to maximum 8 words) ── */}
         <h3
           className="font-semibold text-xs sm:text-[13.5px] text-gray-900 dark:text-foreground line-clamp-2 mt-2 sm:mt-2.5 mb-1 leading-snug min-h-[32px] sm:min-h-[36px] group-hover:text-[#FF5500] transition-colors"
           title={product.name}
         >
-          {product.name}
+          {formatProductTitle(product.name, 8)}
         </h3>
 
         {/* Vendor Row with Verified Badge */}

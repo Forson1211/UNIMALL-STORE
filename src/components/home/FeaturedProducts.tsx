@@ -690,35 +690,28 @@ const FeaturedProducts = () => {
   const cachedProducts = productService.getCachedProducts();
 
   // Fetch Pro Sellers Products (5-Hour Deterministic Round-Robin Fair Rotation among Subscribed Vendors)
-  const { data: dbProSellers = [] } = useQuery({
+  const { data: proSellers = [] } = useQuery({
     queryKey: ["homepage-pro-sellers"],
     queryFn: () => productService.getProSellersRotated(8),
-    initialData: DEFAULT_PRO_SELLER_PRODUCTS,
+    initialData: cachedProducts.length > 0 ? cachedProducts.filter((p) => p.is_pro || p.vendor_verified).slice(0, 8) : undefined,
     staleTime: 1000 * 60 * 5,
   });
 
   // Fetch Best Sellers (Automatically ranked by highest purchases & sales volume)
-  const { data: dbBestSellers = [] } = useQuery({
+  const { data: bestSellers = [] } = useQuery({
     queryKey: ["homepage-bestsellers"],
     queryFn: () => productService.getBestSellers(12),
-    initialData: cachedProducts.length > 0 ? cachedProducts.slice(0, 12) : DEFAULT_SHOWCASE_PRODUCTS,
+    initialData: cachedProducts.length > 0 ? cachedProducts.slice(0, 12) : undefined,
     staleTime: 1000 * 60 * 5,
   });
 
-  // Fetch New Arrivals (instantly renders in 0ms from cache or showcase defaults)
-  const { data: dbNewArrivals = [] } = useQuery({
+  // Fetch New Arrivals (instantly renders in 0ms from real cache or live DB)
+  const { data: newArrivals = [] } = useQuery({
     queryKey: ["homepage-newarrivals"],
     queryFn: () => productService.getProducts({ sortBy: "created_at", sortOrder: "desc", limit: 12 }),
-    initialData: cachedProducts.length > 0 ? cachedProducts.slice(0, 12) : DEFAULT_NEW_ARRIVALS_PRODUCTS,
+    initialData: cachedProducts.length > 0 ? cachedProducts.slice(0, 12) : undefined,
     staleTime: 1000 * 60 * 5,
   });
-
-  // Use database products if available, otherwise use default exact showcase products
-  const proSellers = dbProSellers.length > 0 ? dbProSellers : DEFAULT_PRO_SELLER_PRODUCTS;
-  const bestSellers = dbBestSellers.length > 0 ? dbBestSellers : DEFAULT_SHOWCASE_PRODUCTS;
-  const newArrivals = dbNewArrivals.length > 0 
-    ? [...dbNewArrivals, ...DEFAULT_NEW_ARRIVALS_PRODUCTS] 
-    : DEFAULT_NEW_ARRIVALS_PRODUCTS;
 
   return (
     <section className="py-8 md:py-16 bg-white dark:bg-background">
@@ -744,7 +737,7 @@ const FeaturedProducts = () => {
           </div>
 
           {/* Product Swiper Carousel (Rotated Verified Pro Vendors) */}
-          <ProductSwiperCarousel products={proSellers} badgeType="pro" />
+          <ProductSwiperCarousel products={proSellers} badgeType="new" />
         </div>
 
         {/* ── 1. BEST SELLERS SECTION ── */}

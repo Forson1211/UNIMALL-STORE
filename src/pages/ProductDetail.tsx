@@ -277,97 +277,6 @@ const getProductGallery = (prod: Partial<StorefrontProduct>): string[] => {
   return [primaryImage];
 };
 
-/* Fallback "You May Also Like" items matching screenshot */
-const DEFAULT_RELATED_PRODUCTS: (StorefrontProduct & { isNew?: boolean })[] = [
-  {
-    id: "rel-powercube-1",
-    name: "PowerCube 201 UK Type Plug 20W Fast Charger Adapter",
-    description: "Dual Output USB-C & USB-A Fast Charger",
-    price: 55.00,
-    original_price: 65.00,
-    category: "Power",
-    image: "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=600&auto=format&fit=crop&q=80",
-    features: ["Dual Fast Charge", "Compact Travel Plug"],
-    rating: 4.8,
-    reviews: 733,
-    vendor: "oraimo power",
-    vendor_id: "v-oraimo",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 50,
-  },
-  {
-    id: "rel-chilldock-2",
-    name: "ChillDock Dual USB Ports Laptop Cooling Stand",
-    description: "RGB Dual Fans Silent Ultra Cool Stand",
-    price: 215.00,
-    original_price: 240.00,
-    category: "Electronics",
-    image: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=600&auto=format&fit=crop&q=80",
-    features: ["Dual High Speed Fans", "Multi-Angle Elevation"],
-    rating: 4.8,
-    reviews: 149,
-    vendor: "TechGear",
-    vendor_id: "v-tech",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 20,
-  },
-  {
-    id: "rel-opensnap-3",
-    name: "OpenSnap N2 Quick Charging Wireless Earbuds",
-    description: "Digital Battery Case ANC Clear Voice",
-    price: 260.00,
-    original_price: 290.00,
-    category: "Electronics",
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&auto=format&fit=crop&q=80",
-    features: ["Active Noise Cancellation", "Digital Display Case"],
-    rating: 4.8,
-    reviews: 348,
-    vendor: "SoundHub",
-    vendor_id: "v-sound",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 35,
-    isNew: true,
-  },
-  {
-    id: "rel-easycut-4",
-    name: "EasyCut 2 10W Super Powerful Cordless Hair Clipper",
-    description: "Self-Sharpening Blade 240min Battery",
-    price: 240.00,
-    original_price: 270.00,
-    category: "Personal Care",
-    image: "https://images.unsplash.com/photo-1621607512214-68297480165e?w=600&auto=format&fit=crop&q=80",
-    features: ["10W Heavy Duty Motor", "Multiple Guard Combs"],
-    rating: 4.8,
-    reviews: 140,
-    vendor: "GroomingPro",
-    vendor_id: "v-groom",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 18,
-    isNew: true,
-  },
-  {
-    id: "rel-powerjet-5",
-    name: "PowerJet 130 27000mAh Ultra Fast Laptop Power Bank",
-    description: "130W Dual USB-C Laptop PD Output",
-    price: 640.00,
-    original_price: 715.00,
-    category: "Power",
-    image: "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=600&auto=format&fit=crop&q=80",
-    features: ["130W High Power Output", "TFT Smart Display"],
-    rating: 4.9,
-    reviews: 700,
-    vendor: "oraimo power",
-    vendor_id: "v-oraimo",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 12,
-  },
-];
-
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -376,40 +285,70 @@ const ProductDetail = () => {
   const { addItem } = useCart();
   const { toast } = useToast();
 
-  // 1. Fetch live product from DB
-  const { data: dbProduct, isLoading } = useQuery({
+  // 1. Fetch live product from DB with instant cache pre-hydration
+  const cachedProds = useMemo(() => productService.getCachedProducts(), []);
+  const cachedCurrentProduct = useMemo(() => {
+    if (!id) return null;
+    try {
+      const activeRaw = sessionStorage.getItem(`unimall_active_product_${id}`);
+      if (activeRaw) return JSON.parse(activeRaw);
+    } catch (e) {}
+
+    const targetId = String(id).trim().toLowerCase();
+    return cachedProds.find((p: any) => {
+      const pid = String(p.id || p.product_id || "").trim().toLowerCase();
+      return pid === targetId;
+    }) || null;
+  }, [id, cachedProds]);
+
+  const { data: dbProduct } = useQuery({
     queryKey: ["product", id],
     queryFn: () => productService.getProductById(id!),
+    initialData: cachedCurrentProduct || undefined,
     enabled: !!id,
   });
 
-  // 2. Fetch related products from DB
-  const { data: dbRelated = [] } = useQuery({
-    queryKey: ["related-products", dbProduct?.category],
-    queryFn: () => productService.getProducts({ category: dbProduct?.category, limit: 6 }),
-    enabled: !!dbProduct?.category,
-  });
-
-  // 3. Resolve active product (DB or rich fallback)
-  const mockFallback = (id && MOCK_PRODUCTS_DATA[id]) || MOCK_PRODUCTS_DATA["power-magpower-1"];
+  // 3. Resolve active product
+  const mockFallback = (id && MOCK_PRODUCTS_DATA[id]) || null;
   
-  const product: StorefrontProduct = dbProduct || {
-    id: id || "power-magpower-1",
-    name: mockFallback?.name || "oraimo MagPower 15 10000mAh Wireless Power Bank",
-    description: mockFallback?.description || "Strong Magnetic Attachment • 15W Wireless Charge",
-    price: mockFallback?.price || 280.00,
-    original_price: mockFallback?.original_price || 310.00,
-    category: mockFallback?.category || "Power",
-    image: mockFallback?.gallery?.[0] || "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=900&auto=format&fit=crop&q=85",
-    features: mockFallback?.bulletFeatures,
-    rating: mockFallback?.rating || 4.9,
-    reviews: mockFallback?.reviews || 0,
-    vendor: mockFallback?.vendor || "Campus Merchant Store",
+  const product: StorefrontProduct = dbProduct || cachedCurrentProduct || mockFallback || {
+    id: id || "item",
+    name: "Loading Product...",
+    description: "",
+    price: 0,
+    original_price: null,
+    category: "General",
+    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600",
+    features: [],
+    rating: 5.0,
+    reviews: 0,
+    vendor: "Campus Merchant",
     vendor_id: "v-store",
     created_at: new Date().toISOString(),
     status: true,
     stock: 50,
   };
+
+  // 2. Fetch related products from DB & synchronous real products cache (NO dummy items)
+  const cachedRelatedProducts = useMemo(() => {
+    if (!cachedProds || cachedProds.length === 0) return [];
+    const filtered = cachedProds.filter((p: any) => String(p.id || p.product_id) !== String(id));
+    const sameCat = filtered.filter((p: any) => !product.category || p.category?.toLowerCase() === product.category?.toLowerCase());
+    return (sameCat.length > 0 ? sameCat : filtered).slice(0, 5);
+  }, [cachedProds, id, product.category]);
+
+  const { data: dbRelated = cachedRelatedProducts } = useQuery({
+    queryKey: ["related-products", product.category, id],
+    queryFn: async () => {
+      const prods = await productService.getProducts({ category: product.category, limit: 8 });
+      const filtered = prods.filter((p: any) => String(p.id || p.product_id) !== String(id));
+      return filtered.length > 0 ? filtered.slice(0, 5) : [];
+    },
+    initialData: cachedRelatedProducts.length > 0 ? cachedRelatedProducts : undefined,
+    enabled: true,
+  });
+
+  const relatedProducts = (dbRelated && dbRelated.length > 0) ? dbRelated : cachedRelatedProducts;
 
   // 4. Fetch REAL vendor profile who owns this product
   const vendorId = product.vendor_id || (product as any).vendorId;
@@ -735,8 +674,6 @@ const ProductDetail = () => {
   const bulletFeatures = getSmartFeatures(product);
   const rankingBadge = `TOP ${product.category || "Campus"} Best Seller #1`;
 
-  const relatedProducts = dbRelated.length > 0 ? dbRelated : DEFAULT_RELATED_PRODUCTS;
-
   // Local interaction states
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -804,18 +741,6 @@ const ProductDetail = () => {
     });
     setIsMessageModalOpen(false);
   };
-
-  if (isLoading && !dbProduct && !mockFallback) {
-    return (
-      <div className="min-h-screen bg-white dark:bg-background">
-        <Navbar />
-        <div className="pt-32 flex justify-center pb-20">
-          <div className="w-10 h-10 border-3 border-[#FF5500] border-t-transparent rounded-full animate-spin" />
-        </div>
-        <Footer />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-white dark:bg-background pb-16">

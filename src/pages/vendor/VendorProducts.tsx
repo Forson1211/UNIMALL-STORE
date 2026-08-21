@@ -97,14 +97,20 @@ export const VendorProducts = () => {
 
   // Fetch Vendor Products
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ["vendor-products", user?.id],
-    queryFn: () => vendorService.getProducts(user!.id),
+    queryKey: ["vendor-products", user?.id, storeName],
+    queryFn: () => vendorService.getProducts(user!.id, storeName),
     enabled: !!user,
   });
 
   // Mutations
   const createMutation = useMutation({
-    mutationFn: (data: any) => vendorService.createProduct({ ...data, vendor_id: user!.id }),
+    mutationFn: (data: any) => vendorService.createProduct({ 
+      ...data, 
+      vendor_id: user!.id,
+      vendor: storeName,
+      store_name: storeName,
+      vendor_name: storeName
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vendor-products"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
@@ -224,6 +230,8 @@ export const VendorProducts = () => {
       end_time: new Date(dealForm.endTime).toISOString(),
     });
   };
+
+  const handleSubmitDeal = handleDealSubmit;
 
   // ── Metrics Calculations ──
   const metrics = useMemo(() => {
@@ -988,7 +996,7 @@ export const VendorProducts = () => {
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmitDeal} className="space-y-4 py-2">
+          <form onSubmit={handleDealSubmit} className="space-y-4 py-2">
             {dealingProduct && (
               <div className="bg-orange-50/50 dark:bg-orange-950/20 p-3 rounded-xl border border-orange-100 dark:border-orange-900/30 flex items-center gap-3">
                 <div className="w-11 h-11 rounded-lg bg-white flex items-center justify-center overflow-hidden border border-gray-100 shrink-0">

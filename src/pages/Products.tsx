@@ -45,10 +45,14 @@ const Products = () => {
   const { addItem } = useCart();
   const { toast } = useToast();
 
-  const { data: products = [], isLoading } = useQuery({
+  const cachedProducts = useMemo(() => productService.getCachedProducts(), []);
+
+  const { data: products = cachedProducts, isLoading } = useQuery({
     queryKey: ["products", categoryFilter, searchQuery],
     queryFn: () => productService.getProducts({ category: categoryFilter, search: searchQuery }),
-    placeholderData: (prev) => prev || (categoryFilter === "All" && !searchQuery ? productService.getCachedProducts() : undefined),
+    initialData: cachedProducts.length > 0 
+      ? (categoryFilter === "All" && !searchQuery ? cachedProducts : cachedProducts.filter(p => !categoryFilter || categoryFilter === "All" || p.category?.toLowerCase() === categoryFilter.toLowerCase()))
+      : undefined,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -65,7 +69,7 @@ const Products = () => {
   };
 
   const processedProducts = useMemo(() => {
-    let list = [...products];
+    let list = (products && products.length > 0) ? [...products] : [...cachedProducts];
 
     // 1. Campus filter
     if (campusFilter !== "All") {
@@ -370,7 +374,7 @@ const Products = () => {
 
             {/* ── PRODUCTS GRID MAIN DISPLAY ── */}
             <div className="flex-1 min-w-0">
-              {isLoading ? (
+              {isLoading && processedProducts.length === 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
                   {[...Array(8)].map((_, i) => (
                     <div key={i} className="bg-white dark:bg-card h-[320px] sm:h-[380px] animate-pulse space-y-3">

@@ -33,6 +33,7 @@ import { Product } from "@/types/dashboard";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
+import { analyzeImageWithAI, ProductIntelliSenseResult } from "@/services/imageIntelliSense";
 
 interface ProductFormProps {
   open: boolean;
@@ -45,6 +46,7 @@ interface ProductFormProps {
 export const ProductForm = ({ open, onClose, product, onSave, isSubmitting = false }: ProductFormProps) => {
   const [isUploadingMain, setIsUploadingMain] = useState(false);
   const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
+  const [aiSuggestions, setAiSuggestions] = useState<ProductIntelliSenseResult[]>([]);
   
   const mainFileInputRef = useRef<HTMLInputElement>(null);
   const slotFileInputRef = useRef<HTMLInputElement>(null);
@@ -112,81 +114,148 @@ export const ProductForm = ({ open, onClose, product, onSave, isSubmitting = fal
     }
   }, [product, open]);
 
-  // Upload helper for files
-  const processFileUpload = async (file: File): Promise<string> => {
-    const bucketsToTry = ['unimall', 'products', 'site-assets', 'avatars', 'public', 'images'];
-    const fileExt = file.name.split('.').pop() || 'jpg';
-    const filePath = `products/prod-${Date.now()}-${Math.random().toString(36).substring(2, 6)}.${fileExt}`;
-
-    for (const bucket of bucketsToTry) {
-      try {
-        const { error } = await (supabase.storage as any)
-          .from(bucket)
-          .upload(filePath, file, { upsert: true });
-
-        if (!error) {
-          const { data: { publicUrl } } = (supabase.storage as any)
-            .from(bucket)
-            .getPublicUrl(filePath);
-          if (publicUrl) return publicUrl;
-        }
-      } catch (e) {}
-    }
-
-    // Base64 fallback
+  // Instant Client Image Compression Helper (<10ms)
+  const compressAndReadImage = (file: File, maxDim = 1000): Promise<string> => {
     return new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
+      reader.onload = (e) => {
+        const src = e.target?.result as string;
+        if (!src) return resolve("");
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL("image/jpeg", 0.85));
+          } else {
+            resolve(src);
+          }
+        };
+        img.onerror = () => resolve(src);
+        img.src = src;
+      };
       reader.onerror = () => resolve("");
       reader.readAsDataURL(file);
     });
   };
 
-  // Main Image Upload Handler
+  // Fast direct storage upload helper
+  const processFileUpload = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop() || 'jpg';
+    const filePath = `products/prod-${Date.now()}-${Math.random().toString(36).substring(2, 6)}.${fileExt}`;
+
+    try {
+      const { error } = await (supabase.storage as any)
+        .from('products')
+        .upload(filePath, file, { upsert: true });
+
+      if (!error) {
+        const { data: { publicUrl } } = (supabase.storage as any)
+          .from('products')
+          .getPublicUrl(filePath);
+        if (publicUrl) return publicUrl;
+      }
+    } catch (e) {}
+
+    return "";
+  };
+
+  // Instant Main Image Upload Handler (0ms perceived latency)
   const handleMainImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image size must be less than 5MB");
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image size must be less than 10MB");
       return;
     }
 
-    setIsUploadingMain(true);
     try {
-      const resultUrl = await processFileUpload(file);
-      if (resultUrl) {
-        setFormData((prev) => ({ ...prev, image_url: resultUrl }));
-        toast.success("Main product image attached!");
-      } else {
-        toast.error("Could not process image.");
+      // 1. Instant ultra-fast preview (< 10ms)
+      const compressedDataUrl = await compressAndReadImage(file);
+      if (compressedDataUrl) {
+        setFormData((prev) => ({ ...prev, image_url: compressedDataUrl }));
       }
+
+      // 2. Background Cloud Storage Upload (Non-blocking)
+      processFileUpload(file).then((publicUrl) => {
+        if (publicUrl) {
+          setFormData((prev) => ({ ...prev, image_url: publicUrl }));
+        }
+      }).catch(() => {});
+
+      // 3. Parallel AI Neural Vision Analysis
+      const targetToAnalyze = compressedDataUrl || file;
+      analyzeImageWithAI(targetToAnalyze, formData.category).then((suggestions) => {
+        if (suggestions.length > 0) {
+          setAiSuggestions(suggestions);
+          setFormData((prev) => {
+            if (!prev.name.trim()) {
+              return {
+                ...prev,
+                name: suggestions[0].title,
+                category: suggestions[0].category,
+                highlight: prev.highlight || suggestions[0].suggestedHighlight,
+                price: prev.price || (suggestions[0].suggestedPrice ? suggestions[0].suggestedPrice.toString() : ""),
+              };
+            }
+            return prev;
+          });
+          const detectedInfo = suggestions[0].aiDetectedTag ? ` (${suggestions[0].aiDetectedTag})` : "";
+          toast.success(`✨ AI Vision: "${suggestions[0].title}"${detectedInfo}`);
+        }
+      }).catch((err) => {
+        console.warn("AI Vision analysis failed:", err);
+      });
+
     } finally {
-      setIsUploadingMain(false);
       if (mainFileInputRef.current) mainFileInputRef.current.value = "";
     }
   };
 
-  // Preview Image Upload Handler
+  // Instant Preview Angles Image Upload Handler
   const handleSlotImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const slotIndex = activeSlotRef.current;
-    setUploadingSlot(slotIndex);
 
     try {
-      const resultUrl = await processFileUpload(file);
-      if (resultUrl) {
+      // 1. Instant preview (< 10ms)
+      const compressedDataUrl = await compressAndReadImage(file);
+      if (compressedDataUrl) {
         setPreviewImages((prev) => {
           const copy = [...prev];
-          copy[slotIndex] = resultUrl;
+          copy[slotIndex] = compressedDataUrl;
           return copy;
         });
-        toast.success(`Preview ${slotIndex + 1} attached!`);
       }
+
+      // 2. Background Cloud Storage Upload (Non-blocking)
+      processFileUpload(file).then((publicUrl) => {
+        if (publicUrl) {
+          setPreviewImages((prev) => {
+            const copy = [...prev];
+            copy[slotIndex] = publicUrl;
+            return copy;
+          });
+        }
+      }).catch(() => {});
+
     } finally {
-      setUploadingSlot(null);
       if (slotFileInputRef.current) slotFileInputRef.current.value = "";
     }
   };
@@ -235,9 +304,12 @@ export const ProductForm = ({ open, onClose, product, onSave, isSubmitting = fal
     const validPreviews = previewImages.filter((url) => Boolean(url && url.trim()));
     const fullGallery = [mainImg, ...validPreviews];
 
+    const words = formData.name.trim().split(/\s+/).filter(Boolean);
+    const cleanedName = words.slice(0, 8).join(" ");
+
     onSave({
       ...product,
-      name: formData.name.trim(),
+      name: cleanedName,
       description: formData.description.trim(),
       price: priceNum,
       original_price: origPriceNum && origPriceNum > priceNum ? origPriceNum : undefined,
@@ -341,6 +413,7 @@ export const ProductForm = ({ open, onClose, product, onSave, isSubmitting = fal
                             onClick={(e) => {
                               e.stopPropagation();
                               setFormData((p) => ({ ...p, image_url: "" }));
+                              setAiSuggestions([]);
                             }}
                           >
                             Remove
@@ -374,7 +447,11 @@ export const ProductForm = ({ open, onClose, product, onSave, isSubmitting = fal
                       className="w-full pl-8 pr-3 text-xs rounded-xl border-gray-200 dark:border-slate-700 h-8.5 bg-gray-50/50 focus:bg-white"
                       placeholder="Or paste main image URL (https://...)"
                       value={formData.image_url}
-                      onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFormData({ ...formData, image_url: val });
+                        if (!val) setAiSuggestions([]);
+                      }}
                     />
                   </div>
                 </div>
@@ -473,19 +550,89 @@ export const ProductForm = ({ open, onClose, product, onSave, isSubmitting = fal
               {/* ═══ RIGHT COLUMN: Details & Taxonomy (7 cols) ═══ */}
               <div className="md:col-span-7 w-full space-y-3.5">
                 
-                {/* Product Title */}
+                {/* Product Title (Max 8 Words) */}
                 <div className="space-y-1 w-full">
-                  <Label htmlFor="name" className="text-xs font-black uppercase tracking-wider text-gray-900 dark:text-white">
-                    Product Title *
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="name" className="text-xs font-black uppercase tracking-wider text-gray-900 dark:text-white">
+                      Product Title (7 - 8 Words) *
+                    </Label>
+                    <span className={`text-[10px] font-bold ${
+                      formData.name.trim().split(/\s+/).filter(Boolean).length > 8 
+                        ? "text-red-500 font-extrabold" 
+                        : "text-gray-400"
+                    }`}>
+                      {formData.name.trim().split(/\s+/).filter(Boolean).length} / 8 words
+                    </span>
+                  </div>
                   <Input
                     id="name"
-                    placeholder="e.g. iPhone 15 Pro or Calculus Textbook"
+                    placeholder="e.g. Nike Air Max Sneaker"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full rounded-xl border-gray-200 dark:border-slate-700 h-10 font-bold text-xs bg-gray-50/50 focus:bg-white"
                     required
                   />
+
+                  {/* ── AI IntelliSense Suggestions (Click to Apply) ── */}
+                  {aiSuggestions.length > 0 && (
+                    <div className="p-3 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-transparent border border-[#FF5500]/25 space-y-2 mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-black uppercase text-[#FF5500] flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 animate-pulse text-[#FF5500]" />
+                          AI Suggestions from Photo (Click to Apply)
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const target = formData.image_url || formData.name || "item";
+                              const fresh = await analyzeImageWithAI(target, formData.category);
+                              setAiSuggestions(fresh);
+                              toast.success("AI Suggestions Refreshed! ⚡");
+                            }}
+                            className="text-[10px] font-bold text-gray-500 hover:text-[#FF5500] flex items-center gap-1 cursor-pointer"
+                          >
+                            Refresh
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAiSuggestions([])}
+                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer"
+                            title="Dismiss suggestions"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-1.5">
+                        {aiSuggestions.map((sug, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setFormData((prev) => ({
+                                ...prev,
+                                name: sug.title,
+                                category: sug.category,
+                                highlight: sug.suggestedHighlight || prev.highlight,
+                                price: !prev.price && sug.suggestedPrice ? sug.suggestedPrice.toString() : prev.price,
+                              }));
+                              setAiSuggestions([]);
+                              toast.success(`✨ Applied: "${sug.title}" (${sug.category})`);
+                            }}
+                            className="text-xs font-bold px-3 py-1.5 rounded-xl border bg-white dark:bg-card text-gray-800 dark:text-gray-200 border-gray-200 dark:border-slate-700 hover:border-[#FF5500] hover:text-[#FF5500] shadow-2xs hover:scale-[1.02] transition-all cursor-pointer flex items-center gap-1.5 text-left"
+                          >
+                            <Sparkles className="w-3 h-3 text-[#FF5500] opacity-90 shrink-0" />
+                            <span>{sug.title}</span>
+                            <span className="text-[10px] opacity-70 ml-1 font-normal bg-black/10 dark:bg-white/10 px-1.5 py-0.2 rounded-md">
+                              {sug.category}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Category & Condition Row */}

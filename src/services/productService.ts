@@ -87,15 +87,38 @@ export const productService = {
             const productsList = (rawList.map(unpackProductMetadata) as unknown as StorefrontProduct[])
                 .filter((p: any) => p.status !== "deleted_by_admin" && p.status !== "deleted" && p.is_active !== false);
 
-            // Fetch real vendor profile information from profiles table
+            // Fetch real vendor profile information from profiles table and local storage
             const vendorIds = Array.from(new Set(productsList.map((p) => p.vendor_id).filter(Boolean)));
             const profileMap = new Map<string, any>();
-            if (vendorIds.length > 0) {
+
+            // 1. Scan localStorage for cached vendor profiles (instant & offline safe)
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith("unimall_vendor_profile_")) {
+                        const uid = key.replace("unimall_vendor_profile_", "");
+                        const raw = localStorage.getItem(key);
+                        if (raw) {
+                            const parsed = JSON.parse(raw);
+                            if (parsed.store_name || parsed.full_name) {
+                                profileMap.set(uid, parsed);
+                            }
+                        }
+                    }
+                }
+            } catch (e) {}
+
+            // 2. Query Supabase profiles for valid UUIDs only
+            const validUUIDs = vendorIds.filter((id) =>
+                /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(id))
+            );
+
+            if (validUUIDs.length > 0) {
                 try {
                     const { data: vendorProfiles } = await supabase
                         .from("profiles")
                         .select("id, user_id, full_name, store_name, is_verified, role")
-                        .or(`user_id.in.(${vendorIds.join(",")}),id.in.(${vendorIds.join(",")})`);
+                        .in("user_id", validUUIDs);
 
                     vendorProfiles?.forEach((prof: any) => {
                         if (prof.id) profileMap.set(prof.id, prof);
@@ -108,29 +131,39 @@ export const productService = {
 
             // Assign real store names & verified status to every product
             productsList.forEach((p: any) => {
+                const existing = (p.vendor || (p as any).vendor_name || (p as any).store_name || "").trim();
                 let assignedStore = "";
                 let isVerified = false;
 
-                // 1. Check real profile from DB
+                // 1. Check real profile from DB or localStorage (matched strictly by vendor_id)
                 if (p.vendor_id && profileMap.has(p.vendor_id)) {
                     const prof = profileMap.get(p.vendor_id);
                     const realName = (prof.store_name || prof.full_name || "").trim();
                     if (realName && realName !== "Unimall Store" && realName !== "Unimall Merchant") {
                         assignedStore = realName;
-                        isVerified = Boolean(prof.is_verified || prof.role === "vendor");
-                    }
-                }
-
-                // 2. Check existing non-generic vendor name
-                if (!assignedStore) {
-                    const existing = (p.vendor || "").trim();
-                    if (existing && existing !== "Unimall Store" && existing !== "Unimall Merchant" && existing !== "Unimall") {
-                        assignedStore = existing;
                         isVerified = true;
                     }
                 }
 
-                // 3. Dynamic Category / Keyword store resolution
+                // 2. Check existing explicit vendor name listed with the product
+                if (!assignedStore && existing && existing !== "Unimall Store" && existing !== "Unimall Merchant" && existing !== "Unimall") {
+                    assignedStore = existing;
+                    isVerified = true;
+                }
+
+                // 3. Products created by Oflex
+                const nameLower = (p.name || "").toLowerCase();
+                if (!assignedStore && (
+                    nameLower.includes("max sneaker") || 
+                    nameLower.includes("fashionista pro") || 
+                    nameLower.includes("nike sporty shoe") ||
+                    p.vendor_id === "40032e68-b7ef-4872-a5cc-d12280c3cc8e"
+                )) {
+                    assignedStore = "Oflex";
+                    isVerified = true;
+                }
+
+                // 4. Dynamic distinct store assignment ONLY for unassigned platform seed products (never leaks to unrelated products)
                 if (!assignedStore) {
                     const nameLower = (p.name || "").toLowerCase();
                     const catLower = (p.category || "").toLowerCase();
@@ -168,7 +201,7 @@ export const productService = {
                 }
 
                 p.vendor = assignedStore;
-                if (isVerified || p.is_pro) {
+                if (isVerified || p.is_pro || p.vendor_verified) {
                     p.vendor_verified = true;
                     p.is_pro = true;
                 }
@@ -338,17 +371,62 @@ export const productService = {
 
     async getProductById(id: string) {
         return withRetry(async () => {
-            const { data, error } = await supabase
-                .from("storefront_products_view" as any)
-                .select("*")
-                .eq("id", id)
-                .single();
+            let productData: any = null;
 
-            if (error) throw error;
-            const unpacked = unpackProductMetadata(data) as unknown as StorefrontProduct;
+            // 1. Try storefront_products_view
+            try {
+                const { data } = await supabase
+                    .from("storefront_products_view" as any)
+                    .select("*")
+                    .eq("id", id)
+                    .maybeSingle();
+                if (data) productData = data;
+            } catch (e) {}
+
+            // 2. Fallback to direct products table query
+            if (!productData) {
+                try {
+                    const { data } = await supabase
+                        .from("products")
+                        .select("*")
+                        .eq("id", id)
+                        .maybeSingle();
+                    if (data) productData = data;
+                } catch (e) {}
+            }
+
+            // 3. Fallback to cached products in local cache
+            if (!productData) {
+                const cached = this.getCachedProducts();
+                const found = cached.find((p) => p.id === id);
+                if (found) return found;
+            }
+
+            if (!productData) return null as unknown as StorefrontProduct;
+
+            const unpacked = unpackProductMetadata(productData) as unknown as StorefrontProduct;
             if ((unpacked as any).status === "deleted_by_admin" || (unpacked as any).is_active === false) {
                 return null as unknown as StorefrontProduct;
             }
+
+            // Enrich vendor details if vendor_id exists
+            if (unpacked.vendor_id) {
+                try {
+                    const { data: prof } = await supabase
+                        .from("profiles")
+                        .select("store_name, full_name, is_verified, role")
+                        .or(`user_id.eq.${unpacked.vendor_id},id.eq.${unpacked.vendor_id}`)
+                        .maybeSingle();
+                    if (prof) {
+                        unpacked.vendor = (prof as any).store_name || (prof as any).full_name || unpacked.vendor;
+                        if ((prof as any).is_verified || (prof as any).role === "vendor") {
+                            unpacked.vendor_verified = true;
+                            unpacked.is_pro = true;
+                        }
+                    }
+                } catch (e) {}
+            }
+
             return unpacked;
         }, null as unknown as StorefrontProduct, { retries: 2 });
     }
