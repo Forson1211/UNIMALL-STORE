@@ -16,6 +16,7 @@ import { productService, StorefrontProduct } from "@/services/productService";
 import ShopHeroCarousel from "@/components/shop/ShopHeroCarousel";
 import ShopQuickLinks from "@/components/shop/ShopQuickLinks";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
+import { OraimoProductCard } from "@/components/home/FeaturedProducts";
 
 const categories = [
   { label: "All Products", value: "All", icon: Package },
@@ -23,107 +24,6 @@ const categories = [
 ];
 
 const sortOptions = ["Newest", "Price: Low to High", "Price: High to Low", "Most Popular"];
-
-/* ── MCB Rentals Style Product Card ── */
-const MCBProductCard = ({ product }: { product: any }) => {
-  const [isWishlisted, setIsWishlisted] = useState(false);
-  const { addItem } = useCart();
-  const { toast } = useToast();
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      vendor: product.vendor,
-      vendorId: product.vendorId || "",
-    });
-    toast({
-      title: "Added to Cart",
-      description: `${product.name} added to your bag.`,
-    });
-  };
-
-  const handleWishlist = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsWishlisted((prev) => !prev);
-    toast({
-      title: isWishlisted ? "Removed from Wishlist" : "Added to Wishlist",
-      description: product.name,
-    });
-  };
-
-  const inStock = product.stock == null || product.stock > 0;
-
-  return (
-    <Link
-      to={`/products/${product.id}`}
-      className="group flex flex-col bg-white dark:bg-card rounded-none border border-gray-200/80 dark:border-border p-2.5 hover:shadow-lg transition-all duration-300 relative h-full justify-between"
-    >
-      <div>
-        {/* Top Image Box */}
-        <div className="relative aspect-square bg-gray-50/70 dark:bg-muted/30 rounded-none overflow-hidden mb-2">
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-        </div>
-
-        {/* Product Title */}
-        <h3 className="font-bold text-xs md:text-sm text-gray-900 dark:text-foreground line-clamp-1 leading-snug hover:text-[#FF5500] transition-colors mb-0.5">
-          {product.name}
-        </h3>
-
-        {/* Vendor & Stock Status Row */}
-        <div className="flex items-center justify-between text-[10px] text-gray-400 dark:text-muted-foreground font-medium mb-1.5">
-          <span className="truncate max-w-[65%]">{product.vendor || product.category || "Unimall"}</span>
-          <span className="flex items-center gap-0.5 font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
-            <Check className="w-3 h-3 stroke-[2.5]" />
-            {inStock ? "In stock" : "Out of stock"}
-          </span>
-        </div>
-      </div>
-
-      {/* Bottom Price & Action Buttons Row (Sharp Edges) */}
-      <div className="flex items-center justify-between pt-1.5 mt-auto border-t border-gray-100 dark:border-border">
-        <span className="font-black text-xs sm:text-sm text-[#FF5500] tracking-tight">
-          GH₵ {product.price.toLocaleString()}
-        </span>
-
-        <div className="flex items-center gap-1">
-          {/* Wishlist Button (Sharp Square) */}
-          <button
-            type="button"
-            onClick={handleWishlist}
-            className={`w-7 h-7 rounded-none border border-gray-200/80 dark:border-border flex items-center justify-center transition-colors ${
-              isWishlisted
-                ? "bg-red-50 text-red-500 border-red-100"
-                : "bg-gray-50/80 dark:bg-muted/80 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-muted hover:text-[#FF5500]"
-            }`}
-            aria-label="Wishlist"
-          >
-            <Heart className={`w-3.5 h-3.5 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`} />
-          </button>
-
-          {/* Cart Button (Sharp Square) */}
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            className="w-7 h-7 rounded-none bg-[#FF5500] hover:bg-[#e54a00] text-white flex items-center justify-center transition-colors"
-            aria-label="Add to Cart"
-          >
-            <ShoppingCart className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-    </Link>
-  );
-};
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -229,18 +129,18 @@ const Products = () => {
   const activeCategory = categories.find(c => c.value === categoryFilter) || categories[0];
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] dark:bg-background">
+    <div className="min-h-screen bg-white dark:bg-background">
       <Navbar />
 
       <main className="pb-20">
         {/* Curated Shop Top Header */}
-        <div className="container mx-auto px-4 pt-4 md:pt-6">
+        <div className="max-w-[1280px] mx-auto px-4 xl:px-0 pt-4 md:pt-6">
           <ShopHeroCarousel />
           <ShopQuickLinks />
         </div>
 
         {/* ── MAIN PRODUCT CATALOG & FILTER AREA ── */}
-        <div id="all-products" className="container mx-auto px-4 py-6 scroll-mt-24">
+        <div id="all-products" className="max-w-[1280px] mx-auto px-4 xl:px-0 py-6 scroll-mt-24">
           
           {/* Top Filter Header Bar (Matching Reference Screenshot) */}
           <div className="bg-white dark:bg-card border border-gray-200/80 dark:border-border p-4 mb-6 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-none">
@@ -453,14 +353,12 @@ const Products = () => {
             {/* ── PRODUCTS GRID MAIN DISPLAY ── */}
             <div className="flex-1 min-w-0">
               {isLoading ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
                   {[...Array(8)].map((_, i) => (
-                    <div key={i} className="bg-white rounded-none border border-gray-100 overflow-hidden animate-pulse">
-                      <div className="aspect-square bg-gray-100" />
-                      <div className="p-3 space-y-2">
-                        <div className="h-3 bg-gray-100 w-1/2" />
-                        <div className="h-4 bg-gray-100 w-3/4" />
-                      </div>
+                    <div key={i} className="bg-white dark:bg-card h-[320px] sm:h-[380px] animate-pulse space-y-3">
+                      <div className="aspect-square bg-gray-100 dark:bg-muted rounded-xl sm:rounded-2xl" />
+                      <div className="h-4 bg-gray-100 dark:bg-muted rounded w-3/4" />
+                      <div className="h-6 bg-gray-100 dark:bg-muted rounded w-full" />
                     </div>
                   ))}
                 </div>
@@ -484,9 +382,9 @@ const Products = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
                   {processedProducts.map((product) => (
-                    <MCBProductCard key={product.id} product={product} />
+                    <OraimoProductCard key={product.id} product={product} />
                   ))}
                 </div>
               )}
