@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight, ChevronLeft, Menu, Phone, Store, Truck } from "lucide-react";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
+import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 
 const categories = PRODUCT_CATEGORIES.map((cat) => ({ name: cat.label, icon: cat.icon }));
 
-const slides = [
+const DEFAULT_SLIDES = [
   {
     title: ["Shopping", "Spree"],
     subtitle: "Fresh Deals, Hot Prices",
@@ -35,6 +36,11 @@ const slides = [
 const SWIPE_THRESHOLD = 40;
 
 const HeroSection = () => {
+  const { getSetting } = useSiteSettingsContext();
+  const configuredSlides = getSetting("hero_slider_images", DEFAULT_SLIDES);
+  const slides = Array.isArray(configuredSlides) && configuredSlides.length === DEFAULT_SLIDES.length
+    ? configuredSlides.map((slide, index) => ({ ...DEFAULT_SLIDES[index], ...slide }))
+    : DEFAULT_SLIDES;
   const [index, setIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const dragDeltaX = useRef(0);

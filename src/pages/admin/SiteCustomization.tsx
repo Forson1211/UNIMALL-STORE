@@ -35,9 +35,39 @@ import {
     Mail,
     Link2,
     Smartphone,
-    Search
+    Search,
+    MapPin,
+    Plus,
+    Trash2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
+const HERO_SLIDE_DEFAULTS = [
+    { title: ["Shopping", "Spree"], subtitle: "Fresh Deals, Hot Prices", discount: "-45%", src: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop" },
+    { title: ["Campus", "Essentials"], subtitle: "Everything for the semester", discount: "-30%", src: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=2070&auto=format&fit=crop" },
+    { title: ["Fashion", "Week"], subtitle: "Look sharp for less", discount: "-60%", src: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070&auto=format&fit=crop" },
+    { title: ["Tech", "Deals"], subtitle: "Upgrade your gear", discount: "-40%", src: "https://images.unsplash.com/photo-1550009158-9ebf69173e03?q=80&w=2070&auto=format&fit=crop" },
+];
+
+const STOREFRONT_TILE_DEFAULTS = [
+    { label: "Top Phones", src: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=600" },
+    { label: "Watches", src: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=600" },
+    { label: "Sneakers", src: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600" },
+    { label: "Cameras", src: "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?q=80&w=600" },
+];
+
+const STOREFRONT_PROMO_DEFAULTS = [
+    { title: "Electronics Showcase", subtitle: "Starting GH₵ 1,200", src: "https://images.unsplash.com/photo-1550009158-9ebf69173e03?q=80&w=1000&auto=format&fit=crop" },
+    { title: "Fashion Week Sale", subtitle: "Up to 60% OFF", src: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1000&auto=format&fit=crop" },
+];
+
+const CAMPUS_DIRECTORY_DEFAULTS = [
+    { id: "ug", name: "University of Ghana", shortName: "UG", city: "Accra", active: true },
+    { id: "knust", name: "Kwame Nkrumah University of Science and Technology", shortName: "KNUST", city: "Kumasi", active: true },
+    { id: "ucc", name: "University of Cape Coast", shortName: "UCC", city: "Cape Coast", active: true },
+    { id: "ashesi", name: "Ashesi University", shortName: "Ashesi", city: "Berekuso", active: true },
+    { id: "other", name: "Other Ghana campus", shortName: "Other", city: "Ghana", active: true },
+];
 
 const FONT_OPTIONS = [
     { value: "'Barlow Condensed', sans-serif", label: "Barlow Condensed (MCB)" },
@@ -120,6 +150,11 @@ export default function SiteCustomization() {
     // Background State
     const [heroBackgroundUrl, setHeroBackgroundUrl] = useState("");
     const [heroOverlayOpacity, setHeroOverlayOpacity] = useState(0.5);
+    const [heroSlides, setHeroSlides] = useState(HERO_SLIDE_DEFAULTS);
+    const [storefrontTiles, setStorefrontTiles] = useState(STOREFRONT_TILE_DEFAULTS);
+    const [storefrontPromos, setStorefrontPromos] = useState(STOREFRONT_PROMO_DEFAULTS);
+    const [vendorsCtaImageUrl, setVendorsCtaImageUrl] = useState("https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=2000");
+    const [campusDirectory, setCampusDirectory] = useState(CAMPUS_DIRECTORY_DEFAULTS);
 
     // Layout State
     const [containerMaxWidth, setContainerMaxWidth] = useState("1280px");
@@ -199,6 +234,15 @@ export default function SiteCustomization() {
 
             setHeroBackgroundUrl(getSetting("hero_background_url", "") as string);
             setHeroOverlayOpacity(getSetting("hero_overlay_opacity", 0.5) as number);
+            const loadedHeroSlides = getSetting("hero_slider_images", HERO_SLIDE_DEFAULTS);
+            setHeroSlides(Array.isArray(loadedHeroSlides) && loadedHeroSlides.length === HERO_SLIDE_DEFAULTS.length ? loadedHeroSlides : HERO_SLIDE_DEFAULTS);
+            const loadedTiles = getSetting("storefront_tile_images", STOREFRONT_TILE_DEFAULTS);
+            const loadedPromos = getSetting("storefront_promo_images", STOREFRONT_PROMO_DEFAULTS);
+            setStorefrontTiles(Array.isArray(loadedTiles) && loadedTiles.length === STOREFRONT_TILE_DEFAULTS.length ? loadedTiles : STOREFRONT_TILE_DEFAULTS);
+            setStorefrontPromos(Array.isArray(loadedPromos) && loadedPromos.length === STOREFRONT_PROMO_DEFAULTS.length ? loadedPromos : STOREFRONT_PROMO_DEFAULTS);
+            setVendorsCtaImageUrl(getSetting("vendors_cta_image_url", "https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=2000") as string);
+            const savedCampuses = getSetting("campus_directory", CAMPUS_DIRECTORY_DEFAULTS);
+            setCampusDirectory(Array.isArray(savedCampuses) && savedCampuses.length ? savedCampuses : CAMPUS_DIRECTORY_DEFAULTS);
 
             setContainerMaxWidth(getSetting("container_max_width", "1280px") as string);
             setBorderRadius(getSetting("border_radius", "0.5rem") as string);
@@ -244,7 +288,7 @@ export default function SiteCustomization() {
     };
 
     // Handle file upload
-    const handleFileUpload = async (file: File, type: "logo" | "auth_logo" | "sidebar_logo" | "footer_logo" | "favicon" | "hero" | "og_image") => {
+    const handleFileUpload = async (file: File, type: string) => {
         try {
             console.log(`📤 Starting ${type} upload:`, {
                 fileName: file.name,
@@ -308,6 +352,22 @@ export default function SiteCustomization() {
         }
     };
 
+    const handleHeroSliderUpload = async (file: File, index: number) => {
+        const url = await handleFileUpload(file, `hero_slider_${index}`);
+        if (!url) return;
+        setHeroSlides((current) => current.map((slide, slideIndex) => slideIndex === index ? { ...slide, src: url } : slide));
+    };
+
+    const handleStorefrontImageUpload = async (file: File, kind: "tile" | "promo", index: number) => {
+        const url = await handleFileUpload(file, `storefront_${kind}_${index}`);
+        if (!url) return;
+        if (kind === "tile") {
+            setStorefrontTiles((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, src: url } : item));
+        } else {
+            setStorefrontPromos((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, src: url } : item));
+        }
+    };
+
     // Sync local state to global preview settings with debounce to prevent jitter
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -333,6 +393,10 @@ export default function SiteCustomization() {
                 faviconUrl,
                 heroBackgroundUrl,
                 heroOverlayOpacity,
+                storefrontTiles,
+                storefrontPromos,
+                vendorsCtaImageUrl,
+                campusDirectory,
                 announcementEnabled,
                 announcementText,
                 announcementLink,
@@ -360,6 +424,7 @@ export default function SiteCustomization() {
         primaryColor, secondaryColor, accentColor, backgroundColor, headerBgColor, footerBgColor,
         borderRadius, fontFamily, fontSize, containerMaxWidth, darkModeEnabled,
         siteName, siteTagline, logoUrl, authLogoUrl, sidebarLogoUrl, footerLogoUrl, faviconUrl, heroBackgroundUrl, heroOverlayOpacity,
+        heroSlides, storefrontTiles, storefrontPromos, vendorsCtaImageUrl, campusDirectory,
         announcementEnabled, announcementText, announcementLink, supportPhone, supportEmail,
         heroTitle, heroSubtitle, heroCtaText, heroCtaLink,
         facebookUrl, instagramUrl, twitterUrl, whatsappNumber, copyrightText,
@@ -402,7 +467,12 @@ export default function SiteCustomization() {
                 current_theme: { value: currentTheme, category: "theme" },
 
                 hero_background_url: { value: heroBackgroundUrl, category: "media" },
+                hero_slider_images: { value: heroSlides, category: "media" },
                 hero_overlay_opacity: { value: heroOverlayOpacity, category: "media" },
+                storefront_tile_images: { value: storefrontTiles, category: "storefront" },
+                storefront_promo_images: { value: storefrontPromos, category: "storefront" },
+                vendors_cta_image_url: { value: vendorsCtaImageUrl, category: "storefront" },
+                campus_directory: { value: campusDirectory, category: "campuses" },
 
                 container_max_width: { value: containerMaxWidth, category: "layout" },
                 border_radius: { value: borderRadius, category: "layout" },
@@ -1082,6 +1152,111 @@ export default function SiteCustomization() {
                                                 }}
                                             />
                                         </div>
+                                    </div>
+
+                                    <div className="space-y-4 p-5 rounded-2xl bg-gray-50/70 dark:bg-muted/40 border border-gray-200/80 dark:border-border">
+                                        <div>
+                                            <Label className="text-sm font-extrabold text-gray-900 dark:text-white">Homepage Slider Images</Label>
+                                            <p className="text-xs text-gray-400 mt-1">Replace the four rotating hero images shown at the top of the storefront homepage.</p>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {heroSlides.map((slide, index) => (
+                                                <div key={`${slide.title.join("-")}-${index}`} className="space-y-2">
+                                                    <div className="relative aspect-[2.05/1] overflow-hidden border border-gray-200 dark:border-border bg-white dark:bg-card">
+                                                        <img src={slide.src} alt={`${slide.title.join(" ")} slider preview`} className="w-full h-full object-cover" />
+                                                        <div className="absolute inset-0 bg-gradient-to-r from-black/65 to-transparent flex items-end px-4 py-3">
+                                                            <div><p className="text-sm font-black uppercase text-white">{slide.title.join(" ")}</p><p className="text-[10px] font-bold text-orange-200">{slide.subtitle} · {slide.discount}</p></div>
+                                                        </div>
+                                                        <span className="absolute top-2 right-2 bg-black/60 px-2 py-1 text-[10px] font-bold text-white">Slide {index + 1}</span>
+                                                    </div>
+                                                    <Label htmlFor={`hero-slider-${index}`} className="cursor-pointer inline-flex items-center justify-center gap-1.5 border border-gray-200 dark:border-border bg-white dark:bg-card px-3 py-2 text-[11px] font-bold text-gray-700 dark:text-gray-200 hover:border-[#FF5500] hover:text-[#FF5500]">
+                                                        <Upload className="w-3.5 h-3.5" /> Replace slider image
+                                                    </Label>
+                                                    <Input id={`hero-slider-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) void handleHeroSliderUpload(file, index); }} />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4 p-5 rounded-2xl bg-gray-50/70 dark:bg-muted/40 border border-gray-200/80 dark:border-border">
+                                        <div>
+                                            <Label className="text-sm font-extrabold text-gray-900 dark:text-white">Storefront Category Tiles</Label>
+                                            <p className="text-xs text-gray-400 mt-1">Change the four image tiles displayed below Deals of the Day.</p>
+                                        </div>
+                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                            {storefrontTiles.map((tile, index) => (
+                                                <div key={tile.label} className="space-y-2">
+                                                    <div className="relative aspect-square overflow-hidden border border-gray-200 dark:border-border bg-white dark:bg-card">
+                                                        <img src={tile.src} alt={tile.label} className="w-full h-full object-cover" />
+                                                        <span className="absolute inset-x-0 bottom-0 bg-black/60 px-2 py-1.5 text-[10px] font-black uppercase text-white">{tile.label}</span>
+                                                    </div>
+                                                    <Label htmlFor={`storefront-tile-${index}`} className="cursor-pointer inline-flex w-full items-center justify-center gap-1.5 border border-gray-200 dark:border-border bg-white dark:bg-card px-2 py-2 text-[11px] font-bold text-gray-700 dark:text-gray-200 hover:border-[#FF5500] hover:text-[#FF5500]">
+                                                        <Upload className="w-3.5 h-3.5" /> Replace image
+                                                    </Label>
+                                                    <Input id={`storefront-tile-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) void handleStorefrontImageUpload(file, "tile", index); }} />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4 p-5 rounded-2xl bg-gray-50/70 dark:bg-muted/40 border border-gray-200/80 dark:border-border">
+                                        <div>
+                                            <Label className="text-sm font-extrabold text-gray-900 dark:text-white">Promotional Banners</Label>
+                                            <p className="text-xs text-gray-400 mt-1">Update the wide campaign images used on the storefront homepage.</p>
+                                        </div>
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                            {storefrontPromos.map((promo, index) => (
+                                                <div key={promo.title} className="space-y-2">
+                                                    <div className="relative aspect-[3/1] overflow-hidden border border-gray-200 dark:border-border bg-white dark:bg-card">
+                                                        <img src={promo.src} alt={promo.title} className="w-full h-full object-cover" />
+                                                        <div className="absolute inset-0 bg-gradient-to-r from-black/65 to-transparent flex items-center px-4">
+                                                            <div><p className="text-sm font-black uppercase text-white">{promo.title}</p><p className="text-[10px] font-bold uppercase text-yellow-300">{promo.subtitle}</p></div>
+                                                        </div>
+                                                    </div>
+                                                    <Label htmlFor={`storefront-promo-${index}`} className="cursor-pointer inline-flex items-center justify-center gap-1.5 border border-gray-200 dark:border-border bg-white dark:bg-card px-3 py-2 text-[11px] font-bold text-gray-700 dark:text-gray-200 hover:border-[#FF5500] hover:text-[#FF5500]">
+                                                        <Upload className="w-3.5 h-3.5" /> Replace banner image
+                                                    </Label>
+                                                    <Input id={`storefront-promo-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) void handleStorefrontImageUpload(file, "promo", index); }} />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4 p-5 rounded-2xl bg-gray-50/70 dark:bg-muted/40 border border-gray-200/80 dark:border-border">
+                                        <div>
+                                            <Label className="text-sm font-extrabold text-gray-900 dark:text-white">Vendors Page Campaign Image</Label>
+                                            <p className="text-xs text-gray-400 mt-1">Controls the background image behind the vendor sign-up call-to-action.</p>
+                                        </div>
+                                        <div className="relative aspect-[4/1] overflow-hidden border border-gray-200 dark:border-border bg-white dark:bg-card">
+                                            <img src={vendorsCtaImageUrl} alt="Vendors campaign" className="w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-black/35 flex items-center px-5"><span className="text-sm font-black uppercase text-white">Launch your campus venture</span></div>
+                                        </div>
+                                        <Label htmlFor="vendorsCtaImage" className="cursor-pointer inline-flex items-center justify-center gap-2 border border-gray-200 dark:border-border bg-white dark:bg-card px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-gray-200 hover:border-[#FF5500] hover:text-[#FF5500]">
+                                            <Upload className="w-3.5 h-3.5" /> Replace campaign image
+                                        </Label>
+                                        <Input id="vendorsCtaImage" type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; const url = await handleFileUpload(file, "vendors_cta"); if (url) setVendorsCtaImageUrl(url); }} />
+                                    </div>
+
+                                    <div className="space-y-4 p-5 rounded-2xl bg-white dark:bg-card border border-gray-200 dark:border-border">
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div>
+                                                <Label className="text-sm font-extrabold text-gray-900 dark:text-white">Vendor campus directory</Label>
+                                                <p className="text-xs text-gray-400 mt-1">Manage the campus locations vendors can select and buyers can use to find sellers.</p>
+                                            </div>
+                                            <Button type="button" size="sm" className="shrink-0 bg-[#FF5500] hover:bg-[#e54a00] text-white" onClick={() => setCampusDirectory((current) => [...current, { id: `campus-${Date.now()}`, name: "", shortName: "", city: "", active: true }])}><Plus className="w-3.5 h-3.5 mr-1.5" /> Add campus</Button>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {campusDirectory.map((campus, index) => (
+                                                <div key={campus.id} className="grid grid-cols-1 md:grid-cols-[1.6fr_0.7fr_0.9fr_auto_auto] gap-2 items-center border border-gray-100 dark:border-border bg-gray-50/70 dark:bg-muted/30 p-3">
+                                                    <Input value={campus.name} placeholder="Campus name" onChange={(e) => setCampusDirectory((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, name: e.target.value } : item))} />
+                                                    <Input value={campus.shortName} placeholder="Short name" onChange={(e) => setCampusDirectory((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, shortName: e.target.value } : item))} />
+                                                    <Input value={campus.city} placeholder="City" onChange={(e) => setCampusDirectory((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, city: e.target.value } : item))} />
+                                                    <Button type="button" variant={campus.active ? "default" : "outline"} size="sm" className={campus.active ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""} onClick={() => setCampusDirectory((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, active: !item.active } : item))}>{campus.active ? "Active" : "Hidden"}</Button>
+                                                    <Button type="button" variant="ghost" size="icon" className="text-gray-400 hover:text-red-500" onClick={() => setCampusDirectory((current) => current.filter((_, itemIndex) => itemIndex !== index))}><Trash2 className="w-4 h-4" /></Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="border-t border-gray-100 dark:border-border pt-3 flex items-center gap-2 text-xs text-gray-500"><MapPin className="w-3.5 h-3.5 text-[#FF5500]" /><span>{campusDirectory.filter((campus) => campus.active && campus.name.trim()).length} active campus locations will be available to vendors and buyers.</span></div>
                                     </div>
 
                                     <div className="p-4 rounded-xl bg-gray-50/70 dark:bg-muted/40 border border-gray-200/80 dark:border-border space-y-3">

@@ -6,6 +6,7 @@ import {
   Droplets, Clock, Mic, Sun, Feather, Headphones, Package
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { productService, StorefrontProduct } from "@/services/productService";

@@ -38,6 +38,7 @@ import {
   Scroll,
   Lock,
   Banknote,
+  SearchCheck,
 } from "lucide-react";
 import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -154,11 +155,14 @@ const adminMenuItems = [
 const vendorMenuItems = [
   { title: "Dashboard", url: "/vendor", icon: LayoutDashboard },
   { title: "Products", url: "/vendor/products", icon: Package },
+  { title: "Catalog Health", url: "/vendor/catalog-health", icon: SearchCheck },
+  { title: "Sales Insights", url: "/vendor/sales-insights", icon: BarChart3 },
   { title: "Orders", url: "/vendor/orders", icon: ShoppingCart },
-  { title: "Coupons", url: "/vendor/coupons", icon: Ticket },
-  { title: "Reviews", url: "/vendor/reviews", icon: Star },
+  { title: "Inventory Priorities", url: "/vendor/inventory", icon: Zap },
+  { title: "Campus Offers", url: "/vendor/coupons", icon: Ticket },
+  { title: "Customer Trust", url: "/vendor/reviews", icon: Star },
   { title: "Notifications", url: "/vendor/notifications", icon: Bell },
-  { title: "Settings", url: "/vendor/settings", icon: Settings },
+  { title: "Earnings & Settings", url: "/vendor/settings", icon: Settings },
 ];
 
 export function DashboardSidebar({ type }: DashboardSidebarProps) {
@@ -170,12 +174,12 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
   const { siteName, logoUrl, sidebarLogoUrl, footerLogoUrl } = useSiteSettingsContext();
 
   const isActive = (path: string) => {
-    if (path === `/${type}`) {
-      // Exact match only for dashboard home
-      return location.pathname === path;
+    const [pathname, hash] = path.split("#");
+    if (pathname === `/${type}`) {
+      if (hash) return location.pathname === pathname && location.hash === `#${hash}`;
+      return location.pathname === pathname && !location.hash;
     }
-    // For others, check for exact match OR sub-route match (if path ends in /)
-    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+    return location.pathname === pathname || location.pathname.startsWith(`${pathname}/`);
   };
 
   const hasAccess = (item: any) => {

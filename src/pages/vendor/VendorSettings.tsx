@@ -12,14 +12,26 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { CheckCircle, Upload, Smartphone, Landmark, Trash2 } from "lucide-react";
+import { ArrowUpRight, CheckCircle, CreditCard, ShieldCheck, Sparkles, Upload, Smartphone, Landmark, Trash2, WalletCards } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { vendorService } from "@/services/vendorService";
 import { useState, useEffect } from "react";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
+
+const CAMPUS_OPTIONS = [
+  "University of Ghana",
+  "KNUST",
+  "University of Cape Coast",
+  "University for Development Studies",
+  "Ashesi University",
+  "Ghana Communication Technology University",
+  "Other Ghana campus",
+];
+const DEFAULT_CAMPUS_DIRECTORY = CAMPUS_OPTIONS.map((name, index) => ({ id: `default-${index}`, name, shortName: name, city: "Ghana", active: true }));
 
 const DEFAULT_NOTIFICATION_PREFERENCES = {
   new_order: true,
@@ -33,6 +45,8 @@ const DEFAULT_NOTIFICATION_PREFERENCES = {
 
 const VendorSettings = () => {
   const { user, profile, refreshProfile } = useAuth();
+  const { getSetting } = useSiteSettingsContext();
+  const campusDirectory = (getSetting("campus_directory", DEFAULT_CAMPUS_DIRECTORY) as typeof DEFAULT_CAMPUS_DIRECTORY).filter((campus) => campus.active && campus.name?.trim());
   const [loading, setLoading] = useState(false);
   const [bannerLoading, setBannerLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -142,6 +156,10 @@ const VendorSettings = () => {
 
   const handleSave = async () => {
     if (!user) return;
+    if (!formData.campus) {
+      toast.error("Select your campus location so buyers know where to find you.");
+      return;
+    }
     setLoading(true);
     try {
       const { error } = await supabase
@@ -212,24 +230,44 @@ const VendorSettings = () => {
       userName={profile?.store_name || profile?.full_name || "Vendor"}
       userRole="Vendor"
     >
-      <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="profile">Store Profile</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="payments">Payments</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-        </TabsList>
+      <div className="mx-auto max-w-7xl space-y-6">
+        <section className="relative overflow-hidden border border-slate-200 bg-gradient-to-br from-[#17233D] via-[#1D2B49] to-[#294365] p-5 text-white shadow-[0_18px_45px_rgba(15,23,42,0.14)] sm:p-7">
+          <div className="absolute -right-16 -top-20 h-56 w-56 border border-white/10 bg-white/[0.04]" />
+          <div className="relative flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+            <div>
+              <div className="mb-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-orange-200"><Sparkles className="h-4 w-4" /> Seller workspace</div>
+              <h1 className="text-3xl font-black tracking-[-0.035em] sm:text-4xl">Earnings & settings</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-200">Keep your campus storefront polished, your payouts ready, and your seller account secure.</p>
+            </div>
+            <div className="flex items-center gap-3 border border-white/15 bg-slate-950/20 px-4 py-3 text-sm"><span className={`h-2.5 w-2.5 ${profile?.verified ? "bg-emerald-400" : "bg-amber-300"}`} /><span className="font-bold">{profile?.verified ? "Verified seller" : "Verification in progress"}</span></div>
+          </div>
+          <div className="relative mt-7 grid gap-px overflow-hidden border border-white/10 bg-white/10 sm:grid-cols-3">
+            <div className="bg-slate-950/20 p-4"><p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-300">Available balance</p><p className="mt-2 text-2xl font-black">GH₵{Number(balance?.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p><p className="mt-1 text-xs text-slate-300">Ready for payout</p></div>
+            <div className="bg-slate-950/20 p-4"><p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-300">Payment methods</p><p className="mt-2 text-2xl font-black">{paymentMethods.length}</p><p className="mt-1 text-xs text-slate-300">Configured for settlement</p></div>
+            <div className="bg-slate-950/20 p-4"><p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-300">Payout status</p><p className="mt-2 text-2xl font-black">{hasPendingPayout ? "Pending" : "Ready"}</p><p className="mt-1 text-xs text-slate-300">{hasPendingPayout ? "Being reviewed by Unimall" : "No pending request"}</p></div>
+          </div>
+        </section>
+
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 border border-slate-200 bg-slate-100 p-1 sm:grid-cols-4">
+            <TabsTrigger className="py-2.5 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-[#FF5500] data-[state=active]:shadow-sm sm:text-sm" value="profile">Store Profile</TabsTrigger>
+            <TabsTrigger className="py-2.5 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-[#FF5500] data-[state=active]:shadow-sm sm:text-sm" value="notifications">Notifications</TabsTrigger>
+            <TabsTrigger className="py-2.5 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-[#FF5500] data-[state=active]:shadow-sm sm:text-sm" value="payments">Payments</TabsTrigger>
+            <TabsTrigger className="py-2.5 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-[#FF5500] data-[state=active]:shadow-sm sm:text-sm" value="security">Security</TabsTrigger>
+          </TabsList>
 
         <TabsContent value="profile">
-          <Card>
-            <CardHeader>
-              <CardTitle>Store Profile</CardTitle>
-              <CardDescription>Manage your store information visible to customers</CardDescription>
+          <Card className="overflow-hidden border-slate-200 bg-white shadow-[0_16px_45px_rgba(15,23,42,0.08)]">
+            <CardHeader className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white px-6 py-6 sm:px-8">
+              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+                <div><p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#FF5500]">Public storefront</p><CardTitle className="mt-2 text-2xl font-black tracking-tight text-slate-950">Store Profile</CardTitle><CardDescription className="mt-1 text-sm text-slate-500">Shape the storefront students see when they discover your campus business.</CardDescription></div>
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-500"><span className={`h-2 w-2 ${profile?.verified ? "bg-emerald-500" : "bg-amber-400"}`} />{profile?.verified ? "Verified profile" : "Profile under review"}</div>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-8 p-6 sm:p-8">
               {/* Store Avatar */}
               <div className="flex items-center gap-6">
-                <Avatar className="h-20 w-20 border-2 border-primary/20">
+                <Avatar className="h-24 w-24 border-4 border-orange-100 bg-orange-50 shadow-sm">
                   {profile?.avatar_url ? (
                     <img src={profile.avatar_url} alt="Logo" className="w-full h-full object-cover" />
                   ) : (
@@ -242,7 +280,7 @@ const VendorSettings = () => {
                   <div className="flex flex-wrap gap-2">
                     <Button 
                       variant="outline" 
-                      className="h-9"
+                      className="h-10 border-[#FF5500] font-bold text-[#FF5500] hover:bg-orange-50"
                       onClick={() => document.getElementById('logo-upload')?.click()}
                       disabled={loading}
                     >
@@ -316,18 +354,18 @@ const VendorSettings = () => {
                       </Button>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">Recommended: 200x200px, PNG or JPG (Max 1MB)</p>
+                  <p className="text-xs leading-5 text-slate-500">Use a clear square logo so buyers can recognize your store at a glance. PNG or JPG, max 1MB.</p>
                 </div>
               </div>
 
               {/* Store Banner */}
               <div className="space-y-3">
                 <Label>Store Banner</Label>
-                <div className="h-32 rounded-lg overflow-hidden bg-muted border">
+                <div className="h-36 overflow-hidden border border-slate-200 bg-slate-50 shadow-inner sm:h-40">
                   {profile?.banner_url ? (
                     <img src={profile.banner_url} alt="Store banner" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
+                    <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#f8fafc_25%,#eef2f7_25%,#eef2f7_50%,#f8fafc_50%,#f8fafc_75%,#eef2f7_75%)] bg-[length:24px_24px] text-sm font-medium text-slate-500">
                       No banner uploaded yet
                     </div>
                   )}
@@ -409,10 +447,10 @@ const VendorSettings = () => {
                     </Button>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">Shown at the top of your public store page. Recommended: 1200x400px.</p>
+                <p className="text-xs leading-5 text-slate-500">Shown at the top of your public store page. Recommended size: 1200 × 400px.</p>
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 pb-8">
                 {profile?.verified ? (
                   <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
                     <CheckCircle className="w-3 h-3 mr-1" />
@@ -432,7 +470,7 @@ const VendorSettings = () => {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="storeName">Store Name</Label>
+                  <Label className="text-xs font-bold text-slate-600" htmlFor="storeName">Store Name</Label>
                   <Input
                     id="storeName"
                     value={formData.storeName}
@@ -440,13 +478,13 @@ const VendorSettings = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Contact Email (Linked to account)</Label>
+                  <Label className="text-xs font-bold text-slate-600" htmlFor="email">Contact Email (Linked to account)</Label>
                   <Input id="email" type="email" value={formData.email} disabled />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Store Description</Label>
+                <Label className="text-xs font-bold text-slate-600" htmlFor="description">Store Description</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
@@ -457,12 +495,14 @@ const VendorSettings = () => {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="campus">Campus</Label>
-                  <Input
-                    id="campus"
-                    value={formData.campus}
-                    onChange={(e) => setFormData({ ...formData, campus: e.target.value })}
-                  />
+                  <Label htmlFor="campus">Campus location <span className="text-[#FF5500]">*</span></Label>
+                  <Select value={formData.campus} onValueChange={(value) => setFormData({ ...formData, campus: value })}>
+                    <SelectTrigger id="campus"><SelectValue placeholder="Select the campus you serve" /></SelectTrigger>
+                    <SelectContent>
+                      {campusDirectory.map((campus) => <SelectItem key={campus.id} value={campus.name}>{campus.name}{campus.city ? ` · ${campus.city}` : ""}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Buyers will see this location on your public store.</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
@@ -489,9 +529,7 @@ const VendorSettings = () => {
               </div>
 
               <Separator />
-              <Button onClick={handleSave} disabled={loading}>
-                {loading ? "Saving..." : "Save Changes"}
-              </Button>
+              <div className="flex flex-col justify-between gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center"><p className="text-xs leading-5 text-slate-500">Your changes update the public storefront after saving.</p><Button onClick={handleSave} disabled={loading} className="h-11 bg-[#FF5500] px-6 font-black text-white shadow-sm hover:bg-[#e54a00]">{loading ? "Saving..." : "Save Store Profile"}</Button></div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -720,7 +758,8 @@ const VendorSettings = () => {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </div>
 
       <Dialog open={isAddPaymentOpen} onOpenChange={setIsAddPaymentOpen}>
         <DialogContent>

@@ -244,6 +244,13 @@ const VendorStore = () => {
                 </p>
                 
                 <div className="space-y-3.5 border-t border-gray-100 pt-3.5">
+                  <div className="flex gap-2.5 rounded-lg bg-orange-50 p-3">
+                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#FF5500]" />
+                    <div>
+                      <p className="text-[10px] font-bold leading-none text-[#FF5500]">CAMPUS LOCATION</p>
+                      <p className="mt-1 text-xs font-black text-gray-800">{vendor.campus || "Location not provided"}</p>
+                    </div>
+                  </div>
                   <div className="flex gap-2.5">
                     <Phone className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
                     <div>
