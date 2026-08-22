@@ -94,7 +94,7 @@ const QuickNav = () => {
   ];
 
   return (
-    <div className="hidden md:block max-w-[1280px] mx-auto px-4 xl:px-0 mt-4 mb-2">
+    <div className="hidden md:block max-w-[1280px] mx-auto px-4 xl:px-0 mt-2.5 mb-1">
       <div className="bg-white dark:bg-card shadow-xs border border-gray-200/80 dark:border-border flex items-stretch h-10 overflow-x-auto no-scrollbar rounded-none justify-between">
         
         {/* ── Left Side: Campus Dropdown + Navigation Links ── */}

@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { vendorService } from "@/services/vendorService";
 import { dealService } from "@/services/dealService";
+import { productService } from "@/services/productService";
 import { 
   Package, 
   Plus, 
@@ -112,9 +113,13 @@ export const VendorProducts = () => {
       vendor_name: storeName
     }),
     onSuccess: () => {
+      productService.bustCache();
       queryClient.invalidateQueries({ queryKey: ["vendor-products"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["deals"] });
+      queryClient.invalidateQueries({ queryKey: ["homepage-pro-sellers"] });
+      queryClient.invalidateQueries({ queryKey: ["homepage-bestsellers"] });
+      queryClient.invalidateQueries({ queryKey: ["homepage-newarrivals"] });
       toast.success("Product created and published!");
       setIsFormOpen(false);
     },
@@ -127,9 +132,13 @@ export const VendorProducts = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: any }) => vendorService.updateProduct(id, updates),
     onSuccess: () => {
+      productService.bustCache();
       queryClient.invalidateQueries({ queryKey: ["vendor-products"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["deals"] });
+      queryClient.invalidateQueries({ queryKey: ["homepage-pro-sellers"] });
+      queryClient.invalidateQueries({ queryKey: ["homepage-bestsellers"] });
+      queryClient.invalidateQueries({ queryKey: ["homepage-newarrivals"] });
       toast.success("Product updated successfully");
       setIsFormOpen(false);
     },
@@ -142,7 +151,12 @@ export const VendorProducts = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => vendorService.deleteProduct(id),
     onSuccess: () => {
+      productService.bustCache();
       queryClient.invalidateQueries({ queryKey: ["vendor-products"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["homepage-pro-sellers"] });
+      queryClient.invalidateQueries({ queryKey: ["homepage-bestsellers"] });
+      queryClient.invalidateQueries({ queryKey: ["homepage-newarrivals"] });
       toast.success("Product removed from listing");
     },
     onError: (error: any) => {
@@ -152,7 +166,7 @@ export const VendorProducts = () => {
   });
 
   const submitDealMutation = useMutation({
-    mutationFn: (dealData: any) => dealService.createDeal(dealData),
+    mutationFn: (dealData: any) => dealService.submitDeal(dealData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["deals"] });
       queryClient.invalidateQueries({ queryKey: ["vendor-products"] });

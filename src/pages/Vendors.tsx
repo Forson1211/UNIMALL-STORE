@@ -280,23 +280,26 @@ const Vendors = () => {
   });
 
   return (
-    <div className="min-h-screen bg-[#f1f1f2]">
+    <div className="min-h-screen bg-[#f1f1f2] dark:bg-background">
       <Navbar />
 
-      <main className="py-3">
-        <div className="max-w-[1280px] mx-auto px-3 space-y-3">
+      <main className="pb-16">
+        {/* Full-Bleed Header Banner (100% Screen Width) with Photographic Background */}
+        <div className="relative w-full bg-slate-950 shadow-md py-12 md:py-16 text-white overflow-hidden mb-6 group">
+          {/* Bright, Vivid Background Image with Clean Left-Sided Text Contrast Gradient */}
+          <img 
+            src={vendorsCtaImageUrl || "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=2000&auto=format&fit=crop"} 
+            alt="Campus Stores" 
+            className="absolute inset-0 w-full h-full object-cover opacity-75 group-hover:scale-105 transition-transform duration-1000"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/55 to-black/15 z-0" />
           
-          {/* Header Banner - Sleek card in gradient */}
-          <div className="relative bg-gradient-to-r from-gray-900 via-gray-800 to-[#FF5500] shadow-sm p-6 md:p-10 flex flex-col justify-center text-white overflow-hidden">
-            <div className="absolute right-0 top-0 w-1/3 h-full opacity-10 pointer-events-none transform skew-x-12 translate-x-12">
-              <Store className="w-full h-full text-white" />
-            </div>
-            
-            <div className="relative z-10 max-w-2xl">
-              <span className="bg-white/20 backdrop-blur-sm border border-white/10 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-sm">
+          <div className="max-w-[1280px] mx-auto px-4 xl:px-0 relative z-10">
+            <div className="max-w-2xl">
+              <span className="bg-white/20 backdrop-blur-sm border border-white/10 text-white text-[9.5px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-none inline-block">
                 Verified Campus Sellers
               </span>
-              <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tight mt-3 mb-2">
+              <h1 className="text-2xl md:text-4xl lg:text-5xl font-black uppercase tracking-tight mt-3 mb-2 text-white drop-shadow-sm">
                 Discover Campus Stores
               </h1>
               <p className="text-xs md:text-sm text-gray-200 font-medium mb-6 leading-relaxed max-w-lg">
@@ -304,7 +307,7 @@ const Vendors = () => {
               </p>
 
               {/* Boxed Search */}
-              <div className="flex gap-2 max-w-md bg-white p-1 rounded-sm shadow-lg">
+              <div className="flex gap-2 max-w-md bg-white p-1 rounded-none shadow-lg">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -312,15 +315,18 @@ const Vendors = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search vendor or campus..."
-                    className="w-full h-9 pl-9 pr-3 text-xs bg-transparent text-gray-850 outline-none placeholder-gray-400"
+                    className="w-full h-9 pl-9 pr-3 text-xs bg-transparent text-gray-900 outline-none placeholder-gray-400"
                   />
                 </div>
-                <button className="h-9 px-5 bg-[#FF5500] hover:bg-[#e54a00] text-white font-black text-xs uppercase tracking-wider rounded-sm transition-colors shrink-0">
+                <button className="h-9 px-6 bg-[#FF5500] hover:bg-[#e54a00] text-white font-black text-xs uppercase tracking-wider rounded-none transition-colors shrink-0">
                   Search
                 </button>
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="max-w-[1280px] mx-auto px-4 xl:px-0 space-y-6">
 
           {/* Sticky Tab Category selectors */}
           <div className="bg-white shadow-sm border border-gray-100 p-1 overflow-x-auto no-scrollbar flex gap-1">

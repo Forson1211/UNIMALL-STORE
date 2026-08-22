@@ -782,69 +782,77 @@ const ProductDetail = () => {
             <div className="rounded-2xl border border-gray-200 dark:border-border bg-[#FBFBFC] dark:bg-card/70 p-4 sm:p-5 space-y-4 shadow-2xs">
               
               {/* Vendor Store Header */}
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  {/* Real Vendor Avatar */}
-                  <div className="relative w-12 h-12 shrink-0">
-                    <div className="w-full h-full rounded-full bg-orange-100 dark:bg-orange-950/60 border border-[#FF5500]/20 overflow-hidden flex items-center justify-center text-[#FF5500] font-black text-xl">
-                      {vendorData.avatar_url ? (
-                        <img src={vendorData.avatar_url} alt={vendorData.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <Store className="w-6 h-6" />
-                      )}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between gap-2.5">
+                  {/* Left: Avatar + Store Name */}
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <div className="relative w-11 h-11 sm:w-12 sm:h-12 shrink-0">
+                      <div className="w-full h-full rounded-full bg-orange-100 dark:bg-orange-950/60 border border-[#FF5500]/20 overflow-hidden flex items-center justify-center text-[#FF5500] font-black text-xl">
+                        {vendorData.avatar_url ? (
+                          <img src={vendorData.avatar_url} alt={vendorData.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <Store className="w-6 h-6" />
+                        )}
+                      </div>
+                      <span
+                        className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-card shadow-xs"
+                        title="Online now"
+                      />
                     </div>
-                    <span
-                      className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-card shadow-xs"
-                      title="Online now"
-                    />
+
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h3 className="font-extrabold text-base text-gray-900 dark:text-white leading-tight truncate">
+                          {vendorData.name}
+                        </h3>
+                        {vendorData.is_pro && (
+                          <UnimallVerifiedBadge size={16} color="#FF5500" title="Verified Pro Merchant" className="shrink-0" />
+                        )}
+                      </div>
+                    </div>
                   </div>
 
-                  <div>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <h3 className="font-extrabold text-base text-gray-900 dark:text-white leading-tight">
-                        {vendorData.name}
-                      </h3>
-                      {vendorData.is_pro && (
-                        <UnimallVerifiedBadge size={16} color="#FF5500" title="Verified Pro Merchant" />
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex-wrap">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-[#FF5500] shrink-0" />
-                        <span>{vendorData.campus}</span>
-                      </span>
-                      <span className="text-gray-300 dark:text-gray-700">•</span>
-                      <span className="flex items-center gap-1 font-semibold text-blue-600 dark:text-blue-400">
-                        <Users className="w-3.5 h-3.5" />
-                        <span>{vendorFollowersCount} {vendorFollowersCount === 1 ? "Follower" : "Followers"}</span>
-                      </span>
-                    </div>
+                  {/* Right: Follow Button & Visit Store Link */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={handleToggleFollowVendor}
+                      className={`px-2.5 sm:px-3 py-1.5 rounded-md text-xs font-black transition-all flex items-center gap-1 shadow-2xs cursor-pointer ${
+                        isFollowingVendor
+                          ? "bg-white dark:bg-card text-gray-900 dark:text-white border border-gray-300 dark:border-border"
+                          : "bg-[#FF5500] hover:bg-[#e54a00] text-white"
+                      }`}
+                    >
+                      <Heart className={`w-3 h-3 ${isFollowingVendor ? "fill-red-500 text-red-500" : ""}`} />
+                      <span>{isFollowingVendor ? `Following (${vendorFollowersCount})` : `Follow (${vendorFollowersCount})`}</span>
+                    </button>
+
+                    <Link
+                      to={`/vendor/${vendorData.id}`}
+                      className="text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-[#FF5500] px-2 sm:px-2.5 py-1.5 border border-gray-200 dark:border-border rounded-md bg-white dark:bg-card flex items-center gap-0.5 transition-colors shrink-0"
+                    >
+                      <span>Store</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </Link>
                   </div>
                 </div>
 
-                {/* Follow Button & Visit Store Link */}
-                <div className="flex items-center gap-2 shrink-0 pt-0.5">
-                  <button
-                    type="button"
-                    onClick={handleToggleFollowVendor}
-                    className={`px-3 py-1.5 rounded-md text-xs font-black transition-all flex items-center gap-1 shadow-2xs cursor-pointer ${
-                      isFollowingVendor
-                        ? "bg-white dark:bg-card text-gray-900 dark:text-white border border-gray-300 dark:border-border"
-                        : "bg-[#FF5500] hover:bg-[#e54a00] text-white"
-                    }`}
-                  >
-                    <Heart className={`w-3 h-3 ${isFollowingVendor ? "fill-red-500 text-red-500" : ""}`} />
-                    <span>{isFollowingVendor ? `Following (${vendorFollowersCount})` : `Follow (${vendorFollowersCount})`}</span>
-                  </button>
-
-                  <Link
-                    to={`/vendor/${vendorData.id}`}
-                    className="text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-[#FF5500] px-2.5 py-1.5 border border-gray-200 dark:border-border rounded-md bg-white dark:bg-card flex items-center gap-0.5 transition-colors"
-                  >
-                    <span>Store</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </Link>
+                {/* Sub-row: Full-Width Location and Followers Badges (Never Squished on Mobile) */}
+                <div className="flex items-center gap-2 sm:gap-3 text-xs text-gray-600 dark:text-gray-300 pt-1 border-t border-gray-100 dark:border-border/60 flex-wrap font-medium">
+                  <span className="flex items-center gap-1 whitespace-nowrap">
+                    <MapPin className="w-3.5 h-3.5 text-[#FF5500] shrink-0" />
+                    <span className="truncate max-w-[180px] sm:max-w-none">{vendorData.campus}</span>
+                  </span>
+                  <span className="text-gray-300 dark:text-gray-700">•</span>
+                  <span className="flex items-center gap-1 font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                    <Users className="w-3.5 h-3.5 shrink-0" />
+                    <span>{vendorFollowersCount} {vendorFollowersCount === 1 ? "Follower" : "Followers"}</span>
+                  </span>
+                  <span className="text-gray-300 dark:text-gray-700">•</span>
+                  <span className="flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400 whitespace-nowrap">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
+                    <span>5.0 Store Rating</span>
+                  </span>
                 </div>
               </div>
 

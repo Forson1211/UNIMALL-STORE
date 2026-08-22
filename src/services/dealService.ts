@@ -72,6 +72,16 @@ export const dealService = {
     return data;
   },
 
+  async createDeal(deal: {
+    product_id: string;
+    vendor_id: string;
+    discount_price: number;
+    start_time: string;
+    end_time: string;
+  }) {
+    return this.submitDeal(deal);
+  },
+
   async getPendingDeals() {
     const { data, error } = await (supabase
       .from('deals' as any)

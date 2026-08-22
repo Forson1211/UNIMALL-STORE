@@ -284,11 +284,11 @@ const Navbar = () => {
           </div>
 
           {/* MOBILE HEADER (md:hidden) — MCB RENTALS STYLE */}
-          <div className="flex md:hidden items-center justify-between h-12 relative px-0">
+          <div className="flex md:hidden items-center justify-between h-14 relative px-0">
             {/* Left: Hamburger Button */}
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="p-1.5 -ml-1.5 text-gray-700 dark:text-foreground hover:text-[#FF5500] transition-colors focus:outline-none"
+              className="p-2 -ml-1 text-gray-700 dark:text-foreground hover:text-[#FF5500] transition-colors focus:outline-none"
               aria-label="Open mobile menu"
             >
               <Menu className="w-5 h-5" />
@@ -296,35 +296,44 @@ const Navbar = () => {
 
             {/* Center: Brand Logo */}
             <Link to="/" className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
-              <img src="/LOGO.png" alt={siteName || "Unimall"} className="h-8 w-auto object-contain" />
+              <img src="/LOGO.png" alt={siteName || "Unimall"} className="h-[38px] sm:h-10 w-auto object-contain" />
             </Link>
 
             {/* Right: Cart Button & Profile Avatar (Aligned flush with right edge) */}
-            <div className="flex items-center gap-2.5 shrink-0 -mr-1">
+            <div className="flex items-center gap-3 shrink-0 -mr-1">
               {/* Cart Button */}
               <button
                 onClick={openCart}
-                className="relative flex items-center justify-center p-0.5 text-gray-700 dark:text-foreground hover:text-[#FF5500] transition-colors focus:outline-none"
+                className="relative flex items-center justify-center p-1 text-gray-700 dark:text-foreground hover:text-[#FF5500] transition-colors focus:outline-none"
                 aria-label="View Shopping Cart"
               >
                 <MCBCartIcon count={totalItems} iconClassName="w-5 h-5 text-gray-800 dark:text-white" />
               </button>
 
-              {/* Profile Avatar */}
+              {/* Profile Avatar (Strictly bounded 34x34px size) */}
               <Link
                 to={user ? "/account" : "/login"}
-                className="relative flex items-center justify-center p-0.5 text-gray-700 dark:text-foreground hover:text-[#FF5500] transition-colors shrink-0"
+                className="relative flex items-center justify-center text-gray-700 dark:text-foreground hover:text-[#FF5500] transition-colors shrink-0"
                 aria-label="Account"
               >
                 {user ? (
-                  <Avatar className="h-7 w-7 shrink-0 aspect-square border border-gray-200 dark:border-border">
-                    {profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt={profile?.full_name || "User"} />}
-                    <AvatarFallback className="bg-[#FF5500] text-white font-black text-[11px] flex items-center justify-center">
-                      {profile?.full_name?.charAt(0) || user.email?.charAt(0).toUpperCase() || "U"}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="w-[34px] h-[34px] min-w-[34px] min-h-[34px] max-w-[34px] max-h-[34px] rounded-full overflow-hidden border-2 border-[#FF5500]/40 dark:border-border shadow-2xs bg-orange-100 dark:bg-orange-950/60 flex items-center justify-center">
+                    {profile?.avatar_url ? (
+                      <img 
+                        src={profile.avatar_url} 
+                        alt={profile?.full_name || "User"} 
+                        className="w-full h-full object-cover rounded-full" 
+                      />
+                    ) : (
+                      <span className="bg-[#FF5500] text-white font-black text-xs w-full h-full flex items-center justify-center uppercase">
+                        {profile?.full_name?.charAt(0) || user.email?.charAt(0).toUpperCase() || "U"}
+                      </span>
+                    )}
+                  </div>
                 ) : (
-                  <User className="w-5.5 h-5.5 text-gray-800 dark:text-white stroke-[1.8] shrink-0" />
+                  <div className="w-[32px] h-[32px] rounded-full bg-gray-100 dark:bg-muted flex items-center justify-center border border-gray-200 dark:border-border">
+                    <User className="w-4 h-4 text-gray-800 dark:text-white stroke-[1.8] shrink-0" />
+                  </div>
                 )}
               </Link>
             </div>

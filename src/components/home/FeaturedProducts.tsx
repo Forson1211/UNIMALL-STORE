@@ -362,7 +362,7 @@ const ProductSwiperCarousel = ({
   const [isPaused, setIsPaused] = useState(false);
 
   const totalItems = products.length;
-  const totalDots = Math.min(Math.max(totalItems, 4), 10);
+  const totalDots = Math.min(Math.max(Math.ceil(totalItems / 2), 3), 8);
 
   const updateScrollState = () => {
     if (scrollRef.current) {
@@ -392,9 +392,9 @@ const ProductSwiperCarousel = ({
     }
   }, [products]);
 
-  // Automatic slide movement every 3.5 seconds
+  // Automatic slide movement every 3.5 seconds (Smooth 2-item advance on mobile)
   useEffect(() => {
-    if (isPaused || products.length <= 1) return;
+    if (isPaused || products.length <= 2) return;
 
     const interval = setInterval(() => {
       if (scrollRef.current) {
@@ -408,11 +408,11 @@ const ProductSwiperCarousel = ({
             ? container.clientWidth / 4 
             : container.clientWidth >= 640 
               ? container.clientWidth / 3 
-              : container.clientWidth / 2;
+              : container.clientWidth;
           container.scrollBy({ left: scrollStep, behavior: "smooth" });
         }
       }
-    }, 3500);
+    }, 3800);
 
     return () => clearInterval(interval);
   }, [isPaused, products]);
@@ -420,7 +420,10 @@ const ProductSwiperCarousel = ({
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
       const container = scrollRef.current;
-      const scrollAmount = container.clientWidth * 0.75;
+      const isMobile = container.clientWidth < 640;
+      const scrollAmount = isMobile 
+        ? container.clientWidth 
+        : container.clientWidth * 0.75;
       container.scrollBy({
         left: direction === "left" ? -scrollAmount : scrollAmount,
         behavior: "smooth",
@@ -448,15 +451,20 @@ const ProductSwiperCarousel = ({
       onTouchStart={() => setIsPaused(true)}
       onTouchEnd={() => setIsPaused(false)}
     >
-      {/* Horizontal Smooth Scroll Track */}
+      {/* Horizontal Smooth Scroll Track: Exactly 2 Items per View on Mobile */}
       <div
         ref={scrollRef}
-        className="flex gap-3 sm:gap-5 lg:gap-6 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory py-1 px-0.5"
+        className="flex gap-2.5 sm:gap-5 lg:gap-6 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory py-1 px-0.5"
+        style={{
+          WebkitOverflowScrolling: "touch",
+          scrollBehavior: "smooth",
+          overscrollBehaviorX: "contain",
+        }}
       >
         {products.map((product, idx) => (
           <div
             key={product.id || idx}
-            className="w-[calc(50%-6px)] sm:w-[calc(33.333%-14px)] lg:w-[calc(25%-18px)] shrink-0 snap-start"
+            className="w-[calc(50%-5px)] sm:w-[calc(33.333%-14px)] lg:w-[calc(25%-18px)] shrink-0 snap-start"
           >
             <UnimallProductCard product={product} badgeType={badgeType} />
           </div>
@@ -464,7 +472,7 @@ const ProductSwiperCarousel = ({
       </div>
 
       {/* Bottom Navigation Controls Bar */}
-      <div className="flex items-center justify-center gap-3 sm:gap-4 mt-6">
+      <div className="flex items-center justify-center gap-3 sm:gap-4 mt-5 sm:mt-6">
         <button
           type="button"
           onClick={() => scroll("left")}
@@ -694,7 +702,7 @@ const FeaturedProducts = () => {
     queryKey: ["homepage-pro-sellers"],
     queryFn: () => productService.getProSellersRotated(8),
     initialData: cachedProducts.length > 0 ? cachedProducts.filter((p) => p.is_pro || p.vendor_verified).slice(0, 8) : undefined,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 30,
   });
 
   // Fetch Best Sellers (Automatically ranked by highest purchases & sales volume)
@@ -702,7 +710,7 @@ const FeaturedProducts = () => {
     queryKey: ["homepage-bestsellers"],
     queryFn: () => productService.getBestSellers(12),
     initialData: cachedProducts.length > 0 ? cachedProducts.slice(0, 12) : undefined,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 30,
   });
 
   // Fetch New Arrivals (instantly renders in 0ms from real cache or live DB)
@@ -710,11 +718,11 @@ const FeaturedProducts = () => {
     queryKey: ["homepage-newarrivals"],
     queryFn: () => productService.getProducts({ sortBy: "created_at", sortOrder: "desc", limit: 12 }),
     initialData: cachedProducts.length > 0 ? cachedProducts.slice(0, 12) : undefined,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 30,
   });
 
   return (
-    <section className="py-8 md:py-16 bg-white dark:bg-background">
+    <section className="pt-2 sm:pt-3 md:pt-4 pb-8 sm:pb-12 md:pb-14 bg-white dark:bg-background">
       <div className="max-w-[1280px] mx-auto px-4 xl:px-0 space-y-10 sm:space-y-14 md:space-y-16">
 
         {/* ── 0. PRO SELLERS SECTION (STRICTLY VERIFIED VENDORS ONLY WITH 5-HR ROTATION SWIPER) ── */}

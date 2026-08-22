@@ -32,6 +32,7 @@ import {
 import { UnimallVerifiedBadge } from "@/components/common/UnimallVerifiedBadge";
 import { useAuth } from "@/contexts/AuthContext";
 import { vendorService, unpackProductMetadata } from "@/services/vendorService";
+import { productService } from "@/services/productService";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import { UnimallProductCard } from "@/components/home/UnimallProductCard";
 
@@ -536,14 +537,13 @@ const VendorStore = () => {
     : "";
 
   return (
-    <div className="min-h-screen bg-white dark:bg-background text-gray-900 dark:text-slate-100 font-sans">
+    <div className="min-h-screen bg-[#f8f8f9] dark:bg-background text-gray-900 dark:text-slate-100 font-sans">
       <Navbar />
 
-      <main className="pt-3 pb-20">
-        <div className="max-w-[1280px] mx-auto px-4 xl:px-0">
-          
-          {/* ══════════════════════ TOP STORE NAVIGATION (HOME, PRODUCTS, VENDORS) ══════════════════════ */}
-          <div className="bg-white dark:bg-card border border-gray-200/80 dark:border-border p-2.5 sm:px-4 mb-4 shadow-2xs rounded-none flex items-center justify-between gap-3 flex-wrap">
+      <main className="pb-20">
+        {/* ══════════════════════ 1. TOP STORE BREADCRUMB NAVIGATION ══════════════════════ */}
+        <div className="max-w-[1280px] mx-auto px-4 xl:px-0 pt-3 mb-3">
+          <div className="bg-white dark:bg-card border border-gray-200/80 dark:border-border p-2.5 sm:px-4 shadow-2xs rounded-none flex items-center justify-between gap-3 flex-wrap">
             {/* Left: Interactive Navigation Links */}
             <div className="flex items-center gap-2 sm:gap-2.5 text-xs font-bold text-gray-700 dark:text-gray-200 flex-wrap">
               <Link 
@@ -589,132 +589,135 @@ const VendorStore = () => {
               </Link>
             </div>
           </div>
+        </div>
 
-          {/* ══════════════════════ STORE HERO BANNER & PROFILE (NO OVERLAP) ══════════════════════ */}
-          <div className="rounded-none !rounded-none overflow-hidden shadow-2xs border border-gray-200/80 dark:border-border bg-white dark:bg-card mb-6">
-            
-            {/* 1. Dedicated Top Cover Banner (100% Uncovered) */}
-            <div className="relative h-44 sm:h-56 md:h-64 w-full overflow-hidden bg-slate-900">
-              <img 
-                src={
-                  vendor.banner_url && vendor.banner_url !== vendor.avatar_url
-                    ? vendor.banner_url
-                    : "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1200"
-                } 
-                alt="Store Banner" 
-                className="w-full h-full object-cover" 
-              />
-              <div className="absolute inset-0 bg-black/20" />
+        {/* ══════════════════════ 2. FULL-BLEED STORE COVER BANNER WITH INTEGRATED PROFILE & ACTIONS ══════════════════════ */}
+        <div className="relative min-h-[280px] sm:min-h-[320px] md:min-h-[360px] w-full overflow-hidden bg-slate-950 shadow-md flex flex-col justify-between py-4 sm:py-6 mb-6">
+          {/* Full-Bleed Cover Photo */}
+          <img 
+            src={
+              vendor.banner_url && vendor.banner_url !== vendor.avatar_url
+                ? vendor.banner_url
+                : "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1600"
+            } 
+            alt="Store Banner" 
+            className="absolute inset-0 w-full h-full object-cover opacity-80" 
+          />
+          {/* Dark Contrast Gradient Overlay to make all text & buttons stand out vividly */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-black/30 z-10" />
 
-              {/* Banner Top Right Actions */}
-              <div className="absolute top-3.5 right-3.5 flex items-center gap-2">
-                <button
-                  onClick={handleShareStore}
-                  className="px-3 py-1.5 rounded-none bg-black/60 hover:bg-black/80 backdrop-blur-md text-white text-xs font-bold transition-all flex items-center gap-1.5 border border-white/20 shadow-sm cursor-pointer"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                  <span>Share</span>
-                </button>
+          {/* Top Actions Row: Share & Follow (Aligned with Site Container) */}
+          <div className="max-w-[1280px] mx-auto px-4 xl:px-0 w-full relative z-20 flex items-center justify-end">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleShareStore}
+                className="px-3.5 py-1.5 rounded-none bg-black/60 hover:bg-black/80 backdrop-blur-md text-white text-xs font-bold transition-all flex items-center gap-1.5 border border-white/20 shadow-md cursor-pointer"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>Share</span>
+              </button>
 
-                <button
-                  onClick={handleFollowToggle}
-                  className={`px-3.5 py-1.5 rounded-none text-xs font-black transition-all flex items-center gap-1.5 shadow-sm cursor-pointer ${
-                    isFollowing
-                      ? "bg-white text-gray-900 border border-gray-300"
-                      : "bg-[#FF5500] hover:bg-[#e54a00] text-white"
-                  }`}
-                >
-                  <Heart className={`w-3.5 h-3.5 ${isFollowing ? "fill-red-500 text-red-500" : ""}`} />
-                  <span>{isFollowing ? `Following (${followersCount})` : `Follow (${followersCount})`}</span>
-                </button>
-              </div>
+              <button
+                onClick={handleFollowToggle}
+                className={`px-4 py-1.5 rounded-none text-xs font-black transition-all flex items-center gap-1.5 shadow-md cursor-pointer ${
+                  isFollowing
+                    ? "bg-white text-gray-900 border border-gray-300"
+                    : "bg-[#FF5500] hover:bg-[#e54a00] text-white"
+                }`}
+              >
+                <Heart className={`w-3.5 h-3.5 ${isFollowing ? "fill-red-500 text-red-500" : ""}`} />
+                <span>{isFollowing ? `Following (${followersCount})` : `Follow (${followersCount})`}</span>
+              </button>
             </div>
+          </div>
 
-            {/* 2. Dedicated Profile Bar (Below Banner) */}
-            <div className="p-4 sm:p-5 md:p-6 bg-white dark:bg-card">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Bottom Integrated Profile Row: Avatar, Store Name, Badges & Contact CTAs */}
+          <div className="max-w-[1280px] mx-auto px-3 sm:px-4 xl:px-0 w-full relative z-20 pt-4 sm:pt-6">
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3.5 sm:gap-5">
+              
+              {/* Left: Round Avatar + Store Name + Live Stats Badges */}
+              <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
                 
-                {/* Left: Avatar + Store Name & Badges */}
-                <div className="flex items-start sm:items-center gap-4">
-                  
-                  {/* Avatar (Round with accurately positioned online status badge) */}
-                  <div className="relative -mt-12 sm:-mt-14 shrink-0 w-20 h-20 sm:w-24 sm:h-24">
-                    <div className="w-full h-full rounded-full bg-white dark:bg-card p-1 shadow-md overflow-hidden border-2 border-gray-200 dark:border-border">
-                      <img 
-                        src={vendor.avatar_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80"} 
-                        alt={vendor.store_name || "Vendor"} 
-                        className="w-full h-full object-cover rounded-full"
-                      />
-                    </div>
-                    <span 
-                      className="absolute bottom-1 right-1 sm:bottom-1.5 sm:right-1.5 w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full bg-emerald-500 border-2 border-white dark:border-card flex items-center justify-center shadow-md z-10" 
-                      title="Online Now"
-                    >
-                      <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                {/* Round Avatar with Online Status Indicator */}
+                <div className="relative shrink-0 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24">
+                  <div className="w-full h-full rounded-full bg-white p-0.5 sm:p-1 shadow-2xl overflow-hidden border-2 sm:border-3 border-white">
+                    <img 
+                      src={vendor.avatar_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80"} 
+                      alt={vendor.store_name || "Vendor"} 
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  </div>
+                  <span 
+                    className="absolute bottom-0.5 right-0.5 sm:bottom-1 sm:right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center shadow-lg z-10" 
+                    title="Online Now"
+                  >
+                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white animate-pulse" />
+                  </span>
+                </div>
+
+                {/* Store Name & Live Information Badges */}
+                <div className="space-y-1 sm:space-y-1.5 min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                    <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-black tracking-tight text-white drop-shadow-md truncate">
+                      {vendor.store_name || vendor.full_name}
+                    </h1>
+                    {Boolean(vendor.is_pro || vendor.verified) && (
+                      <UnimallVerifiedBadge size={18} color="#FF5500" title="Verified Pro Merchant" className="shrink-0" />
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-white/90 flex-wrap font-bold">
+                    <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-md px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md border border-white/20 text-white shadow-xs whitespace-nowrap">
+                      <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400 shrink-0" />
+                      <span className="truncate max-w-[150px] sm:max-w-[220px]">{vendor.campus || "University Campus"}</span>
+                    </span>
+
+                    <span className="inline-flex items-center gap-1 bg-black/50 backdrop-blur-md px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md border border-amber-400/40 text-amber-300 shadow-xs whitespace-nowrap">
+                      <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-amber-400 text-amber-400 shrink-0" />
+                      <span>{ratingSummary.rating} ({ratingSummary.label})</span>
+                    </span>
+
+                    <span className="inline-flex items-center gap-1 bg-black/50 backdrop-blur-md px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md border border-sky-400/40 text-sky-300 shadow-xs whitespace-nowrap">
+                      <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-sky-400 shrink-0" />
+                      <span>{followersCount} {followersCount === 1 ? "Follower" : "Followers"}</span>
+                    </span>
+
+                    <span className="inline-flex items-center gap-1 bg-black/50 backdrop-blur-md px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md border border-emerald-400/40 text-emerald-300 shadow-xs whitespace-nowrap">
+                      <Package className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400 shrink-0" />
+                      <span>{products.length} Products</span>
                     </span>
                   </div>
-
-                  {/* Store Name, Campus, Reviews, Followers */}
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-gray-900 dark:text-white">
-                        {vendor.store_name || vendor.full_name}
-                      </h1>
-                      {Boolean(vendor.is_pro || vendor.verified) && (
-                        <UnimallVerifiedBadge size={20} color="#00A3FF" title="Verified Pro Merchant" />
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2 sm:gap-3 text-xs text-gray-600 dark:text-slate-300 flex-wrap font-medium">
-                      <span className="flex items-center gap-1 bg-gray-100 dark:bg-muted px-2.5 py-0.5 rounded-md border border-gray-200 dark:border-border text-gray-700 dark:text-gray-300 font-bold">
-                        <MapPin className="w-3.5 h-3.5 text-[#FF5500]" />
-                        {vendor.campus || "University Campus Hub"}
-                      </span>
-
-                      <span className="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-0.5 rounded-md border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 font-bold">
-                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        {ratingSummary.rating} ({ratingSummary.label})
-                      </span>
-
-                      <span className="flex items-center gap-1 bg-blue-50 dark:bg-blue-950/40 px-2.5 py-0.5 rounded-md border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 font-bold">
-                        <Users className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                        {followersCount} {followersCount === 1 ? "Follower" : "Followers"}
-                      </span>
-
-                      <span className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 font-bold">
-                        <Package className="w-3.5 h-3.5" />
-                        {products.length} Products Listed
-                      </span>
-                    </div>
-                  </div>
-
-                </div>
-
-                {/* Right: Contact & WhatsApp Action CTAs */}
-                <div className="flex items-center gap-2.5 self-start md:self-auto shrink-0 flex-wrap pt-2 md:pt-0">
-                  {whatsappUrl && (
-                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                      <Button className="bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs h-9.5 px-5 rounded-none shadow-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer border border-[#20bd5a]">
-                        <WhatsAppOfficialIcon className="w-5 h-5 shrink-0" />
-                        Chat on WhatsApp
-                      </Button>
-                    </a>
-                  )}
-
-                  {vendor.phone && (
-                    <a href={`tel:${vendor.phone}`}>
-                      <Button variant="outline" className="border-gray-300 dark:border-border text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-muted font-bold text-xs h-9.5 px-4 rounded-none flex items-center gap-2 cursor-pointer">
-                        <PhoneCallOfficialIcon className="w-4.5 h-4.5 text-[#FF5500] shrink-0" />
-                        Call Hotline
-                      </Button>
-                    </a>
-                  )}
                 </div>
 
               </div>
-            </div>
 
+              {/* Right: WhatsApp and Hotline Contact Buttons (2-Col Grid on Mobile, Flex on Desktop) */}
+              <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-2.5 w-full lg:w-auto shrink-0 pt-1 lg:pt-0">
+                {whatsappUrl && (
+                  <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
+                    <Button className="w-full sm:w-auto bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-[11px] sm:text-xs md:text-sm h-9 sm:h-10 px-3 sm:px-5 rounded-none shadow-lg uppercase tracking-wider flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer border border-[#20bd5a]">
+                      <WhatsAppOfficialIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+                      <span className="truncate">Chat on WhatsApp</span>
+                    </Button>
+                  </a>
+                )}
+
+                {vendor.phone && (
+                  <a href={`tel:${vendor.phone}`} className="w-full sm:w-auto">
+                    <Button className="w-full sm:w-auto bg-white/95 hover:bg-white text-gray-950 font-black text-[11px] sm:text-xs md:text-sm h-9 sm:h-10 px-3 sm:px-4 rounded-none flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer shadow-lg uppercase tracking-wider">
+                      <PhoneCallOfficialIcon className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-[#FF5500] shrink-0" />
+                      <span className="truncate">Call Hotline</span>
+                    </Button>
+                  </a>
+                )}
+              </div>
+
+            </div>
           </div>
+        </div>
+
+        {/* ══════════════════════ 3. STORE PRODUCT CATALOG & FILTERS ══════════════════════ */}
+        <div className="max-w-[1280px] mx-auto px-4 xl:px-0">
 
           {/* ══════════════════════ TOP FILTER HEADER BAR (MATCHES PRODUCTS PAGE) ══════════════════════ */}
           <div className="bg-white dark:bg-card border border-gray-200/80 dark:border-border p-4 mb-6 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-none">

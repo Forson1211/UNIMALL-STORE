@@ -53,7 +53,7 @@ const Products = () => {
     initialData: cachedProducts.length > 0 
       ? (categoryFilter === "All" && !searchQuery ? cachedProducts : cachedProducts.filter(p => !categoryFilter || categoryFilter === "All" || p.category?.toLowerCase() === categoryFilter.toLowerCase()))
       : undefined,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 30,
   });
 
   // Map of vendor names to their campus location
@@ -156,10 +156,8 @@ const Products = () => {
       <Navbar />
 
       <main className="pb-20">
-        {/* Curated Shop Top Header */}
-        <div className="max-w-[1280px] mx-auto px-4 xl:px-0 pt-4 md:pt-6">
-          <ShopHeroCarousel />
-        </div>
+        {/* Curated Full-Bleed Shop Top Header Banner */}
+        <ShopHeroCarousel />
 
         {/* ── MAIN PRODUCT CATALOG & FILTER AREA ── */}
         <div id="all-products" className="max-w-[1280px] mx-auto px-4 xl:px-0 py-6 scroll-mt-24">
