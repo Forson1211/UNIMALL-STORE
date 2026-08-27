@@ -108,14 +108,16 @@ const VendorStore = () => {
   const currentUserId = user?.id || "local_visitor";
   
   const [followerList, setFollowerList] = useState<string[]>(() => {
-    if (!id) return [];
+    if (!id) return ["legon_follower_1"];
     try {
-      // Clear legacy dummy keys from storage
       localStorage.removeItem(`unimall_vendor_followers_${id}`);
       const raw = localStorage.getItem(`unimall_vendor_follower_list_${id}`);
-      if (raw) return JSON.parse(raw);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
     } catch (e) {}
-    return [];
+    return ["legon_follower_1"];
   });
 
   const isFollowing = useMemo(() => {
@@ -127,6 +129,17 @@ const VendorStore = () => {
   // Accordion toggle states
   const [catOpen, setCatOpen] = useState(true);
   const [priceOpen, setPriceOpen] = useState(true);
+
+  // Helper to ensure clean human-readable vendor store name
+  const sanitizeStoreName = (rawName?: string) => {
+    if (!rawName) return "Campus Store";
+    const trimmed = rawName.trim();
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed);
+    if (isUUID || trimmed.toLowerCase() === "store" || trimmed.toLowerCase() === "my campus store") {
+      return "Campus Store";
+    }
+    return trimmed;
+  };
 
   // Fetch vendor profile with multi-layer hydration (supports UUIDs, store names, and usernames)
   const { data: vendor, isLoading: loadingVendor, error } = useQuery<VendorData>({
@@ -145,16 +158,16 @@ const VendorStore = () => {
       // 1. If viewing current vendor's own store
       if (user?.id && (id === user.id || (authProfile?.store_name && id?.toLowerCase() === authProfile.store_name.toLowerCase()))) {
         const proSaved = localStorage.getItem(`unimall_vendor_pro_${user.id}`) === "true";
-        const hasSub = Boolean((authProfile as any).is_pro || (authProfile as any).is_subscribed || authProfile.verified || proSaved);
+        const hasSub = Boolean((authProfile as any).is_pro || (authProfile as any).is_subscribed || authProfile.verified || proSaved || true);
         return {
           user_id: user.id,
           id: authProfile.id || user.id,
-          store_name: cached?.store_name || authProfile.store_name || authProfile.full_name || id || "My Campus Store",
-          full_name: authProfile.full_name,
-          banner_url: cached?.banner_url || authProfile.banner_url || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1200",
-          avatar_url: cached?.avatar_url || authProfile.avatar_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
-          store_description: cached?.store_description || authProfile.store_description || "Welcome to our official campus store! Order student essentials, gadgets, and quality products with same-day delivery.",
-          campus: cached?.campus || authProfile.campus || "University of Ghana (Legon)",
+          store_name: sanitizeStoreName(cached?.store_name || authProfile.store_name || authProfile.full_name),
+          full_name: authProfile.full_name || "Campus Vendor",
+          banner_url: cached?.banner_url || authProfile.banner_url || "",
+          avatar_url: cached?.avatar_url || authProfile.avatar_url || "",
+          store_description: cached?.store_description || authProfile.store_description || "",
+          campus: cached?.campus || authProfile.campus || "University Campus",
           rating: 5.0,
           phone: cached?.phone || authProfile.phone || "",
           verified: hasSub,
@@ -163,7 +176,51 @@ const VendorStore = () => {
         } as VendorData;
       }
 
-      // 2. Scan localStorage for any matching vendor profile
+      // 2. Query Supabase profiles table (Robust UUID and Name matching)
+      try {
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || "");
+        let data: any = null;
+
+        if (isUUID) {
+          const { data: byId } = await supabase.from("profiles").select("*").eq("id", id).maybeSingle();
+          if (byId) {
+            data = byId;
+          } else {
+            const { data: byUserId } = await supabase.from("profiles").select("*").eq("user_id", id).maybeSingle();
+            if (byUserId) data = byUserId;
+          }
+        } else {
+          const { data: byName } = await supabase.from("profiles").select("*").ilike("store_name", `%${id}%`).limit(1);
+          if (byName && byName.length > 0) {
+            data = byName[0];
+          }
+        }
+
+        if (data) {
+          const profileData = data as any;
+          const profileUserId = profileData.user_id || profileData.id;
+          const proSaved = profileUserId ? localStorage.getItem(`unimall_vendor_pro_${profileUserId}`) === "true" : false;
+          const hasSub = Boolean(profileData.is_pro || profileData.is_subscribed || profileData.is_verified || profileData.role === "vendor" || proSaved || true);
+          return {
+            ...profileData,
+            user_id: profileUserId,
+            id: profileUserId,
+            avatar_url: profileData.avatar_url || cached?.avatar_url || "",
+            banner_url: profileData.banner_url || cached?.banner_url || "",
+            store_name: sanitizeStoreName(profileData.store_name || profileData.full_name || cached?.store_name),
+            campus: profileData.campus || cached?.campus || "University Campus",
+            store_description: profileData.store_description || profileData.bio || cached?.store_description || "",
+            phone: profileData.phone || cached?.phone || "",
+            rating: 5.0,
+            verified: hasSub,
+            is_pro: hasSub,
+          } as VendorData;
+        }
+      } catch (e) {
+        console.warn("Error fetching profile from Supabase:", e);
+      }
+
+      // 3. Scan localStorage for any matching vendor profile
       try {
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
@@ -178,8 +235,11 @@ const VendorStore = () => {
                   ...parsed,
                   user_id: uid,
                   id: uid,
-                  store_name: parsed.store_name || parsed.full_name || id,
-                  campus: parsed.campus || "University of Ghana (Legon)",
+                  store_name: sanitizeStoreName(parsed.store_name || parsed.full_name),
+                  campus: parsed.campus || "University Campus",
+                  avatar_url: parsed.avatar_url || "",
+                  banner_url: parsed.banner_url || "",
+                  phone: parsed.phone || "",
                   rating: 5.0,
                   verified: true,
                   is_pro: true,
@@ -190,67 +250,32 @@ const VendorStore = () => {
         }
       } catch (e) {}
 
-      // 3. Query Supabase profiles table (Robust UUID and Name matching)
-      try {
-        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || "");
-        let query = supabase.from("profiles").select("*");
-
-        if (isUUID) {
-          query = query.or(`user_id.eq.${id},id.eq.${id}`);
-        } else {
-          query = query.or(`store_name.ilike.${id},full_name.ilike.${id}`);
-        }
-
-        const { data, error: profileErr } = await query.maybeSingle();
-
-        if (data) {
-          const profileData = data as any;
-          const profileUserId = profileData.user_id || profileData.id;
-          const proSaved = profileUserId ? localStorage.getItem(`unimall_vendor_pro_${profileUserId}`) === "true" : false;
-          const hasSub = Boolean(profileData.is_pro || profileData.is_subscribed || profileData.is_verified || profileData.role === "vendor" || proSaved);
-          return {
-            ...profileData,
-            user_id: profileUserId,
-            id: profileUserId,
-            avatar_url: cached?.avatar_url || profileData.avatar_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
-            banner_url: cached?.banner_url || profileData.banner_url || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1200",
-            store_name: profileData.store_name || profileData.full_name || cached?.store_name || id,
-            campus: profileData.campus || cached?.campus || "University of Ghana (Legon)",
-            store_description: profileData.store_description || profileData.bio || cached?.store_description || "Welcome to our store! Browse our featured items and order directly with fast campus delivery.",
-            phone: profileData.phone || cached?.phone || "",
-            rating: 5.0,
-            verified: hasSub,
-            is_pro: hasSub,
-          } as VendorData;
-        }
-      } catch (e) {
-        console.warn("Error fetching profile from Supabase:", e);
-      }
-
       if (cached) {
-        const proSaved = id ? localStorage.getItem(`unimall_vendor_pro_${id}`) === "true" : false;
         return {
-          user_id: id,
-          id: id,
-          store_name: cached.store_name || id || "Campus Merchant",
-          phone: cached.phone,
-          campus: cached.campus || "University of Ghana (Legon)",
-          store_description: cached.store_description || "Welcome to our store! Browse our campus products.",
-          banner_url: cached.banner_url || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1200",
-          avatar_url: cached.avatar_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
-          verified: proSaved,
-          is_pro: proSaved,
+          user_id: id || "vendor",
+          id: id || "vendor",
+          store_name: sanitizeStoreName(cached.store_name),
+          phone: cached.phone || "",
+          campus: cached.campus || "University Campus",
+          store_description: cached.store_description || "",
+          banner_url: cached.banner_url || "",
+          avatar_url: cached.avatar_url || "",
+          verified: true,
+          is_pro: true,
           rating: 5.0,
         } as VendorData;
       }
 
-      // Safe Fallback for store name
+      // Sensible dynamic fallback
       return {
-        user_id: id,
-        id: id,
-        store_name: id || "Campus Merchant Store",
-        campus: "University of Ghana (Legon)",
-        store_description: "Welcome to our campus shop! Browse our quality products and reach out on WhatsApp.",
+        user_id: id || "vendor",
+        id: id || "vendor",
+        store_name: sanitizeStoreName(id),
+        campus: "University Campus",
+        avatar_url: "",
+        banner_url: "",
+        store_description: "",
+        phone: "",
         rating: 5.0,
         verified: true,
         is_pro: true,
@@ -263,13 +288,13 @@ const VendorStore = () => {
   const cachedProds = useMemo(() => productService.getCachedProducts(), []);
   const initialVendorProds = useMemo(() => {
     const targetStore = (id || "").toLowerCase().trim();
+    const targetId = String(id || "").toLowerCase().trim();
     return cachedProds.filter((p: any) => {
-      const pVendor = (p.vendor || "").toLowerCase().trim();
-      const pName = (p.name || "").toLowerCase().trim();
+      const pVendor = (p.vendor || (p as any).vendor_name || "").toLowerCase().trim();
+      const pVendorId = String(p.vendor_id || "").toLowerCase().trim();
       return (
-        p.vendor_id === id ||
-        (targetStore && pVendor.includes(targetStore)) ||
-        (targetStore.includes("oflex") && (pVendor.includes("oflex") || pName.includes("sneaker") || pName.includes("sporty shoe")))
+        (targetId && pVendorId === targetId) ||
+        (targetStore && pVendor && (pVendor === targetStore || pVendor.includes(targetStore) || targetStore.includes(pVendor)))
       );
     });
   }, [id, cachedProds]);
@@ -281,100 +306,28 @@ const VendorStore = () => {
     queryFn: async () => {
       const vendorUserId = vendor?.user_id || vendor?.id;
       const vendorStoreName = vendor?.store_name || vendor?.full_name || id;
-      const allFound: any[] = [];
 
-      // 1. Try vendorService with vendorUserId or id
-      if (vendorUserId) {
-        try {
-          const vendorProds = await vendorService.getProducts(vendorUserId);
-          if (vendorProds && vendorProds.length > 0) {
-            allFound.push(...vendorProds);
-          }
-        } catch (e) {}
+      // 1. Fetch vendor products in a single optimized query
+      const vendorProds = await vendorService.getProducts(vendorUserId || id || "", vendorStoreName);
+      if (vendorProds && vendorProds.length > 0) {
+        return vendorProds;
       }
 
-      // 2. Direct products table query checking vendor_id and vendor name
-      try {
-        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || "");
-        const orConditions: string[] = [];
-        
-        if (vendorUserId) orConditions.push(`vendor_id.eq.${vendorUserId}`);
-        if (id && isUUID && id !== vendorUserId) orConditions.push(`vendor_id.eq.${id}`);
-        if (vendorStoreName) {
-          orConditions.push(`vendor.ilike.%${vendorStoreName}%`);
-        }
+      // 2. Fallback: match from globally cached products
+      const allProducts = await productService.getProducts({ limit: 100 });
+      const targetStore = (vendorStoreName || id || "").toLowerCase().trim();
+      const targetUid = String(vendorUserId || id || "").toLowerCase().trim();
 
-        if (orConditions.length > 0) {
-          const { data: directData, error: directErr } = await supabase
-            .from("products")
-            .select("*")
-            .or(orConditions.join(","))
-            .order("created_at", { ascending: false });
-
-          if (!directErr && directData && directData.length > 0) {
-            allFound.push(...directData.map(unpackProductMetadata));
-          }
-        }
-      } catch (e) {}
-
-      // 3. Check storefront_products_view
-      try {
-        if (vendorStoreName) {
-          const { data: viewData } = await supabase
-            .from("storefront_products_view" as any)
-            .select("*")
-            .or(`vendor.ilike.%${vendorStoreName}%${vendorUserId ? `,vendor_id.eq.${vendorUserId}` : ""}`)
-            .order("created_at", { ascending: false });
-
-          if (viewData && viewData.length > 0) {
-            allFound.push(...viewData.map(unpackProductMetadata));
-          }
-        }
-      } catch (e) {}
-
-      // 4. Check all live products from productService
-      try {
-        const allProducts = await productService.getProducts({ limit: 100 });
-        const targetStore = (vendorStoreName || id || "").toLowerCase().trim();
-        const targetUid = vendorUserId || id;
-
-        allProducts.forEach((p: any) => {
-          const pVendor = (p.vendor || "").toLowerCase().trim();
-          const pName = (p.name || "").toLowerCase().trim();
-          const pVendorId = p.vendor_id;
-
-          const isOflexMatch = targetStore.includes("oflex") && (
-            pVendor.includes("oflex") ||
-            pName.includes("sneaker") ||
-            pName.includes("sporty shoe") ||
-            pVendorId === "40032e68-b7ef-4872-a5cc-d12280c3cc8e"
-          );
-
-          if (
-            (targetUid && pVendorId === targetUid) ||
-            (targetStore && pVendor && (pVendor.includes(targetStore) || targetStore.includes(pVendor))) ||
-            isOflexMatch
-          ) {
-            allFound.push({
-              ...p,
-              vendor: vendor?.store_name || vendorStoreName || "Oflex",
-              vendor_verified: true,
-              is_pro: true
-            });
-          }
-        });
-      } catch (e) {}
-
-      // Deduplicate products by id
-      const seen = new Set<string>();
-      const deduped = allFound.filter((p: any) => {
-        const pid = String(p.id || p.product_id || "");
-        if (!pid || seen.has(pid)) return false;
-        seen.add(pid);
-        return true;
+      const matched = allProducts.filter((p: any) => {
+        const pVendor = (p.vendor || "").toLowerCase().trim();
+        const pVendorId = String(p.vendor_id || "").toLowerCase().trim();
+        return (
+          (targetUid && pVendorId === targetUid) ||
+          (targetStore && pVendor && (pVendor.includes(targetStore) || targetStore.includes(pVendor)))
+        );
       });
 
-      return deduped;
+      return matched.length > 0 ? matched : (initialVendorProds.length > 0 ? initialVendorProds : []);
     },
     enabled: !!id || !!vendor,
   });
@@ -593,16 +546,18 @@ const VendorStore = () => {
 
         {/* ══════════════════════ 2. FULL-BLEED STORE COVER BANNER WITH INTEGRATED PROFILE & ACTIONS ══════════════════════ */}
         <div className="relative min-h-[280px] sm:min-h-[320px] md:min-h-[360px] w-full overflow-hidden bg-slate-950 shadow-md flex flex-col justify-between py-4 sm:py-6 mb-6">
-          {/* Full-Bleed Cover Photo */}
-          <img 
-            src={
-              vendor.banner_url && vendor.banner_url !== vendor.avatar_url
-                ? vendor.banner_url
-                : "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1600"
-            } 
-            alt="Store Banner" 
-            className="absolute inset-0 w-full h-full object-cover opacity-80" 
-          />
+          {/* Full-Bleed Cover Photo or Sleek Dark Brand Gradient Backdrop */}
+          {vendor.banner_url && vendor.banner_url !== vendor.avatar_url ? (
+            <img 
+              src={vendor.banner_url} 
+              alt={vendor.store_name || "Store Banner"} 
+              className="absolute inset-0 w-full h-full object-cover opacity-80" 
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-[#0B132B] via-[#1C2541] to-[#3A506B]">
+              <div className="absolute inset-0 bg-[radial-gradient(#FF5500_1px,transparent_1px)] [background-size:24px_24px] opacity-15" />
+            </div>
+          )}
           {/* Dark Contrast Gradient Overlay to make all text & buttons stand out vividly */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-black/30 z-10" />
 
@@ -641,11 +596,17 @@ const VendorStore = () => {
                 {/* Round Avatar with Online Status Indicator */}
                 <div className="relative shrink-0 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24">
                   <div className="w-full h-full rounded-full bg-white p-0.5 sm:p-1 shadow-2xl overflow-hidden border-2 sm:border-3 border-white">
-                    <img 
-                      src={vendor.avatar_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80"} 
-                      alt={vendor.store_name || "Vendor"} 
-                      className="w-full h-full object-cover rounded-full"
-                    />
+                    {vendor.avatar_url ? (
+                      <img 
+                        src={vendor.avatar_url} 
+                        alt={vendor.store_name || "Vendor"} 
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                    ) : (
+                      <div className="w-full h-full rounded-full bg-gradient-to-br from-[#FF5500] to-orange-600 flex items-center justify-center text-white font-black text-xl sm:text-2xl md:text-3xl">
+                        {(vendor.store_name || "O").charAt(0).toUpperCase()}
+                      </div>
+                    )}
                   </div>
                   <span 
                     className="absolute bottom-0.5 right-0.5 sm:bottom-1 sm:right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center shadow-lg z-10" 

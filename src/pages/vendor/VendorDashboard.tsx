@@ -25,6 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { calculateVendorProfileCompleteness } from "@/lib/vendorProfileUtils";
 
 const VendorDashboard = () => {
   const { user, profile } = useAuth();
@@ -119,13 +120,12 @@ const VendorDashboard = () => {
 
   const stats = (statsData || {}) as any;
   const vendorProfile = { ...(localCache || {}), ...(profile || {}) } as any;
-  const storeName = vendorProfile.store_name || vendorProfile.full_name || localCache?.store_name || "Campus Vendor";
-  const campusLocation = vendorProfile.campus || localCache?.campus || "University of Ghana (Legon)";
-  const isProfileComplete = Boolean(
-    (vendorProfile.store_name || vendorProfile.full_name || localCache?.store_name || localCache?.full_name)?.trim() &&
-    (vendorProfile.campus || localCache?.campus)?.trim() &&
-    (vendorProfile.phone || localCache?.phone)?.trim()
-  );
+  const storeName = vendorProfile.store_name || localCache?.store_name || user?.user_metadata?.store_name || vendorProfile.full_name || "Campus Vendor";
+  const campusLocation = vendorProfile.campus || localCache?.campus || "University Campus";
+  
+  const completenessData = calculateVendorProfileCompleteness(profile, localCache);
+  const isProfileComplete = completenessData.isComplete;
+  const completenessScore = completenessData.score;
 
   // Format today's date
   const todayFormatted = new Date().toLocaleDateString("en-GB", {
@@ -381,23 +381,28 @@ const VendorDashboard = () => {
 
         {/* ── Profile Incomplete Setup Banner ── */}
         {!isProfileComplete && (
-          <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+          <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-900/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
             <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
-                <Store className="w-5 h-5" />
+              <div className="w-11 h-11 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs font-black text-xs">
+                {completenessScore}%
               </div>
               <div>
-                <h4 className="text-sm font-black text-gray-900 dark:text-white">Store Profile Setup Required</h4>
+                <h4 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2">
+                  <span>100% Store Setup Required to List Products</span>
+                  <span className="text-[10px] bg-amber-200 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200 px-2 py-0.5 rounded-full font-bold">
+                    {completenessScore}% Complete
+                  </span>
+                </h4>
                 <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mt-0.5">
-                  Complete your store profile (Store Name, Campus Hub, WhatsApp Hotline) to start adding products and selling on Unimall.
+                  Complete 100% of your store profile (Logo, Cover Banner, WhatsApp Hotline, Campus Hub, and Bio) to unlock product publishing on Unimall.
                 </p>
               </div>
             </div>
             <Button
               onClick={() => navigate("/vendor/profile")}
-              className="w-full sm:w-auto bg-[#FF5500] hover:bg-[#e54a00] text-white font-bold text-xs h-9 px-5 rounded-xl shadow-xs shrink-0"
+              className="w-full sm:w-auto bg-[#FF5500] hover:bg-[#e54a00] text-white font-black text-xs h-9 px-5 rounded-xl shadow-xs shrink-0 uppercase tracking-wider"
             >
-              Complete Store Profile →
+              Complete Store Profile ({completenessScore}%) →
             </Button>
           </div>
         )}

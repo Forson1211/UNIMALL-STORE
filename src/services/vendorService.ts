@@ -1,4 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
+import { withRetry } from "@/lib/dbUtils";
+import { REAL_VENDOR_PRODUCTS } from "@/data/realVendorProducts";
 
 export const packProductMetadata = (product: any) => {
     const extraMeta: any = {};
@@ -55,7 +57,9 @@ export const unpackProductMetadata = (product: any) => {
         ? product.images
         : (extra.images && Array.isArray(extra.images) && extra.images.length > 0)
             ? extra.images
-            : product.image_url ? [product.image_url] : [];
+            : product.image_url ? [product.image_url] : (product.image ? [product.image] : []);
+
+    const mainImage = product.image_url || product.image || (images && images.length > 0 ? images[0] : "") || extra.image_url || extra.image || "";
 
     const original_price = (product.original_price !== undefined && product.original_price !== null)
         ? Number(product.original_price)
@@ -75,11 +79,13 @@ export const unpackProductMetadata = (product: any) => {
 
     return {
         ...product,
+        image: mainImage,
+        image_url: mainImage,
         description: cleanDescription,
         vendor: vendor || product.vendor || "",
         original_price,
-        images,
-        gallery: images,
+        images: images.length > 0 ? images : (mainImage ? [mainImage] : []),
+        gallery: images.length > 0 ? images : (mainImage ? [mainImage] : []),
         condition,
         status,
         deleted_by: extra.deleted_by || (isDeletedByAdmin ? "admin" : null),
@@ -93,158 +99,212 @@ export const unpackProductMetadata = (product: any) => {
 
 export const vendorService = {
     async getDashboardStats(vendorId: string) {
-        const { data, error } = await ((supabase as any)
-            .from("vendor_dashboard_stats")
-            .select("*")
-            .eq("vendor_id", vendorId)
-            .single());
-
-        if (error) {
-            if (error.code === "PGRST116") {
-                return {
-                    total_revenue: 0,
-                    total_orders: 0,
-                    total_products: 0,
-                    low_stock_count: 0,
-                };
-            }
-            throw error;
+        if (!vendorId) {
+            return {
+                total_revenue: 0,
+                total_orders: 0,
+                total_products: 0,
+                low_stock_count: 0,
+            };
         }
-        return data;
-    },
 
-    async getProducts(vendorId: string, vendorName?: string) {
-        const allFetched: any[] = [];
-
-        // 1. Direct products table query by vendor_id
         try {
-            const { data: directData } = await (supabase as any)
-                .from("products")
+            const { data, error } = await ((supabase as any)
+                .from("vendor_dashboard_stats")
                 .select("*")
                 .eq("vendor_id", vendorId)
-                .order("created_at", { ascending: false });
+                .maybeSingle());
 
-            if (directData && directData.length > 0) {
-                allFetched.push(...directData.map(unpackProductMetadata));
+            if (!error && data) {
+                return data;
             }
         } catch (e) {}
 
-        // 2. Query vendor_products_view
+        // Dynamic fallback aggregation directly from products & order_items
         try {
-            const { data: viewData } = await ((supabase as any)
-                .from("vendor_products_view")
+            const { data: prods } = await supabase
+                .from("products")
+                .select("id, stock, is_active")
+                .eq("vendor_id", vendorId);
+
+            const totalProds = prods?.length || 0;
+            const lowStock = (prods || []).filter((p: any) => Number(p.stock || 0) < 10).length;
+
+            const { data: orderItems } = await supabase
+                .from("order_items")
+                .select("price_at_purchase, quantity, order_id")
+                .eq("vendor_id", vendorId);
+
+            const totalRev = (orderItems || []).reduce((sum: number, it: any) => sum + (Number(it.price_at_purchase || 0) * Number(it.quantity || 1)), 0);
+            const totalOrders = new Set((orderItems || []).map((it: any) => it.order_id)).size;
+
+            return {
+                total_revenue: totalRev,
+                total_orders: totalOrders,
+                total_products: totalProds,
+                low_stock_count: lowStock,
+            };
+        } catch (err) {
+            return {
+                total_revenue: 0,
+                total_orders: 0,
+                total_products: 0,
+                low_stock_count: 0,
+            };
+        }
+    },
+
+    async getProducts(vendorId: string, vendorName?: string) {
+        if (!vendorId && !vendorName) return [];
+
+        const cachedVendorKey = `unimall_vendor_prods_${vendorId}`;
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(vendorId || "");
+
+        try {
+            let query = (supabase as any)
+                .from("products")
+                .select("*")
+                .order("created_at", { ascending: false });
+
+            if (vendorId && isUUID) {
+                query = query.eq("vendor_id", vendorId);
+            } else if (vendorName) {
+                query = query.ilike("vendor", `%${vendorName.trim()}%`);
+            } else if (vendorId) {
+                query = query.or(`vendor_id.eq.${vendorId},vendor.ilike.%${vendorId}%`);
+            }
+
+            const { data, error } = await query;
+            if (!error && data) {
+                const unpacked = (data as any[]).map(unpackProductMetadata)
+                    .filter((p: any) => p.status !== "deleted_by_admin" && p.status !== "deleted");
+
+                try {
+                    localStorage.setItem(cachedVendorKey, JSON.stringify(unpacked.slice(0, 50)));
+                } catch (e) {}
+
+                return unpacked;
+            }
+        } catch (err) {
+            console.warn("Failed to fetch vendor products from Supabase:", err);
+        }
+
+        // Return locally cached vendor products if DB is temporarily unreachable
+        try {
+            const raw = localStorage.getItem(cachedVendorKey);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    return parsed;
+                }
+            }
+        } catch (e) {}
+
+        return [];
+    },
+
+    async getOrders(vendorId: string) {
+        if (!vendorId) return [];
+
+        try {
+            const { data, error } = await ((supabase as any)
+                .from("vendor_orders_view")
                 .select("*")
                 .eq("vendor_id", vendorId)
                 .order("created_at", { ascending: false }));
 
-            if (viewData && viewData.length > 0) {
-                allFetched.push(...viewData.map(unpackProductMetadata));
-            }
+            if (!error && data) return data;
         } catch (e) {}
 
-        // 3. Query products table by vendor store name if known (e.g. "Oflex")
-        let targetName = vendorName;
-        if (!targetName && vendorId) {
-            try {
-                const raw = localStorage.getItem(`unimall_vendor_profile_${vendorId}`);
-                if (raw) {
-                    const parsed = JSON.parse(raw);
-                    targetName = parsed.store_name || parsed.full_name;
-                }
-            } catch (e) {}
-        }
-
-        if (targetName && targetName.trim()) {
-            try {
-                const { data: nameData } = await (supabase as any)
-                    .from("products")
-                    .select("*")
-                    .or(`vendor.ilike.%${targetName}%,description.ilike.%${targetName}%`)
-                    .order("created_at", { ascending: false });
-
-                if (nameData && nameData.length > 0) {
-                    allFetched.push(...nameData.map(unpackProductMetadata));
-                }
-            } catch (e) {}
-        }
-
-        // 4. Query all recent products and match vendor_id or vendor
+        // Direct order_items fallback
         try {
-            const { data: recentData } = await (supabase as any)
-                .from("products")
-                .select("*")
-                .order("created_at", { ascending: false })
-                .limit(100);
+            const { data, error } = await ((supabase as any)
+                .from("order_items")
+                .select("*, orders(*)")
+                .eq("vendor_id", vendorId)
+                .order("created_at", { ascending: false }));
 
-            if (recentData && recentData.length > 0) {
-                recentData.forEach((p: any) => {
-                    const unpacked = unpackProductMetadata(p);
-                    const pVendor = (unpacked.vendor || "").toLowerCase();
-                    const pDesc = (unpacked.description || "").toLowerCase();
-                    const pName = (unpacked.name || "").toLowerCase();
-                    const tName = (targetName || "oflex").toLowerCase();
-
-                    const isOflexItem = tName.includes("oflex") && (
-                        pName.includes("sneaker") ||
-                        pName.includes("sporty shoe") ||
-                        pName.includes("max sneaker") ||
-                        pName.includes("fashionista") ||
-                        p.vendor_id === "40032e68-b7ef-4872-a5cc-d12280c3cc8e"
-                    );
-
-                    if (
-                        p.vendor_id === vendorId ||
-                        (tName && (pVendor.includes(tName) || pDesc.includes(tName))) ||
-                        isOflexItem
-                    ) {
-                        unpacked.vendor = targetName || "Oflex";
-                        allFetched.push(unpacked);
-                    }
-                });
+            if (!error && data) {
+                return data.map((it: any) => ({
+                    order_id: it.order_id,
+                    vendor_id: it.vendor_id,
+                    created_at: it.created_at || it.orders?.created_at,
+                    order_status: it.orders?.status || "pending",
+                    order_total: it.orders?.total_amount || (it.price_at_purchase * it.quantity),
+                    vendor_total: it.price_at_purchase * it.quantity,
+                    item_count: it.quantity,
+                    shipping_address: it.orders?.shipping_address,
+                }));
             }
         } catch (e) {}
 
-        // Deduplicate by product id
-        const seen = new Set<string>();
-        const deduped = allFetched.filter((p: any) => {
-            const pid = String(p.id || p.product_id || "");
-            if (!pid || seen.has(pid)) return false;
-            seen.add(pid);
-            return true;
-        });
-
-        return deduped;
-    },
-
-    async getOrders(vendorId: string) {
-        const { data, error } = await ((supabase as any)
-            .from("vendor_orders_view")
-            .select("*")
-            .eq("vendor_id", vendorId)
-            .order("created_at", { ascending: false }));
-
-        if (error) throw error;
-        return data;
+        return [];
     },
 
     async getWeeklySales(vendorId: string) {
-        const { data, error } = await ((supabase as any)
-            .from("vendor_weekly_sales")
-            .select("*")
-            .eq("vendor_id", vendorId)
-            .order("week_start", { ascending: true }));
+        if (!vendorId) return [];
+        try {
+            const { data, error } = await ((supabase as any)
+                .from("vendor_weekly_sales")
+                .select("*")
+                .eq("vendor_id", vendorId)
+                .order("week_start", { ascending: true }));
 
-        if (error) {
+            if (!error && data) {
+                return data as { week_start: string; revenue: number; orders: number }[];
+            }
+        } catch (error) {
             console.error("Error fetching weekly sales:", error);
-            return [];
         }
-        return data as { week_start: string; revenue: number; orders: number }[];
+        return [];
     },
 
     async createProduct(product: any) {
-        const payload = packProductMetadata(product);
+        // Enforce authentic user ID from active Supabase session
+        const { data: authData } = await supabase.auth.getUser();
+        const authenticatedUserId = authData?.user?.id;
 
-        // Self-healing insert loop to handle any missing columns in DB schema
+        if (!authenticatedUserId) {
+            throw new Error("You must be signed in to create a product.");
+        }
+
+        // Validate 100% Store Profile Completeness requirement
+        let profileData: any = null;
+        try {
+            const { data: prof } = await supabase
+                .from("profiles")
+                .select("store_name, full_name, phone, campus, store_description, avatar_url, banner_url")
+                .eq("user_id", authenticatedUserId)
+                .maybeSingle();
+            if (prof) profileData = prof;
+        } catch (e) {}
+
+        let localData: any = null;
+        try {
+            const raw = localStorage.getItem(`unimall_vendor_profile_${authenticatedUserId}`);
+            if (raw) localData = JSON.parse(raw);
+        } catch (e) {}
+
+        const mergedProf = { ...(profileData || {}), ...(localData || {}) };
+        const hasStoreName = Boolean((mergedProf.store_name || mergedProf.full_name || product.vendor || product.store_name)?.trim());
+        const hasPhone = Boolean(mergedProf.phone?.trim());
+        const hasCampus = Boolean(mergedProf.campus?.trim());
+        const hasDescription = Boolean((mergedProf.store_description || mergedProf.description)?.trim());
+        const hasAvatar = Boolean(mergedProf.avatar_url?.trim());
+        const hasBanner = Boolean(mergedProf.banner_url?.trim());
+
+        if (!hasStoreName || !hasPhone || !hasCampus || !hasDescription || !hasAvatar || !hasBanner) {
+            throw new Error("Please complete 100% of your store profile (Store Logo, Cover Banner, WhatsApp Contact, Campus Location, and Bio) before listing products.");
+        }
+
+        const payload = packProductMetadata({
+            ...product,
+            vendor_id: authenticatedUserId,
+        });
+
+        // Ensure vendor_id is strictly the authenticated user's ID
+        payload.vendor_id = authenticatedUserId;
+
         let currentPayload = { ...payload };
         let result: any = null;
         let lastError: any = null;
@@ -264,7 +324,7 @@ export const vendorService = {
             lastError = error;
             console.warn(`Product insert attempt ${attempt + 1} failed:`, error?.message);
 
-            // If a specific column is missing, strip it and retry
+            // If a specific column is missing from older schema, strip it and retry
             const match = error?.message?.match(/Could not find the '(\w+)' column/i);
             if (match && match[1]) {
                 delete currentPayload[match[1]];

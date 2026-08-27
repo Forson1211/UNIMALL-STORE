@@ -1,12 +1,14 @@
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardHeader } from "./DashboardHeader";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
-import { Clock, ShieldAlert, CheckCircle2, Lock, Ban, Home, Mail } from "lucide-react";
+import { Clock, ShieldAlert, CheckCircle2, Lock, Ban, Home, Mail, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -17,9 +19,114 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children, type, title, userName, userRole }: DashboardLayoutProps) {
-  const { vendorStatus, role, isLoading, refreshProfile } = useAuth();
+  const { user, vendorStatus, role, isLoading, refreshProfile } = useAuth();
   const isVendor = type === 'vendor';
-  const isApproved = role === 'admin' || !isVendor || vendorStatus === 'approved';
+  const localStatus = user?.id ? localStorage.getItem(`unimall_vendor_status_${user.id}`) : null;
+  // isSuspended: trust both AuthContext state AND localStorage (monitor updates localStorage first)
+  const isSuspended = vendorStatus === 'suspended' || localStatus === 'suspended';
+  // isApproved: NEVER use localStatus=approved to override — only trust vendorStatus from AuthContext (set by DB)
+  // Use localStatus=approved only as a fast-path while vendorStatus is still null (loading)
+  const isStatusLoaded = vendorStatus !== null;
+  const isApproved = role === 'admin' || (!isVendor ? true : (
+    !isSuspended && (
+      vendorStatus === 'approved' ||
+      (!isStatusLoaded && localStatus === 'approved')  // only while loading
+    )
+  ));
+  // Status transition toast (only fires on actual state changes, never on page routing)
+  useEffect(() => {
+    if (!user?.id || !isVendor) return;
+
+    const prevStatus = sessionStorage.getItem(`unimall_prev_vendor_status_${user.id}`);
+
+    if (prevStatus === "pending" && vendorStatus === "approved") {
+      toast.success("🎉 Store Approved!", {
+        description: "Your vendor dashboard and product manager are fully unlocked.",
+      });
+    } else if (prevStatus === "approved" && (vendorStatus === "suspended" || isSuspended)) {
+      toast.error("⚠️ Account Suspended", {
+        description: "Your vendor store has been suspended by an administrator.",
+      });
+    }
+
+    if (vendorStatus) {
+      sessionStorage.setItem(`unimall_prev_vendor_status_${user.id}`, vendorStatus);
+    }
+  }, [vendorStatus, isSuspended, user?.id, isVendor]);
+
+  // Universal status monitor — detects both approval AND suspension in real-time
+  useEffect(() => {
+    if (!isVendor || !user?.id || role === "admin") return;
+
+    let lastCheckedRole: string | null = null;
+
+    const checkStatus = async () => {
+      // 1. Check local storage first
+      const local = localStorage.getItem(`unimall_vendor_status_${user.id}`);
+      if (local === "suspended" && vendorStatus !== "suspended") {
+        refreshProfile();
+        return;
+      }
+      if (local === "approved" && vendorStatus !== "approved") {
+        refreshProfile();
+        return;
+      }
+
+      // 2. Direct query on user_roles
+      try {
+        const { data: roleRow } = await supabase
+          .from("user_roles")
+          .select("role, vendor_status")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (roleRow?.vendor_status === "suspended") {
+          localStorage.setItem(`unimall_vendor_status_${user.id}`, "suspended");
+          refreshProfile();
+          return;
+        }
+        if (roleRow?.vendor_status === "approved" && vendorStatus !== "approved") {
+          localStorage.setItem(`unimall_vendor_status_${user.id}`, "approved");
+          refreshProfile();
+          return;
+        }
+      } catch (e) {}
+
+      // 3. Direct query on profiles
+      try {
+        const { data: pData } = await (supabase
+          .from("profiles" as any)
+          .select("vendor_status, verified")
+          .or(`id.eq.${user.id},user_id.eq.${user.id}`)
+          .maybeSingle() as any);
+
+        if (pData?.vendor_status === "suspended") {
+          localStorage.setItem(`unimall_vendor_status_${user.id}`, "suspended");
+          refreshProfile();
+          return;
+        }
+      } catch (e) {}
+
+      // 4. RPC role check
+      try {
+        const { data: currentVendorStatus } = await (supabase.rpc as any)("get_vendor_status", { _user_id: user.id });
+        if (!currentVendorStatus) return;
+
+        const roleChanged = currentVendorStatus !== lastCheckedRole;
+        lastCheckedRole = currentVendorStatus;
+
+        if (roleChanged || currentVendorStatus !== vendorStatus) {
+          localStorage.setItem(`unimall_vendor_status_${user.id}`, currentVendorStatus);
+          refreshProfile();
+        }
+      } catch (e) {}
+    };
+
+    // Run immediately on mount to catch suspended state before first interval
+    checkStatus();
+    const timer = setInterval(checkStatus, 3000);
+    return () => clearInterval(timer);
+  }, [isVendor, user?.id, role, refreshProfile]);
 
   useEffect(() => {
     const rootEl = document.getElementById("root");
@@ -53,7 +160,7 @@ export function DashboardLayout({ children, type, title, userName, userRole }: D
           />
           <main className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-4 lg:p-6">
             {!isApproved ? (
-              vendorStatus === 'suspended' ? (
+              (vendorStatus === 'suspended' || isSuspended || localStatus === 'suspended') ? (
                 <div className="flex flex-col items-center justify-center h-[70vh] max-w-2xl mx-auto text-center space-y-8 animate-in fade-in zoom-in duration-500">
                   <div className="relative">
                     <div className="w-24 h-24 bg-destructive/10 rounded-full flex items-center justify-center relative z-10">
@@ -63,10 +170,10 @@ export function DashboardLayout({ children, type, title, userName, userRole }: D
                   </div>
 
                   <div className="space-y-4">
-                    <h2 className="text-3xl font-bold tracking-tight">Account Suspended</h2>
+                    <h2 className="text-3xl font-bold tracking-tight text-destructive">Account Suspended</h2>
                     <p className="text-lg text-muted-foreground leading-relaxed">
-                      Your vendor account has been suspended by an administrator.
-                      Please contact support if you believe this is a mistake.
+                      Your vendor store has been suspended by an administrator.
+                      Please contact Unimall support if you believe this is a mistake or to appeal this decision.
                     </p>
                   </div>
 

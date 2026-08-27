@@ -71,7 +71,9 @@ export function DashboardHeader({ title }: DashboardHeaderProps) {
     navigate("/login");
   };
 
-  const displayName = profile?.full_name || user?.email?.split('@')[0] || "User";
+  const displayName = role === "vendor"
+    ? (profile?.store_name || user?.user_metadata?.store_name || profile?.full_name || user?.email?.split('@')[0] || "Vendor")
+    : (profile?.full_name || user?.email?.split('@')[0] || "User");
   const displayRole = role ? role.charAt(0).toUpperCase() + role.slice(1) : "Guest";
   const initials = displayName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
 
@@ -151,17 +153,42 @@ export function DashboardHeader({ title }: DashboardHeaderProps) {
               </div>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52 shadow-xl border-gray-100">
-            <DropdownMenuLabel className="font-bold text-xs text-gray-700">Account Actions</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-56 shadow-xl border-gray-100 dark:border-border">
+            <DropdownMenuLabel className="font-bold text-xs text-gray-700 dark:text-gray-200">Account & Portals</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate(role === 'vendor' ? '/vendor/profile' : '/profile')}>
-              Profile Settings
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate('/admin/site-customization')}>
-              Site Customization
+            {role === 'admin' && (
+              <>
+                <DropdownMenuItem className="font-bold text-[#FF5500] cursor-pointer" onClick={() => navigate('/admin')}>
+                  🛡️ Admin Portal
+                </DropdownMenuItem>
+                <DropdownMenuItem className="font-bold text-gray-900 dark:text-white cursor-pointer" onClick={() => navigate('/vendor')}>
+                  🏪 Seller Dashboard
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/vendor/profile')}>
+                  🛍️ Store Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/admin/site-customization')}>
+                  🎨 Site Customization
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            {role === 'vendor' && (
+              <>
+                <DropdownMenuItem className="font-bold text-[#FF5500] cursor-pointer" onClick={() => navigate('/vendor')}>
+                  🏪 Seller Dashboard
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/vendor/profile')}>
+                  🛍️ Store Profile
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/account')}>
+              👤 Buyer Account
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-rose-600 font-bold" onClick={handleLogout}>
+            <DropdownMenuItem className="text-rose-600 font-bold cursor-pointer" onClick={handleLogout}>
               Logout
             </DropdownMenuItem>
           </DropdownMenuContent>

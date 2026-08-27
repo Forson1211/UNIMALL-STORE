@@ -9,7 +9,8 @@ export interface ShopHeroSlide {
   title: string;
   highlight: string;
   subtitle: string;
-  image: string;
+  image?: string;
+  src?: string;
   cta: string;
   ctaLink?: string;
 }
@@ -48,7 +49,11 @@ const ShopHeroCarousel = () => {
   const { getSetting } = useSiteSettingsContext();
   const configuredSlides = getSetting("shop_slider_images", DEFAULT_SHOP_SLIDES);
   const slides: ShopHeroSlide[] = Array.isArray(configuredSlides) && configuredSlides.length > 0
-    ? configuredSlides
+    ? configuredSlides.map((s, idx) => ({
+        ...DEFAULT_SHOP_SLIDES[idx % DEFAULT_SHOP_SLIDES.length],
+        ...s,
+        image: s.image || (s as any).src || DEFAULT_SHOP_SLIDES[idx % DEFAULT_SHOP_SLIDES.length]?.image
+      }))
     : DEFAULT_SHOP_SLIDES;
 
   const [index, setIndex] = useState(0);
@@ -61,6 +66,7 @@ const ShopHeroCarousel = () => {
 
   const activeIndex = index >= slides.length ? 0 : index;
   const slide = slides[activeIndex] || DEFAULT_SHOP_SLIDES[0];
+  const slideImage = slide.image || slide.src || DEFAULT_SHOP_SLIDES[0].image;
 
   const prev = () => setIndex((i) => (i - 1 + slides.length) % slides.length);
   const next = () => setIndex((i) => (i + 1) % slides.length);
@@ -69,10 +75,10 @@ const ShopHeroCarousel = () => {
     <div className="relative w-full h-64 sm:h-72 md:h-80 lg:h-[320px] bg-gradient-to-r from-orange-600 via-[#FF5500] to-amber-600 rounded-none overflow-hidden mb-6 group shadow-md">
       {/* ── 1. Full-Bleed Background Image & Gradients (100% Screen Width) ── */}
       <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/25 z-10" />
-      {slide.image && (
+      {slideImage && (
         <img
-          key={slide.image}
-          src={slide.image}
+          key={slideImage}
+          src={slideImage}
           className="absolute inset-0 w-full h-full object-cover opacity-65 transition-opacity duration-700"
           alt=""
           loading="eager"

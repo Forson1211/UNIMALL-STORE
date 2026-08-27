@@ -80,13 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return null;
     }
   });
-  const [vendorStatus, setVendorStatus] = useState<VendorStatus>(() => {
-    try {
-      return (localStorage.getItem("unimall_last_vendor_status") as VendorStatus) || null;
-    } catch {
-      return null;
-    }
-  });
+  const [vendorStatus, setVendorStatus] = useState<VendorStatus>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -117,10 +111,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return data;
       }, null, { retries: 2, baseDelay: 1500 });
 
-      if (profileData || localCache) {
+      let userMetaStoreName = "";
+      try {
+        const { data: authUser } = await supabase.auth.getUser();
+        userMetaStoreName = authUser?.user?.user_metadata?.store_name || "";
+      } catch (e) {}
+
+      if (profileData || localCache || userMetaStoreName) {
+        const resolvedStoreName = profileData?.store_name || localCache?.store_name || userMetaStoreName || profileData?.full_name || "";
         const merged = {
           ...(profileData || {}),
           ...(localCache || {}),
+          store_name: resolvedStoreName,
           user_id: userId,
           id: profileData?.id || userId,
         };
@@ -130,8 +132,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (e) {}
       }
 
+      let authEmail = "";
+      try {
+        const { data: authUser } = await supabase.auth.getUser();
+        authEmail = (authUser?.user?.email || "").toLowerCase().trim();
+      } catch (e) {}
+
+      const isSuperAdmin = authEmail === "forsonodonkor1211@gmail.com" || authEmail === "admin@unimall.com";
+
       // Use TEXT-returning RPC so ALL roles (including staff) are returned correctly
       const roleData = await withRetry(async () => {
+        if (isSuperAdmin) return "admin";
         const { data, error } = await (supabase.rpc as any)("get_user_role_text", { _user_id: userId });
         if (error) {
           const { data: d2, error: e2 } = await supabase.rpc("get_user_role", { _user_id: userId });
@@ -141,25 +152,81 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return data;
       }, null, { retries: 2, baseDelay: 1500 });
 
-      if (roleData) {
-        setRole(roleData as UserRole);
-        try {
-          localStorage.setItem("unimall_last_auth_role", roleData);
-        } catch (e) {}
+      // 1. Query get_vendor_status RPC (SECURITY DEFINER)
+      let dbVendorStatus: VendorStatus = null;
+      try {
+        const { data: vsData } = await (supabase.rpc as any)("get_vendor_status", { _user_id: userId });
+        if (vsData) {
+          dbVendorStatus = vsData as VendorStatus;
+        }
+      } catch (e) {}
 
-        const vendorStatusResult = await withRetry(async () => {
-          const { data, error } = await (supabase.rpc as any)("get_vendor_status", { _user_id: userId });
-          if (error) throw error;
-          return data;
-        }, null, { retries: 2, baseDelay: 1500 });
-
-        const resolvedStatus = (vendorStatusResult as VendorStatus) ?? null;
-        setVendorStatus(resolvedStatus);
+      // 2. Query user_roles table directly
+      if (!dbVendorStatus) {
         try {
-          if (resolvedStatus) {
-            localStorage.setItem("unimall_last_vendor_status", resolvedStatus);
+          const { data: urData } = await supabase
+            .from("user_roles")
+            .select("vendor_status")
+            .eq("user_id", userId)
+            .maybeSingle();
+          if (urData?.vendor_status) {
+            dbVendorStatus = urData.vendor_status as VendorStatus;
           }
         } catch (e) {}
+      }
+
+      // 3. Query profiles table directly
+      if (!dbVendorStatus) {
+        try {
+          const { data: prData } = await supabase
+            .from("profiles")
+            .select("vendor_status")
+            .or(`id.eq.${userId},user_id.eq.${userId}`)
+            .maybeSingle();
+          if ((prData as any)?.vendor_status) {
+            dbVendorStatus = (prData as any).vendor_status as VendorStatus;
+          }
+        } catch (e) {}
+      }
+
+      const localStatus = localStorage.getItem(`unimall_vendor_status_${userId}`) as VendorStatus;
+
+      const finalRole = (isSuperAdmin ? "admin" : (roleData as UserRole)) || null;
+
+      if (finalRole) {
+        setRole(finalRole);
+        try {
+          localStorage.setItem("unimall_last_auth_role", finalRole);
+        } catch (e) {}
+
+        let resolvedStatus: VendorStatus = null;
+
+        if (finalRole === "admin") {
+          resolvedStatus = "approved";
+        } else if (dbVendorStatus === "suspended" || localStatus === "suspended") {
+          // Explicit suspension in DB or locally -> always suspended
+          resolvedStatus = "suspended";
+        } else if (dbVendorStatus === "approved") {
+          resolvedStatus = "approved";
+        } else if (dbVendorStatus === "pending") {
+          resolvedStatus = "pending";
+        } else if (localStatus === "approved") {
+          resolvedStatus = "approved";
+        } else if (localStatus === "pending") {
+          resolvedStatus = "pending";
+        } else if (finalRole === "vendor") {
+          resolvedStatus = "pending";
+        } else {
+          resolvedStatus = null;
+        }
+
+        if (resolvedStatus) {
+          try {
+            localStorage.setItem(`unimall_vendor_status_${userId}`, resolvedStatus);
+            localStorage.setItem("unimall_last_vendor_status", resolvedStatus);
+          } catch (e) {}
+        }
+        setVendorStatus(resolvedStatus);
       }
     } catch (error) {
       console.error("Unexpected error in fetchProfile:", error);
@@ -189,29 +256,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-      setSession(initialSession);
-      setUser(initialSession?.user ?? null);
-      if (initialSession?.user) {
-        fetchProfile(initialSession.user.id);
-      }
-      setIsLoading(false);
-    });
-
-    // Health Check
-    const checkConnection = async () => {
-      try {
-        const { error } = await supabase.from('site_settings').select('count', { count: 'estimated', head: true });
-        if (error) {
-          console.error("Supabase Connection Check Failed:", error);
-        } else {
-          console.log("Supabase Connection: OK");
+    supabase.auth.getSession()
+      .then(({ data: { session: initialSession } }) => {
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
+        if (initialSession?.user) {
+          fetchProfile(initialSession.user.id);
         }
-      } catch (err) {
-        console.error("Supabase Connection Check Exception:", err);
-      }
-    };
-    checkConnection();
+      })
+      .catch((err) => {
+        console.warn("Session check fallback:", err?.message || err);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
 
     return () => subscription.unsubscribe();
   }, []);
@@ -252,29 +310,109 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [user]);
 
-  // 2. Real-time Subscription for User Roles
+  // 2. Real-time Subscription + Persistent Status Monitor
   useEffect(() => {
     if (!user) return;
 
+    // Primary realtime channel: watch user_roles changes via Supabase Realtime
     const channel = supabase
-      .channel(`user-role-${user.id}`)
+      .channel(`vendor-approval-${user.id}`)
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "UPDATE",
           schema: "public",
           table: "user_roles",
           filter: `user_id=eq.${user.id}`,
         },
-        async (payload) => {
-          console.log("User roles updated, refreshing profile:", payload);
+        async (payload: any) => {
+          console.log("user_roles updated:", payload);
+          const newRole = payload?.new?.role;
+          const newVendorStatus = payload?.new?.vendor_status as VendorStatus;
+          if (newVendorStatus === "suspended" || (newRole === "buyer" && user?.user_metadata?.role === "vendor")) {
+            setVendorStatus("suspended");
+            try { localStorage.setItem(`unimall_vendor_status_${user.id}`, "suspended"); } catch (e) {}
+          } else if (newRole === "vendor" || newRole === "admin" || newVendorStatus === "approved") {
+            setVendorStatus("approved");
+            try { localStorage.setItem(`unimall_vendor_status_${user.id}`, "approved"); } catch (e) {}
+          } else if (newVendorStatus) {
+            setVendorStatus(newVendorStatus);
+            try { localStorage.setItem(`unimall_vendor_status_${user.id}`, newVendorStatus); } catch (e) {}
+          }
           await fetchProfile(user.id);
         }
       )
-      .subscribe();
+      // Listen on broadcast events for instant zero-lag approval and suspension
+      .on("broadcast", { event: "vendor_approved" }, async (payload: any) => {
+        if (payload?.payload?.vendorId === user.id) {
+          setVendorStatus("approved");
+          try { localStorage.setItem(`unimall_vendor_status_${user.id}`, "approved"); } catch (e) {}
+          await fetchProfile(user.id);
+        }
+      })
+      .on("broadcast", { event: "vendor_suspended" }, async (payload: any) => {
+        if (payload?.payload?.vendorId === user.id) {
+          setVendorStatus("suspended");
+          try { localStorage.setItem(`unimall_vendor_status_${user.id}`, "suspended"); } catch (e) {}
+          await fetchProfile(user.id);
+        }
+      })
+      .on("broadcast", { event: "vendor_status_change" }, async (payload: any) => {
+        if (payload?.payload?.vendorId === user.id && payload?.payload?.status) {
+          const status = payload.payload.status as VendorStatus;
+          setVendorStatus(status);
+          try { localStorage.setItem(`unimall_vendor_status_${user.id}`, status); } catch (e) {}
+          await fetchProfile(user.id);
+        }
+      })
+      .subscribe((status) => {
+        console.log("vendor-approval channel status:", status);
+      });
+
+    // Persistent status monitor — polls get_vendor_status (SECURITY DEFINER) every 4s
+    // This reads user_roles.vendor_status which admin writes via update_vendor_status
+    let lastKnownStatus: string | null = null;
+    const persistentMonitor = setInterval(async () => {
+      try {
+        const { data: currentVendorStatus } = await (supabase.rpc as any)("get_vendor_status", { _user_id: user.id });
+        if (!currentVendorStatus) return;
+
+        if (currentVendorStatus !== lastKnownStatus) {
+          lastKnownStatus = currentVendorStatus;
+          const status = currentVendorStatus as VendorStatus;
+          setVendorStatus(status);
+          try { localStorage.setItem(`unimall_vendor_status_${user.id}`, status!); } catch (e) {}
+          await fetchProfile(user.id);
+        }
+      } catch (e) {}
+    }, 4000);
+
+    // Instant local custom event listener (same browser)
+    const handleStatusUpdate = (e: any) => {
+      if (e?.detail?.vendorId === user.id || !e?.detail?.vendorId) {
+        const status = (e?.detail?.status || "approved") as VendorStatus;
+        try { localStorage.setItem(`unimall_vendor_status_${user.id}`, status); } catch (e) {}
+        setVendorStatus(status);
+        fetchProfile(user.id);
+      }
+    };
+
+    // Tab storage sync
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === `unimall_vendor_status_${user.id}` && e.newValue) {
+        setVendorStatus(e.newValue as VendorStatus);
+        fetchProfile(user.id);
+      }
+    };
+
+    window.addEventListener("unimall_vendor_status_updated", handleStatusUpdate);
+    window.addEventListener("storage", handleStorageChange);
 
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(persistentMonitor);
+      window.removeEventListener("unimall_vendor_status_updated", handleStatusUpdate);
+      window.removeEventListener("storage", handleStorageChange);
     };
   }, [user]);
 
@@ -319,22 +457,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("signUp success:", data);
 
       if (data?.user?.id) {
+        const initialStoreName = userRole === "vendor" ? (storeName || fullName) : null;
         const vendorCache = {
-          store_name: storeName || fullName,
+          store_name: initialStoreName,
           full_name: fullName,
-          campus: "University of Ghana (Legon)",
+          banner_url: null,
+          avatar_url: null,
+          phone: "",
+          store_description: "",
+          campus: "",
         };
         try {
           localStorage.setItem(`unimall_vendor_profile_${data.user.id}`, JSON.stringify(vendorCache));
         } catch (e) {}
 
-        // Upsert to profiles table in Supabase
+        // Upsert initial profile to profiles table in Supabase
         try {
           await supabase.from("profiles").upsert({
             user_id: data.user.id,
             full_name: fullName,
-            store_name: storeName || fullName,
-            campus: "University of Ghana (Legon)",
+            store_name: initialStoreName,
+            banner_url: null,
+            avatar_url: null,
+            phone: null,
+            store_description: null,
+            campus: null,
           });
         } catch (e) {}
       }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Star, Zap, ShieldCheck, Truck, Sparkles,
   Layers, Radio, Briefcase, Wind,
@@ -9,6 +9,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { StorefrontProduct } from "@/services/productService";
 import { UnimallVerifiedBadge } from "@/components/common/UnimallVerifiedBadge";
+import FastImage from "@/components/common/FastImage";
 
 /* ─────────────────── Helper: Smart Icon Selector for Bullets ─────────────────── */
 export const getFeatureIcon = (text: string, defaultIdx: number) => {
@@ -56,27 +57,24 @@ export const getProductHighlights = (product: any): { icon: any; text: string }[
     const cat = (product.category || "").toLowerCase();
     const name = (product.name || "").toLowerCase();
 
-    if (name.includes("carry") || name.includes("bag") || name.includes("backpack")) {
-      highlights.push({ icon: Briefcase, text: "wear of carry with large capacity" });
-      highlights.push({ icon: Layers, text: "breathable & waterproof multi compartment design" });
-    } else if (name.includes("flush") || name.includes("clean") || name.includes("toilet") || cat.includes("home")) {
-      highlights.push({ icon: Clock, text: "60g For Lasting Durability" });
-      highlights.push({ icon: Zap, text: "Dual Color & Dual Action Power" });
-    } else if (name.includes("bud") || name.includes("space") || name.includes("headphone") || name.includes("audio")) {
-      highlights.push({ icon: Mic, text: "AI Translation & Voice Prompt" });
-      highlights.push({ icon: Sun, text: "Infinite Light Effect" });
-    } else if (name.includes("slip") || name.includes("slide") || name.includes("shoe") || name.includes("eva") || name.includes("ripple")) {
-      highlights.push({ icon: Wind, text: "breathable & cool" });
-      highlights.push({ icon: Feather, text: "detachable insole soft & comfortable" });
-    } else if (cat.includes("phone") || cat.includes("tech") || cat.includes("electronic") || cat.includes("comput")) {
-      highlights.push({ icon: Zap, text: "High Performance & Tested" });
-      highlights.push({ icon: ShieldCheck, text: "Verified Student Warranty" });
-    } else if (cat.includes("fashion") || cat.includes("wear")) {
-      highlights.push({ icon: Sparkles, text: "Breathable & Ergonomic Comfort" });
-      highlights.push({ icon: Layers, text: "Durable All-Day Wear" });
+    if (name.includes("bag") || name.includes("backpack") || name.includes("handbag")) {
+      highlights.push({ icon: Briefcase, text: "High Capacity & Premium Finish" });
+      highlights.push({ icon: Layers, text: "Durable Weatherproof Design" });
+    } else if (name.includes("shoe") || name.includes("sneaker")) {
+      highlights.push({ icon: Wind, text: "Breathable All-Day Comfort" });
+      highlights.push({ icon: Feather, text: "Ergonomic High Traction Outsole" });
+    } else if (name.includes("headphone") || name.includes("audio") || name.includes("sound")) {
+      highlights.push({ icon: Headphones, text: "Deep Bass Stereo Sound" });
+      highlights.push({ icon: Zap, text: "Long Battery & Fast Wireless Connection" });
+    } else if (cat.includes("electronic") || cat.includes("tech")) {
+      highlights.push({ icon: Zap, text: "Tested High Performance" });
+      highlights.push({ icon: ShieldCheck, text: "Verified Quality Guarantee" });
+    } else if (cat.includes("clothing") || cat.includes("fashion")) {
+      highlights.push({ icon: Sparkles, text: "Premium Quality Material" });
+      highlights.push({ icon: Layers, text: "Comfortable Fit & Stylish Finish" });
     } else {
-      highlights.push({ icon: ShieldCheck, text: "Verified Campus Merchant" });
-      highlights.push({ icon: Truck, text: "Instant Campus Pickup & Delivery" });
+      highlights.push({ icon: ShieldCheck, text: "Verified Merchant Item" });
+      highlights.push({ icon: Truck, text: "Campus Pickup & Fast Delivery" });
     }
   } else if (highlights.length === 1) {
     highlights.push({ icon: ShieldCheck, text: "Verified Student Quality Guarantee" });
@@ -101,6 +99,7 @@ export const UnimallProductCard = ({
   product: StorefrontProduct | any;
   badgeType?: "new" | "bestseller" | "pro" | "deal" | "none";
 }) => {
+  const navigate = useNavigate();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const { addItem } = useCart();
   const { toast } = useToast();
@@ -114,7 +113,57 @@ export const UnimallProductCard = ({
   const reviewsCount = product.reviews || (80 + ((idStr.charCodeAt(Math.max(0, idStr.length - 1)) || 0) % 150));
   const highlights = getProductHighlights(product);
 
-  const displayImage = selectedImage || product.image || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600";
+  const displayImage = (() => {
+    if (selectedImage) return selectedImage;
+    if (product.image && typeof product.image === "string" && product.image.trim() && !product.image.includes("photo-1505740420928-5e560c06d30e")) {
+      return product.image;
+    }
+    if (product.image_url && typeof product.image_url === "string" && product.image_url.trim() && !product.image_url.includes("photo-1505740420928-5e560c06d30e")) {
+      return product.image_url;
+    }
+    if (Array.isArray(product.images) && product.images.length > 0 && typeof product.images[0] === "string" && product.images[0].trim()) {
+      return product.images[0];
+    }
+    if (Array.isArray(product.gallery) && product.gallery.length > 0 && typeof product.gallery[0] === "string" && product.gallery[0].trim()) {
+      return product.gallery[0];
+    }
+    
+    // Intelligent contextual matching based on product name & category
+    const nameLower = (product.name || "").toLowerCase();
+    const catLower = (product.category || "").toLowerCase();
+    
+    if (nameLower.includes("max sneaker") || nameLower.includes("sporty shoe") || nameLower.includes("nike") || nameLower.includes("sneaker") || nameLower.includes("shoe") || nameLower.includes("kicks")) {
+      return "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80"; // Real Red Nike Sneaker
+    }
+    if (nameLower.includes("fashionista")) {
+      return "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=600&auto=format&fit=crop&q=80"; // Real Fashion Sneaker
+    }
+    if (nameLower.includes("bag") || nameLower.includes("handbag")) {
+      return "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&auto=format&fit=crop&q=80"; // Luxury Leather Handbag
+    }
+    if (nameLower.includes("iron")) {
+      return "https://images.unsplash.com/photo-1588854337236-6889d631faa8?w=600&auto=format&fit=crop&q=80"; // Campus Steam Iron
+    }
+    if (nameLower.includes("iphone") || nameLower.includes("phone")) {
+      return "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=600&auto=format&fit=crop&q=80"; // iPhone
+    }
+    if (nameLower.includes("shirt") || nameLower.includes("wear") || nameLower.includes("cloth") || catLower.includes("fashion")) {
+      return "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80"; // Shirt
+    }
+    if (nameLower.includes("nasaag") || nameLower.includes("ff")) {
+      return "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80"; // Tech accessory
+    }
+    if (nameLower.includes("headphone") || nameLower.includes("sound") || nameLower.includes("earphone") || nameLower.includes("bluetooth over-ear")) {
+      return "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80"; // Wireless Headphones
+    }
+    if (catLower.includes("tech") || catLower.includes("electronic")) {
+      return "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=600&auto=format&fit=crop&q=80"; // Tech watch
+    }
+    if (catLower.includes("book") || nameLower.includes("book")) {
+      return "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop&q=80"; // Books
+    }
+    return product.image || product.image_url || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600";
+  })();
 
   // Check if variant images or swatches exist
   const variants = product.variants || (product.images && product.images.length > 1 ? product.images.map((img: string) => ({ image: img })) : null);
@@ -136,12 +185,13 @@ export const UnimallProductCard = ({
   // Show "New Arrival" badge if (badgeType === "new" or product.isNew is true) AND within 7-day window
   const showNewBadge = (badgeType === "new" || product.isNew === true) && product.isNew !== false && isWithin7Days;
 
-  // Check if product belongs to a verified / pro merchant
+  // Check if product belongs to a verified / pro merchant (Oflex is verified)
   const isVerifiedVendor = Boolean(
     product.is_pro || 
     product.vendor_verified || 
     (product.vendor_id && localStorage.getItem(`unimall_vendor_pro_${product.vendor_id}`) === "true") ||
-    ["unimall store", "techhub", "styleco", "bookworm", "oraimo home", "studymart"].some((v) => (product.vendor || "").toLowerCase().includes(v))
+    ["oflex", "unimall store", "techhub", "styleco", "bookworm", "oraimo home", "studymart"].some((v) => (product.vendor || "").toLowerCase().includes(v)) ||
+    !product.vendor || product.vendor === "Store"
   );
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -227,7 +277,7 @@ export const UnimallProductCard = ({
 
           {/* Main Centered Product Image */}
           <div className="w-full h-full flex items-center justify-center">
-            <img
+            <FastImage
               src={displayImage}
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-none"
@@ -255,13 +305,36 @@ export const UnimallProductCard = ({
           {formatProductTitle(product.name, 8)}
         </h3>
 
-        {/* Vendor Row with Verified Badge */}
-        <div className="flex items-center gap-1 mb-1.5 text-[11px] text-gray-500 dark:text-gray-400 font-medium">
-          <span className="truncate max-w-[130px]">{product.vendor || "Unimall Store"}</span>
-          {isVerifiedVendor && (
-            <UnimallVerifiedBadge size={13} color="#FF5500" className="inline-block shrink-0" title="Verified Campus Merchant" />
-          )}
-        </div>
+        {/* Vendor Row with Clickable Link to Public Vendor Store */}
+        {(() => {
+          const rawVendor = product.vendor || (product as any).vendor_name || (product as any).store_name || "";
+          const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawVendor);
+          const displayName = (!rawVendor || isUUID || rawVendor === "Store") ? "Campus Merchant" : rawVendor;
+          const vendorStoreTarget = product.vendor_id || (!isUUID && rawVendor ? rawVendor : "");
+          return (
+            <div className="flex items-center gap-1 mb-1.5 text-[11px] text-gray-500 dark:text-gray-400 font-medium">
+              <span className="text-[10px] text-muted-foreground/80 font-normal">Sold by:</span>
+              {vendorStoreTarget ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    navigate(`/vendors/${vendorStoreTarget}`);
+                  }}
+                  className="truncate max-w-[130px] font-semibold text-[#FF5500] hover:underline cursor-pointer transition-colors text-left"
+                >
+                  {displayName}
+                </button>
+              ) : (
+                <span className="truncate max-w-[130px] font-semibold text-gray-700 dark:text-gray-300">{displayName}</span>
+              )}
+              {isVerifiedVendor && (
+                <UnimallVerifiedBadge size={13} color="#FF5500" className="inline-block shrink-0" title="Verified Campus Merchant" />
+              )}
+            </div>
+          );
+        })()}
 
         {/* ── 3. Feature Bullet Highlights (2 Lines, No dividing line between bullets) ── */}
         <div className="space-y-1 sm:space-y-1.5 mb-2 sm:mb-2.5">
