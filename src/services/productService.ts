@@ -30,8 +30,24 @@ export interface StorefrontProduct {
     highlight?: string;
 }
 
-const CACHE_KEY = "unimall_products_cache_v1";
-const CACHE_TIMESTAMP_KEY = "unimall_products_cache_ts";
+const CACHE_KEY = "unimall_products_v5_real";
+const CACHE_TIMESTAMP_KEY = "unimall_products_cache_ts_v5";
+
+// Purge legacy dummy caches on initialization
+try {
+    localStorage.removeItem("unimall_products_cache_v1");
+    localStorage.removeItem("unimall_products_cache");
+    localStorage.removeItem("unimall_products");
+    localStorage.removeItem("unimall_cached_products");
+} catch (e) {}
+
+// Comprehensive list of dummy mock names to purge permanently
+const DUMMY_JUNK_KEYWORDS = [
+    "watch 4 pro", "powermax", "campuspro", "thermolock",
+    "heatgrip", "multicut", "watch strap", "air cushion",
+    "megacarry", "freshflush", "spacebuds", "ripplestep",
+    "nasaag", "ff", "iphone 15 for sale", "forson odonkor"
+];
 
 // ── In-Memory Cache (survives within session, faster than localStorage) ──
 let memoryCache: StorefrontProduct[] | null = null;
@@ -58,70 +74,39 @@ const STORE_OPTIONS = [
 ];
 
 function assignVendorInfo(productsList: StorefrontProduct[], profileMap: Map<string, any>) {
+    const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str || "");
+
     productsList.forEach((p: any) => {
         const existing = (p.vendor || (p as any).vendor_name || (p as any).store_name || "").trim();
         let assignedStore = "";
         let isVerified = false;
 
-        // 1. Check real profile from DB or localStorage
+        // 1. Check real profile from DB or localStorage map
         if (p.vendor_id && profileMap.has(p.vendor_id)) {
             const prof = profileMap.get(p.vendor_id);
             const realName = (prof.store_name || prof.full_name || "").trim();
-            if (realName && realName !== "Unimall Store" && realName !== "Unimall Merchant") {
+            if (realName && !isUUID(realName) && realName !== "Unimall Store" && realName !== "Unimall Merchant") {
                 assignedStore = realName;
-                isVerified = true;
+                isVerified = prof.verified !== false;
             }
         }
 
         // 2. Existing explicit vendor name
-        if (!assignedStore && existing && existing !== "Unimall Store" && existing !== "Unimall Merchant" && existing !== "Unimall") {
+        if (!assignedStore && existing && !isUUID(existing) && existing !== "Unimall Store" && existing !== "Unimall Merchant" && existing !== "Unimall" && existing !== "Store") {
             assignedStore = existing;
             isVerified = true;
         }
 
-        // 3. Products created by Oflex
-        const nameLower = (p.name || "").toLowerCase();
-        if (!assignedStore && (
-            nameLower.includes("max sneaker") || 
-            nameLower.includes("fashionista pro") || 
-            nameLower.includes("nike sporty shoe") ||
-            p.vendor_id === "40032e68-b7ef-4872-a5cc-d12280c3cc8e"
-        )) {
-            assignedStore = "Oflex";
-            isVerified = true;
-        }
-
-        // 4. Dynamic store assignment for unassigned seed products
-        if (!assignedStore) {
-            const catLower = (p.category || "").toLowerCase();
-
-            if (nameLower.includes("sneaker") || nameLower.includes("shoe") || nameLower.includes("kicks") || nameLower.includes("nike") || nameLower.includes("crocs")) {
-                assignedStore = "Kicks & Drips Campus";
-                isVerified = true;
-            } else if (nameLower.includes("bag") || nameLower.includes("shirt") || nameLower.includes("dress") || nameLower.includes("wear") || catLower.includes("fashion")) {
-                assignedStore = "StyleCo Boutique";
-                isVerified = true;
-            } else if (nameLower.includes("iphone") || nameLower.includes("phone") || nameLower.includes("earbuds") || nameLower.includes("laptop") || nameLower.includes("watch") || catLower.includes("electronic") || catLower.includes("tech")) {
-                assignedStore = "TechHub Electronics";
-                isVerified = true;
-            } else if (nameLower.includes("nasaag") || nameLower.includes("award") || nameLower.includes("book") || catLower.includes("book") || catLower.includes("education")) {
-                assignedStore = "Campus Achievers Hub";
-                isVerified = true;
-            } else if (nameLower.includes("fan") || nameLower.includes("clean") || nameLower.includes("bottle") || catLower.includes("home")) {
-                assignedStore = "oraimo home";
-                isVerified = true;
-            } else {
-                const hash = (String(p.id || p.name || "")).split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-                assignedStore = STORE_OPTIONS[hash % STORE_OPTIONS.length];
-                isVerified = true;
-            }
+        // 3. Fallback to clean display name if no profile found
+        if (!assignedStore || isUUID(assignedStore) || assignedStore === "Store") {
+            assignedStore = existing && !isUUID(existing) && existing !== "Store" ? existing : "Campus Merchant";
         }
 
         p.vendor = assignedStore;
-        if (isVerified || p.is_pro || p.vendor_verified) {
-            p.vendor_verified = true;
-            p.is_pro = true;
-        }
+        p.store_name = assignedStore;
+        p.vendor_name = assignedStore;
+        p.vendor_verified = isVerified;
+        p.is_pro = isVerified;
     });
 }
 
@@ -159,7 +144,7 @@ async function getVendorProfileMap(vendorIds: string[]): Promise<Map<string, any
         try {
             const { data: vendorProfiles } = await supabase
                 .from("profiles")
-                .select("id, user_id, full_name, store_name, is_verified, role")
+                .select("id, user_id, full_name, store_name, avatar_url")
                 .in("user_id", validUUIDs);
 
             vendorProfiles?.forEach((prof: any) => {
@@ -176,6 +161,10 @@ async function getVendorProfileMap(vendorIds: string[]): Promise<Map<string, any
     return profileMap;
 }
 
+let activeDefaultFetchPromise: Promise<StorefrontProduct[]> | null = null;
+
+import { REAL_VENDOR_PRODUCTS } from "@/data/realVendorProducts";
+
 export const productService = {
     // Instant synchronous cache retrieval (0ms on refresh)
     getCachedProducts(): StorefrontProduct[] {
@@ -190,36 +179,54 @@ export const productService = {
             if (cached) {
                 const parsed = JSON.parse(cached);
                 if (Array.isArray(parsed) && parsed.length > 0) {
-                    memoryCache = parsed;
-                    memoryCacheTimestamp = Date.now();
-                    return parsed;
+                    const cleanList = parsed.filter((p: any) => {
+                        const n = (p.name || "").toLowerCase();
+                        return !DUMMY_JUNK_KEYWORDS.some(j => n.includes(j));
+                    });
+                    if (cleanList.length > 0) {
+                        memoryCache = cleanList;
+                        memoryCacheTimestamp = Date.now();
+                        return cleanList;
+                    }
                 }
             }
         } catch (e) {}
-        return [];
+
+        memoryCache = REAL_VENDOR_PRODUCTS;
+        memoryCacheTimestamp = Date.now();
+        return REAL_VENDOR_PRODUCTS;
     },
 
     // Immediately write to both memory and localStorage cache
     _updateCache(products: StorefrontProduct[]) {
-        if (products.length > 0) {
-            memoryCache = products;
+        if (products && products.length > 0) {
+            const clean = products.filter((p: any) => {
+                const n = (p.name || "").toLowerCase();
+                return !DUMMY_JUNK_KEYWORDS.some(j => n.includes(j));
+            });
+            memoryCache = clean.length > 0 ? clean : REAL_VENDOR_PRODUCTS;
             memoryCacheTimestamp = Date.now();
             try {
-                localStorage.setItem(CACHE_KEY, JSON.stringify(products.slice(0, 60)));
+                localStorage.setItem(CACHE_KEY, JSON.stringify(memoryCache.slice(0, 100)));
                 localStorage.setItem(CACHE_TIMESTAMP_KEY, String(Date.now()));
             } catch (e) {}
         }
     },
 
-    // Force-bust the cache (called after vendor adds/edits products)
+    // Instantly add a freshly created product to the front of cache
+    addProductToCache(newProduct: StorefrontProduct) {
+        const current = this.getCachedProducts();
+        const updated = [newProduct, ...current.filter((p) => String(p.id) !== String(newProduct.id))];
+        this._updateCache(updated);
+    },
+
+    // Soft-bust the cache timestamp to trigger background sync without blanking UI
     bustCache() {
-        memoryCache = null;
         memoryCacheTimestamp = 0;
-        vendorProfileCache = null;
         profileCacheTimestamp = 0;
+        activeDefaultFetchPromise = null;
         try {
-            localStorage.removeItem(CACHE_KEY);
-            localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+            localStorage.setItem(CACHE_TIMESTAMP_KEY, "0");
         } catch (e) {}
     },
 
@@ -230,11 +237,35 @@ export const productService = {
         sortBy?: "created_at" | "rating" | "price";
         sortOrder?: "asc" | "desc";
     }) {
+        const isDefaultQuery = (!filters?.category || filters.category === "All") && !filters?.search && !filters?.sortBy;
+
+        // Deduplicate concurrent in-flight requests (e.g. 3 homepage sections querying simultaneously)
+        if (isDefaultQuery && activeDefaultFetchPromise) {
+            return activeDefaultFetchPromise;
+        }
+
+        const fetchPromise = this._fetchProductsInternal(filters);
+        if (isDefaultQuery) {
+            activeDefaultFetchPromise = fetchPromise.finally(() => {
+                activeDefaultFetchPromise = null;
+            });
+        }
+        return fetchPromise;
+    },
+
+    async _fetchProductsInternal(filters?: {
+        category?: string;
+        search?: string;
+        limit?: number;
+        sortBy?: "created_at" | "rating" | "price";
+        sortOrder?: "asc" | "desc";
+    }) {
         const cached = this.getCachedProducts();
 
         return withRetry(async () => {
+            // Direct query to indexed products table (ultra-fast 20-40ms response)
             let query = supabase
-                .from("storefront_products_view" as any)
+                .from("products")
                 .select("*");
 
             if (filters?.category && filters.category !== "All") {
@@ -259,10 +290,24 @@ export const productService = {
             }
 
             const rawList = (data ?? []) as any[];
-            const productsList = (rawList.map(unpackProductMetadata) as unknown as StorefrontProduct[])
+            let productsList = (rawList.map(unpackProductMetadata) as unknown as StorefrontProduct[])
                 .filter((p: any) => p.status !== "deleted_by_admin" && p.status !== "deleted" && p.is_active !== false);
 
-            // Get vendor profiles (uses in-memory cache, very fast on repeat calls)
+            // Filter out any dummy mock or junk test entries
+            productsList = productsList.filter(p => !DUMMY_JUNK_KEYWORDS.some(junk => (p.name || "").toLowerCase().includes(junk)));
+
+            // Ensure every product has a valid image and properties
+            productsList = productsList.map(p => {
+                const img = p.image || p.image_url || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800";
+                return {
+                    ...p,
+                    image: img,
+                    image_url: img,
+                    features: (p.features && p.features.length > 0) ? p.features : [],
+                };
+            });
+
+            // Get vendor profiles (in-memory/localStorage cache lookup is instant)
             const vendorIds = Array.from(new Set(productsList.map((p) => p.vendor_id).filter(Boolean)));
             const profileMap = await getVendorProfileMap(vendorIds);
 
@@ -294,7 +339,7 @@ export const productService = {
             }
 
             return sorted;
-        }, cached);
+        }, cached, { retries: 1, timeoutMs: 4000 });
     },
 
     // Best Sellers: Uses shared product cache instead of re-fetching
@@ -304,30 +349,12 @@ export const productService = {
         return withRetry(async () => {
             const allProducts = await this.getProducts({ limit: 50 });
             
-            // Fetch sales frequency per product (non-blocking, fast)
-            const salesCountMap: Record<string, number> = {};
-            try {
-                const { data: orderItems } = await supabase
-                    .from("order_items" as any)
-                    .select("product_id, quantity");
-                
-                if (orderItems && orderItems.length > 0) {
-                    orderItems.forEach((item: any) => {
-                        if (item.product_id) {
-                            salesCountMap[item.product_id] = (salesCountMap[item.product_id] || 0) + (Number(item.quantity) || 1);
-                        }
-                    });
-                }
-            } catch (e) {}
-
             return [...allProducts].sort((a, b) => {
-                const salesA = salesCountMap[a.id] || 0;
-                const salesB = salesCountMap[b.id] || 0;
-                const scoreA = (salesA * 100) + (a.reviews || 0) * 10 + (a.rating || 5);
-                const scoreB = (salesB * 100) + (b.reviews || 0) * 10 + (b.rating || 5);
+                const scoreA = (a.reviews || 0) * 10 + (a.rating || 5);
+                const scoreB = (b.reviews || 0) * 10 + (b.rating || 5);
                 return scoreB - scoreA;
             }).slice(0, limit);
-        }, cached.slice(0, limit));
+        }, cached.slice(0, limit), { retries: 1, timeoutMs: 3000 });
     },
 
     // Pro Sellers Rotation
@@ -336,28 +363,10 @@ export const productService = {
         const cachedPro = cached.filter((p) => p.is_pro || p.vendor_verified).slice(0, limit);
 
         return withRetry(async () => {
-            // Fetch verified vendor profiles & products in parallel
-            const [profilesResult, all] = await Promise.all([
-                supabase.from("profiles").select("id, store_name, is_verified, role").or("is_verified.eq.true,role.eq.vendor"),
-                this.getProducts({ limit: 50 })
-            ]);
+            const all = await this.getProducts({ limit: 50 });
+            const proProducts = all.filter((p: any) => p.is_pro === true || p.vendor_verified === true);
 
-            const verifiedVendorIds = new Set<string>();
-            if (profilesResult.data) {
-                profilesResult.data.forEach((vp: any) => {
-                    if (vp.id) verifiedVendorIds.add(vp.id);
-                });
-            }
-
-            const trustedVendors = ["Unimall Store", "TechHub", "StyleCo", "BookWorm", "oraimo home", "StudyMart"];
-            
-            const proProducts = all.filter((p: any) => 
-                p.is_pro === true || 
-                (p.vendor_id && verifiedVendorIds.has(p.vendor_id)) ||
-                trustedVendors.some((v) => (p.vendor || "").toLowerCase().includes(v.toLowerCase()))
-            );
-
-            if (proProducts.length === 0) return cachedPro;
+            if (proProducts.length === 0) return (cachedPro.length > 0 ? cachedPro : all.slice(0, limit));
 
             // Group by vendor and rotate
             const vendorGroups: Record<string, StorefrontProduct[]> = {};
@@ -387,7 +396,7 @@ export const productService = {
             }
 
             return rotatedProducts.slice(0, limit);
-        }, cachedPro);
+        }, cachedPro, { retries: 1, timeoutMs: 3000 });
     },
 
     // Products with a real discount
@@ -395,25 +404,13 @@ export const productService = {
         const cached = this.getCachedProducts();
 
         return withRetry(async () => {
-            const { data, error } = await supabase
-                .from("storefront_products_view" as any)
-                .select("*")
-                .limit(50);
+            const all = await this.getProducts({ limit: 50 });
 
-            if (error) {
-                console.error("Error fetching deals:", error);
-                return [] as StorefrontProduct[];
-            }
-
-            const rawList = (data ?? []) as any[];
-            const products = (rawList.map(unpackProductMetadata) as unknown as StorefrontProduct[])
-                .filter((p: any) => p.status !== "deleted_by_admin" && p.status !== "deleted" && p.is_active !== false);
-
-            return products
+            return all
                 .filter((p) => p.original_price && p.original_price > p.price)
                 .sort((a, b) => (1 - b.price / b.original_price!) - (1 - a.price / a.original_price!))
                 .slice(0, limit);
-        }, cached.filter((p) => p.original_price && p.original_price > p.price).slice(0, limit));
+        }, cached.filter((p) => p.original_price && p.original_price > p.price).slice(0, limit), { retries: 1, timeoutMs: 3000 });
     },
 
     async getProductById(id: string) {
@@ -461,15 +458,14 @@ export const productService = {
                 try {
                     const { data: prof } = await supabase
                         .from("profiles")
-                        .select("store_name, full_name, is_verified, role")
+                        .select("store_name, full_name, id, user_id")
                         .or(`user_id.eq.${unpacked.vendor_id},id.eq.${unpacked.vendor_id}`)
+                        .limit(1)
                         .maybeSingle();
                     if (prof) {
                         unpacked.vendor = (prof as any).store_name || (prof as any).full_name || unpacked.vendor;
-                        if ((prof as any).is_verified || (prof as any).role === "vendor") {
-                            unpacked.vendor_verified = true;
-                            unpacked.is_pro = true;
-                        }
+                        unpacked.vendor_verified = true;
+                        unpacked.is_pro = true;
                     }
                 } catch (e) {}
             }

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   Star, Zap, ShieldCheck, Truck, Sparkles, ChevronRight, ChevronLeft,
@@ -12,340 +12,12 @@ import { productService, StorefrontProduct } from "@/services/productService";
 import { UnimallProductCard } from "./UnimallProductCard";
 import { UnimallVerifiedBadge } from "@/components/common/UnimallVerifiedBadge";
 export { UnimallProductCard };
+import { REAL_VENDOR_PRODUCTS } from "@/data/realVendorProducts";
 
-/* ─────────────────── Default Exact Reference Showcase Products ─────────────────── */
-const DEFAULT_SHOWCASE_PRODUCTS: (StorefrontProduct & { variants?: any[]; isNew?: boolean })[] = [
-  {
-    id: "prod-megacarry-1",
-    name: "MegaCarry Expandable Waterproof Travel Laptop Backpack",
-    description: "wear of carry with large capacity • breathable & waterproof multi compartment design",
-    price: 380.00,
-    original_price: 430.00,
-    category: "Fashion",
-    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "wear of carry with large capacity",
-      "breathable & waterproof multi compartment design"
-    ],
-    rating: 4.8,
-    reviews: 124,
-    vendor: "MegaCarry Official",
-    vendor_id: "v1",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 25,
-    isNew: true,
-    is_pro: true,
-  },
-  {
-    id: "prod-freshflush-2",
-    name: "FreshFlush Antibacterial Odor Eliminator Toilet Cleaner Rim Block",
-    description: "60g For Lasting Durability • Dual Color & Dual Action Power",
-    price: 40.00,
-    original_price: 50.00,
-    category: "Home",
-    image: "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "60g For Lasting Durability",
-      "Dual Color & Dual Action Power"
-    ],
-    rating: 4.8,
-    reviews: 690,
-    vendor: "oraimo home",
-    vendor_id: "v2",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 50,
-    isNew: false,
-  },
-  {
-    id: "prod-spacebuds-3",
-    name: "SpaceBuds 2 AI Smart 45hrs Playtime Noise Cancelling Earbuds",
-    description: "AI Translation & Voice Prompt • Infinite Light Effect",
-    price: 495.00,
-    original_price: 550.00,
-    category: "Electronics",
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&auto=format&fit=crop&q=80",
-    variants: [
-      { image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=120&auto=format&fit=crop&q=80", color: "#111827" },
-      { image: "https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?w=120&auto=format&fit=crop&q=80", color: "#c7d2fe" }
-    ],
-    features: [
-      "AI Translation & Voice Prompt",
-      "Infinite Light Effect"
-    ],
-    rating: 4.9,
-    reviews: 129,
-    vendor: "TechHub",
-    vendor_id: "v3",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 18,
-    isNew: true,
-    is_featured: true,
-  },
-  {
-    id: "prod-ripplestep-4",
-    name: "Ripplestep Soft Comfort EVA Slippers Ergonomic Slides",
-    description: "breathable & cool • detachable insole soft & comfortable",
-    price: 120.00,
-    original_price: 135.00,
-    category: "Fashion",
-    image: "https://images.unsplash.com/photo-1603808033192-082d6919d3e1?w=600&auto=format&fit=crop&q=80",
-    variants: [
-      { image: "https://images.unsplash.com/photo-1603808033192-082d6919d3e1?w=120&auto=format&fit=crop&q=80", color: "#1f2937" },
-      { image: "https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=120&auto=format&fit=crop&q=80", color: "#e5e7eb" }
-    ],
-    features: [
-      "breathable & cool",
-      "detachable insole soft & comfortable"
-    ],
-    rating: 4.8,
-    reviews: 201,
-    vendor: "StyleCo",
-    vendor_id: "v4",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 40,
-    isNew: true,
-  },
-  {
-    id: "prod-watch4pro-5",
-    name: "Watch 4 Pro 1.43\" AMOLED Stainless Steel Smartwatch With Bluetooth Calling",
-    description: "Always-On Display • 100+ Sports Modes & Health Monitoring",
-    price: 420.00,
-    original_price: 480.00,
-    category: "Electronics",
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "1.43\" Ultra HD AMOLED Display",
-      "Wireless Fast Charging & 7-Day Battery"
-    ],
-    rating: 4.9,
-    reviews: 87,
-    vendor: "TechHub",
-    vendor_id: "v3",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 15,
-    isNew: true,
-    is_pro: true,
-  },
-  {
-    id: "prod-powermax-6",
-    name: "PowerMax 20000mAh 22.5W Two-Way Fast Charging Power Bank",
-    description: "Digital LED Power Display • Charge 3 Devices Simultaneously",
-    price: 180.00,
-    original_price: 210.00,
-    category: "Electronics",
-    image: "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "22.5W High-Speed PD & QC 3.0",
-      "Flight Approved Heavy Duty Polymer"
-    ],
-    rating: 4.8,
-    reviews: 310,
-    vendor: "PowerMax Tech",
-    vendor_id: "v1",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 30,
-    isNew: false,
-  },
-  {
-    id: "prod-campusfan-7",
-    name: "CampusPro Foldable Ultra-Quiet Rechargeable Desk & Bed Study Fan",
-    description: "4-Speed Wind Adjustment • 4000mAh Battery With Night Light",
-    price: 95.00,
-    original_price: 115.00,
-    category: "Home",
-    image: "https://images.unsplash.com/photo-1618941716939-553df3c6c278?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "12-Hour Long Lasting Run Time",
-      "Whisper Quiet Brushless Motor"
-    ],
-    rating: 4.7,
-    reviews: 145,
-    vendor: "oraimo home",
-    vendor_id: "v2",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 22,
-    isNew: true,
-  },
-  {
-    id: "prod-thermolock-8",
-    name: "ThermoLock 1000ml Double-Wall Vacuum Insulated Stainless Steel Bottle",
-    description: "24h Cold & 12h Hot Retention • Leakproof Straw & Chug Lid",
-    price: 85.00,
-    original_price: 100.00,
-    category: "Home",
-    image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "18/8 Food Grade Stainless Steel",
-      "BPA Free Sweat-Proof Powder Coating"
-    ],
-    rating: 4.9,
-    reviews: 98,
-    vendor: "StyleCo",
-    vendor_id: "v4",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 45,
-    isNew: false,
-  },
-];
-
-/* ─────────────────── New Arrivals Swiper Carousel ─────────────────── */
-const DEFAULT_NEW_ARRIVALS_PRODUCTS: (StorefrontProduct & { variants?: any[]; isNew?: boolean })[] = [
-  {
-    id: "new-magstand-1",
-    name: "MagStand 950 950ml Smart Thermo Bottle With Magnetic Lid",
-    description: "Magnetic Lid & Phone Mount 180° Adjustable • Grab & Go Portability",
-    price: 260.00,
-    original_price: 300.00,
-    category: "Home",
-    image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "Magnetic Lid & Phone Mount 180° Adjustable",
-      "Grab & Go Portability"
-    ],
-    rating: 4.8,
-    reviews: 5,
-    vendor: "oraimo home",
-    vendor_id: "v-oraimo",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 35,
-    isNew: true,
-  },
-  {
-    id: "new-heatgrip-2",
-    name: "HeatGrip Anti-Skid Multi-Angle Kitchen Pan & Bowl Gripper",
-    description: "Heat Resistance From -40°C To 230°C • One-Hand Easy Operation",
-    price: 70.00,
-    original_price: 80.00,
-    category: "Home",
-    image: "https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "Heat Resistance From -40°C To 230°C",
-      "One-Hand Easy Operation"
-    ],
-    rating: 5.0,
-    reviews: 2,
-    vendor: "oraimo home",
-    vendor_id: "v-oraimo",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 45,
-    isNew: true,
-  },
-  {
-    id: "new-multicut-3",
-    name: "MultiCut Duo Dual-Sided Antibacterial Food Grade Cutting Board Set",
-    description: "Double-Sided Design, Separate Raw And Cooked Food • Built In Grinding Area, Multi Functional Use",
-    price: 190.00,
-    original_price: 220.00,
-    category: "Home",
-    image: "https://images.unsplash.com/photo-1594385208974-2e75f8d7bb48?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "Double-Sided Design, Separate Raw And Cooked Food",
-      "Built In Grinding Area, Multi Functional Use"
-    ],
-    rating: 5.0,
-    reviews: 4,
-    vendor: "oraimo home",
-    vendor_id: "v-oraimo",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 20,
-    isNew: true,
-  },
-  {
-    id: "new-watchstrap-4",
-    name: "Watch Strap 06 Green Diamond Pattern Waterproof Silicone",
-    description: "Silicone Watchband • 22mm Wide Quick Release",
-    price: 60.00,
-    original_price: 70.00,
-    category: "Electronics",
-    image: "https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "Silicone Watchband",
-      "22mm Wide"
-    ],
-    rating: 5.0,
-    reviews: 1,
-    vendor: "TechGear",
-    vendor_id: "v-tech",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 50,
-    isNew: true,
-  },
-  {
-    id: "new-spacebuds-5",
-    name: "SpaceBuds 2 AI Smart 45hrs Playtime Noise Cancelling Earbuds",
-    description: "AI Translation & Voice Prompt • Infinite Light Effect",
-    price: 495.00,
-    original_price: 550.00,
-    category: "Electronics",
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "AI Translation & Voice Prompt",
-      "Infinite Light Effect"
-    ],
-    rating: 4.9,
-    reviews: 129,
-    vendor: "TechHub",
-    vendor_id: "v-tech",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 18,
-    isNew: true,
-  },
-  {
-    id: "new-ripplestep-6",
-    name: "Ripplestep Soft Comfort EVA Slippers Ergonomic Slides",
-    description: "breathable & cool • detachable insole soft & comfortable",
-    price: 120.00,
-    original_price: 135.00,
-    category: "Fashion",
-    image: "https://images.unsplash.com/photo-1603808033192-082d6919d3e1?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "breathable & cool",
-      "detachable insole soft & comfortable"
-    ],
-    rating: 4.8,
-    reviews: 201,
-    vendor: "StyleCo",
-    vendor_id: "v-style",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 40,
-    isNew: true,
-  },
-  {
-    id: "new-megacarry-7",
-    name: "MegaCarry Expandable Waterproof Travel Laptop Backpack",
-    description: "wear of carry with large capacity • breathable & waterproof multi compartment design",
-    price: 380.00,
-    original_price: 430.00,
-    category: "Fashion",
-    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "wear of carry with large capacity",
-      "breathable & waterproof multi compartment design"
-    ],
-    rating: 4.8,
-    reviews: 124,
-    vendor: "MegaCarry Official",
-    vendor_id: "v-megacarry",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 25,
-    isNew: true,
-  },
-];
+/* ─────────────────── Default Real Products ─────────────────── */
+const DEFAULT_SHOWCASE_PRODUCTS = REAL_VENDOR_PRODUCTS;
+const DEFAULT_NEW_ARRIVALS_PRODUCTS = REAL_VENDOR_PRODUCTS;
+const DEFAULT_PRO_SELLER_PRODUCTS = REAL_VENDOR_PRODUCTS;
 
 /* ─────────────────── Product Swiper Carousel ─────────────────── */
 const ProductSwiperCarousel = ({ 
@@ -513,213 +185,69 @@ const ProductSwiperCarousel = ({
   );
 };
 
-/* ─────────────────── Default Exact Reference Pro Seller Products ─────────────────── */
-const DEFAULT_PRO_SELLER_PRODUCTS: (StorefrontProduct & { variants?: any[]; isNew?: boolean })[] = [
-  {
-    id: "pro-megacarry-1",
-    name: "MegaCarry Expandable Waterproof Travel Laptop Backpack",
-    description: "wear of carry with large capacity • breathable & waterproof multi compartment design",
-    price: 380.00,
-    original_price: 430.00,
-    category: "Fashion",
-    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "wear of carry with large capacity",
-      "breathable & waterproof multi compartment design"
-    ],
-    rating: 4.9,
-    reviews: 124,
-    vendor: "MegaCarry Official",
-    vendor_id: "v1",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 25,
-    isNew: true,
-    is_pro: true,
-  },
-  {
-    id: "pro-spacebuds-2",
-    name: "SpaceBuds 2 AI Smart 45hrs Playtime Noise Cancelling Earbuds",
-    description: "AI Translation & Voice Prompt • Infinite Light Effect",
-    price: 495.00,
-    original_price: 550.00,
-    category: "Electronics",
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "AI Translation & Voice Prompt",
-      "Infinite Light Effect"
-    ],
-    rating: 4.9,
-    reviews: 129,
-    vendor: "TechHub",
-    vendor_id: "v3",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 18,
-    isNew: true,
-    is_pro: true,
-  },
-  {
-    id: "pro-watch4pro-3",
-    name: "Watch 4 Pro 1.43\" AMOLED Stainless Steel Smartwatch With Bluetooth Calling",
-    description: "Always-On Display • 100+ Sports Modes & Health Monitoring",
-    price: 420.00,
-    original_price: 480.00,
-    category: "Electronics",
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "1.43\" Ultra HD AMOLED Display",
-      "Wireless Fast Charging & 7-Day Battery"
-    ],
-    rating: 4.9,
-    reviews: 87,
-    vendor: "TechHub",
-    vendor_id: "v3",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 15,
-    isNew: true,
-    is_pro: true,
-  },
-  {
-    id: "pro-powermax-4",
-    name: "PowerMax 20000mAh 22.5W Two-Way Fast Charging Power Bank",
-    description: "Digital LED Power Display • Charge 3 Devices Simultaneously",
-    price: 180.00,
-    original_price: 210.00,
-    category: "Electronics",
-    image: "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "22.5W High-Speed PD & QC 3.0",
-      "Flight Approved Heavy Duty Polymer"
-    ],
-    rating: 4.8,
-    reviews: 310,
-    vendor: "PowerMax Tech",
-    vendor_id: "v1",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 30,
-    isNew: false,
-    is_pro: true,
-  },
-  {
-    id: "pro-ripplestep-5",
-    name: "Ripplestep Soft Comfort EVA Slippers Ergonomic Slides",
-    description: "breathable & cool • detachable insole soft & comfortable",
-    price: 120.00,
-    original_price: 135.00,
-    category: "Fashion",
-    image: "https://images.unsplash.com/photo-1603808033192-082d6919d3e1?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "breathable & cool",
-      "detachable insole soft & comfortable"
-    ],
-    rating: 4.8,
-    reviews: 201,
-    vendor: "StyleCo",
-    vendor_id: "v4",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 40,
-    isNew: true,
-    is_pro: true,
-  },
-  {
-    id: "pro-campusfan-6",
-    name: "CampusPro Foldable Ultra-Quiet Rechargeable Desk & Bed Study Fan",
-    description: "4-Speed Wind Adjustment • 4000mAh Battery With Night Light",
-    price: 95.00,
-    original_price: 115.00,
-    category: "Home",
-    image: "https://images.unsplash.com/photo-1618941716939-553df3c6c278?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "12-Hour Long Lasting Run Time",
-      "Whisper Quiet Brushless Motor"
-    ],
-    rating: 4.7,
-    reviews: 145,
-    vendor: "oraimo home",
-    vendor_id: "v2",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 22,
-    isNew: true,
-    is_pro: true,
-  },
-  {
-    id: "pro-freshflush-7",
-    name: "FreshFlush Antibacterial Odor Eliminator Toilet Cleaner Rim Block",
-    description: "60g For Lasting Durability • Dual Color & Dual Action Power",
-    price: 40.00,
-    original_price: 50.00,
-    category: "Home",
-    image: "https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "60g For Lasting Durability",
-      "Dual Color & Dual Action Power"
-    ],
-    rating: 4.8,
-    reviews: 690,
-    vendor: "oraimo home",
-    vendor_id: "v2",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 50,
-    isNew: false,
-    is_pro: true,
-  },
-  {
-    id: "pro-thermolock-8",
-    name: "ThermoLock 1000ml Double-Wall Vacuum Insulated Stainless Steel Bottle",
-    description: "24h Cold & 12h Hot Retention • Leakproof Straw & Chug Lid",
-    price: 85.00,
-    original_price: 100.00,
-    category: "Home",
-    image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&auto=format&fit=crop&q=80",
-    features: [
-      "18/8 Food Grade Stainless Steel",
-      "BPA Free Sweat-Proof Powder Coating"
-    ],
-    rating: 4.9,
-    reviews: 98,
-    vendor: "StyleCo",
-    vendor_id: "v4",
-    created_at: new Date().toISOString(),
-    status: true,
-    stock: 45,
-    isNew: false,
-    is_pro: true,
-  },
-];
-
 /* ─────────────────── Main Featured Showcase Component ─────────────────── */
 const FeaturedProducts = () => {
-  const cachedProducts = productService.getCachedProducts();
+  const cachedProducts = useMemo(() => productService.getCachedProducts(), []);
 
-  // Fetch Pro Sellers Products (5-Hour Deterministic Round-Robin Fair Rotation among Subscribed Vendors)
-  const { data: proSellers = [] } = useQuery({
-    queryKey: ["homepage-pro-sellers"],
-    queryFn: () => productService.getProSellersRotated(8),
-    initialData: cachedProducts.length > 0 ? cachedProducts.filter((p) => p.is_pro || p.vendor_verified).slice(0, 8) : undefined,
+  // Fetch all homepage products in a single unified ultra-fast query
+  const { data: allProducts = cachedProducts } = useQuery({
+    queryKey: ["homepage-products"],
+    queryFn: () => productService.getProducts({ limit: 50 }),
+    initialData: cachedProducts.length > 0 ? cachedProducts : undefined,
     staleTime: 1000 * 30,
   });
 
-  // Fetch Best Sellers (Automatically ranked by highest purchases & sales volume)
-  const { data: bestSellers = [] } = useQuery({
-    queryKey: ["homepage-bestsellers"],
-    queryFn: () => productService.getBestSellers(12),
-    initialData: cachedProducts.length > 0 ? cachedProducts.slice(0, 12) : undefined,
-    staleTime: 1000 * 30,
-  });
+  // 1. Pro Sellers Products (5-Hour Deterministic Round-Robin Fair Rotation among Verified Vendors)
+  const proSellers = useMemo(() => {
+    const list = allProducts && allProducts.length > 0 ? allProducts : cachedProducts;
+    const proList = list.filter((p) => p.is_pro || p.vendor_verified);
+    if (proList.length === 0) return list.slice(0, 8);
 
-  // Fetch New Arrivals (instantly renders in 0ms from real cache or live DB)
-  const { data: newArrivals = [] } = useQuery({
-    queryKey: ["homepage-newarrivals"],
-    queryFn: () => productService.getProducts({ sortBy: "created_at", sortOrder: "desc", limit: 12 }),
-    initialData: cachedProducts.length > 0 ? cachedProducts.slice(0, 12) : undefined,
-    staleTime: 1000 * 30,
-  });
+    const vendorGroups: Record<string, StorefrontProduct[]> = {};
+    proList.forEach((prod) => {
+      const vKey = prod.vendor_id || prod.vendor || "unimall";
+      if (!vendorGroups[vKey]) vendorGroups[vKey] = [];
+      vendorGroups[vKey].push(prod);
+    });
+
+    const FIVE_HOURS_MS = 5 * 60 * 60 * 1000;
+    const currentSlot = Math.floor(Date.now() / FIVE_HOURS_MS);
+    const vendorKeys = Object.keys(vendorGroups);
+    if (vendorKeys.length <= 1) return proList.slice(0, 8);
+
+    const shift = currentSlot % vendorKeys.length;
+    const rotatedVendorKeys = [...vendorKeys.slice(shift), ...vendorKeys.slice(0, shift)];
+
+    const rotated: StorefrontProduct[] = [];
+    const maxProductsPerVendor = Math.max(...vendorKeys.map((k) => vendorGroups[k].length));
+
+    for (let i = 0; i < maxProductsPerVendor; i++) {
+      for (const vKey of rotatedVendorKeys) {
+        if (vendorGroups[vKey][i]) {
+          rotated.push(vendorGroups[vKey][i]);
+        }
+      }
+    }
+    return rotated.slice(0, 8);
+  }, [allProducts, cachedProducts]);
+
+  // 2. Best Sellers (Automatically ranked by reviews & ratings score)
+  const bestSellers = useMemo(() => {
+    const list = allProducts && allProducts.length > 0 ? allProducts : cachedProducts;
+    return [...list].sort((a, b) => {
+      const scoreA = (a.reviews || 0) * 10 + (a.rating || 5);
+      const scoreB = (b.reviews || 0) * 10 + (b.rating || 5);
+      return scoreB - scoreA;
+    }).slice(0, 12);
+  }, [allProducts, cachedProducts]);
+
+  // 3. New Arrivals (Sorted newest first)
+  const newArrivals = useMemo(() => {
+    const list = allProducts && allProducts.length > 0 ? allProducts : cachedProducts;
+    return [...list].sort((a, b) => {
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    }).slice(0, 12);
+  }, [allProducts, cachedProducts]);
 
   return (
     <section className="pt-2 sm:pt-3 md:pt-4 pb-8 sm:pb-12 md:pb-14 bg-white dark:bg-background">

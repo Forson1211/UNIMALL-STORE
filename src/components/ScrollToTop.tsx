@@ -6,15 +6,14 @@ const ScrollToTop = () => {
   const { pathname, hash } = useLocation();
   const { siteName } = useSiteSettingsContext();
 
-  // Disable browser scroll restoration so page always loads at top on refresh
+  // Enable native browser scroll restoration like Jumia
   useEffect(() => {
     if ("scrollRestoration" in window.history) {
-      window.history.scrollRestoration = "manual";
+      window.history.scrollRestoration = "auto";
     }
-    window.scrollTo(0, 0);
   }, []);
 
-  // Scroll to top or anchor logic on route change
+  // Smooth scroll to anchor if hash is present
   useEffect(() => {
     if (hash) {
       const id = window.setTimeout(() => {
@@ -23,7 +22,6 @@ const ScrollToTop = () => {
       }, 80);
       return () => window.clearTimeout(id);
     }
-    window.scrollTo(0, 0);
   }, [pathname, hash]);
 
 

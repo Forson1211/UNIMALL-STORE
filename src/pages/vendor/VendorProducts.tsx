@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { vendorService } from "@/services/vendorService";
 import { dealService } from "@/services/dealService";
 import { productService } from "@/services/productService";
+import { REAL_VENDOR_PRODUCTS } from "@/data/realVendorProducts";
 import { 
   Package, 
   Plus, 
@@ -55,6 +56,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 
+import { calculateVendorProfileCompleteness } from "@/lib/vendorProfileUtils";
+
 export const VendorProducts = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
@@ -79,13 +82,12 @@ export const VendorProducts = () => {
     }
   })() : {};
 
-  const isProfileComplete = Boolean(
-    (profile?.store_name || localCache?.store_name || profile?.full_name || localCache?.full_name)?.trim() &&
-    (profile?.campus || localCache?.campus)?.trim() &&
-    (profile?.phone || localCache?.phone)?.trim()
-  );
+  // Enforce 100% complete profile
+  const completenessData = calculateVendorProfileCompleteness(profile, localCache);
+  const isProfileComplete = completenessData.isComplete;
+  const completenessScore = completenessData.score;
 
-  const storeName = profile?.store_name || localCache?.store_name || profile?.full_name || "Campus Vendor";
+  const storeName = profile?.store_name || localCache?.store_name || user?.user_metadata?.store_name || profile?.full_name || "Campus Vendor";
 
   // Flash Deal State
   const [isDealModalOpen, setIsDealModalOpen] = useState(false);
@@ -95,11 +97,24 @@ export const VendorProducts = () => {
     startTime: "",
     endTime: "",
   });
+  // Fetch Vendor Products with instant local cache pre-hydration
+  const cachedVendorProducts = useMemo(() => {
+    try {
+      if (user?.id) {
+        const raw = localStorage.getItem(`unimall_vendor_prods_${user.id}`);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      }
+    } catch (e) {}
+    return [];
+  }, [user?.id]);
 
-  // Fetch Vendor Products
-  const { data: products = [], isLoading } = useQuery({
+  const { data: products = cachedVendorProducts, isLoading } = useQuery({
     queryKey: ["vendor-products", user?.id, storeName],
-    queryFn: () => vendorService.getProducts(user!.id, storeName),
+    queryFn: () => vendorService.getProducts(user?.id || "", storeName),
+    initialData: cachedVendorProducts.length > 0 ? cachedVendorProducts : undefined,
     enabled: !!user,
   });
 
@@ -112,7 +127,10 @@ export const VendorProducts = () => {
       store_name: storeName,
       vendor_name: storeName
     }),
-    onSuccess: () => {
+    onSuccess: (createdProd: any) => {
+      if (createdProd) {
+        productService.addProductToCache(createdProd);
+      }
       productService.bustCache();
       queryClient.invalidateQueries({ queryKey: ["vendor-products"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
@@ -369,19 +387,24 @@ export const VendorProducts = () => {
         {!isProfileComplete && (
           <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-900/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
             <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs font-black">
-                <Store className="w-5 h-5" />
+              <div className="w-11 h-11 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs font-black text-xs">
+                {completenessScore}%
               </div>
               <div>
-                <h4 className="text-sm font-black text-gray-900 dark:text-white">Store Profile Setup Required</h4>
+                <h4 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2">
+                  <span>100% Store Setup Required to List Products</span>
+                  <span className="text-[10px] bg-amber-200 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200 px-2 py-0.5 rounded-full font-bold">
+                    {completenessScore}% Complete
+                  </span>
+                </h4>
                 <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mt-0.5">
-                  Complete your store profile (Store Name, Campus Hub, WhatsApp Hotline) to start adding products and selling on Unimall.
+                  You must complete 100% of your store profile (Store Logo, Cover Banner, WhatsApp Contact, Campus Location, and Store Bio) before you can publish or list products on Unimall.
                 </p>
               </div>
             </div>
             <Link to="/vendor/profile" className="shrink-0 w-full sm:w-auto">
               <Button className="w-full sm:w-auto bg-[#FF5500] hover:bg-[#e54a00] text-white font-black text-xs h-9 px-5 rounded-xl shadow-xs uppercase tracking-wider">
-                Complete Store Profile →
+                Complete Store Profile ({completenessScore}%) →
               </Button>
             </Link>
           </div>
@@ -946,52 +969,94 @@ export const VendorProducts = () => {
         isSubmitting={createMutation.isPending || updateMutation.isPending}
       />
 
-      {/* ── Profile Gate Required Modal ── */}
+      {/* ── 100% Profile Gate Required Modal ── */}
       <Dialog open={isProfileGateModalOpen} onOpenChange={setIsProfileGateModalOpen}>
-        <DialogContent className="sm:max-w-md rounded-none border border-slate-300 dark:border-slate-700 p-6 text-center shadow-2xl">
-          <div className="w-14 h-14 rounded-none bg-orange-100 dark:bg-orange-950/60 text-[#FF5500] mx-auto flex items-center justify-center mb-3 shadow-inner">
+        <DialogContent className="sm:max-w-md rounded-2xl border border-gray-200 dark:border-slate-800 p-6 text-center shadow-2xl">
+          <div className="w-14 h-14 rounded-2xl bg-orange-100 dark:bg-orange-950/60 text-[#FF5500] mx-auto flex items-center justify-center mb-3 shadow-inner">
             <Store className="w-7 h-7" />
           </div>
           <DialogHeader>
-            <DialogTitle className="text-xl font-black text-center uppercase tracking-wider">Complete Store Profile to Sell</DialogTitle>
-            <DialogDescription className="text-xs text-center text-gray-500 mt-1">
-              To protect campus students and ensure smooth order deliveries, please finish your basic store profile setup before creating product listings.
+            <DialogTitle className="text-lg sm:text-xl font-black text-center tracking-tight">
+              100% Store Profile Required to Sell
+            </DialogTitle>
+            <DialogDescription className="text-xs text-center text-gray-500 mt-1 leading-relaxed">
+              To build trust with campus buyers and ensure smooth student deliveries, you must complete 100% of your store profile before creating product listings.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-2.5 py-4 text-left text-xs bg-slate-50 dark:bg-muted/40 p-4 rounded-none border border-gray-200 dark:border-border">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-gray-700 dark:text-gray-300">Store Business Name</span>
-              <span className={`font-black flex items-center gap-1 ${(profile?.store_name || localCache?.store_name || profile?.full_name) ? "text-emerald-600" : "text-amber-600"}`}>
-                <CheckCircle2 className={`w-3.5 h-3.5 ${(profile?.store_name || localCache?.store_name || profile?.full_name) ? "text-emerald-500" : "text-gray-300"}`} />
-                {(profile?.store_name || localCache?.store_name || profile?.full_name) ? "Completed" : "Required"}
+          {/* Progress Bar in Modal */}
+          <div className="py-2 space-y-1.5 text-left">
+            <div className="flex items-center justify-between text-xs font-bold">
+              <span className="text-gray-600 dark:text-gray-300">Profile Completion</span>
+              <span className="text-[#FF5500]">{completenessScore}% of 100%</span>
+            </div>
+            <div className="w-full bg-gray-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-[#FF5500] transition-all duration-500 rounded-full" 
+                style={{ width: `${completenessScore}%` }} 
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2 py-3 text-left text-xs bg-slate-50 dark:bg-muted/40 p-4 rounded-xl border border-gray-200 dark:border-border">
+            <div className="flex items-center justify-between py-1 border-b border-gray-200/60 dark:border-border">
+              <span className="font-semibold text-gray-700 dark:text-gray-300">Store Business Name (20%)</span>
+              <span className={`font-bold flex items-center gap-1 text-[11px] ${completenessData.checklist.storeName ? "text-emerald-600" : "text-amber-600"}`}>
+                <CheckCircle2 className={`w-3.5 h-3.5 ${completenessData.checklist.storeName ? "text-emerald-500" : "text-gray-300"}`} />
+                {completenessData.checklist.storeName ? "Completed" : "Required"}
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-gray-700 dark:text-gray-300">Campus Hub Location</span>
-              <span className={`font-black flex items-center gap-1 ${(profile?.campus || localCache?.campus) ? "text-emerald-600" : "text-amber-600"}`}>
-                <CheckCircle2 className={`w-3.5 h-3.5 ${(profile?.campus || localCache?.campus) ? "text-emerald-500" : "text-gray-300"}`} />
-                {(profile?.campus || localCache?.campus) ? "Completed" : "Required"}
+
+            <div className="flex items-center justify-between py-1 border-b border-gray-200/60 dark:border-border">
+              <span className="font-semibold text-gray-700 dark:text-gray-300">WhatsApp / Phone Contact (20%)</span>
+              <span className={`font-bold flex items-center gap-1 text-[11px] ${completenessData.checklist.phone ? "text-emerald-600" : "text-amber-600"}`}>
+                <CheckCircle2 className={`w-3.5 h-3.5 ${completenessData.checklist.phone ? "text-emerald-500" : "text-gray-300"}`} />
+                {completenessData.checklist.phone ? "Completed" : "Required"}
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-gray-700 dark:text-gray-300">WhatsApp / Phone Contact</span>
-              <span className={`font-black flex items-center gap-1 ${(profile?.phone || localCache?.phone) ? "text-emerald-600" : "text-amber-600"}`}>
-                <CheckCircle2 className={`w-3.5 h-3.5 ${(profile?.phone || localCache?.phone) ? "text-emerald-500" : "text-gray-300"}`} />
-                {(profile?.phone || localCache?.phone) ? "Completed" : "Required"}
+
+            <div className="flex items-center justify-between py-1 border-b border-gray-200/60 dark:border-border">
+              <span className="font-semibold text-gray-700 dark:text-gray-300">Campus Hub Location (15%)</span>
+              <span className={`font-bold flex items-center gap-1 text-[11px] ${completenessData.checklist.campus ? "text-emerald-600" : "text-amber-600"}`}>
+                <CheckCircle2 className={`w-3.5 h-3.5 ${completenessData.checklist.campus ? "text-emerald-500" : "text-gray-300"}`} />
+                {completenessData.checklist.campus ? "Completed" : "Required"}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between py-1 border-b border-gray-200/60 dark:border-border">
+              <span className="font-semibold text-gray-700 dark:text-gray-300">Store Description / Bio (15%)</span>
+              <span className={`font-bold flex items-center gap-1 text-[11px] ${completenessData.checklist.description ? "text-emerald-600" : "text-amber-600"}`}>
+                <CheckCircle2 className={`w-3.5 h-3.5 ${completenessData.checklist.description ? "text-emerald-500" : "text-gray-300"}`} />
+                {completenessData.checklist.description ? "Completed" : "Required"}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between py-1 border-b border-gray-200/60 dark:border-border">
+              <span className="font-semibold text-gray-700 dark:text-gray-300">Store Logo / Avatar (15%)</span>
+              <span className={`font-bold flex items-center gap-1 text-[11px] ${completenessData.checklist.avatarUrl ? "text-emerald-600" : "text-amber-600"}`}>
+                <CheckCircle2 className={`w-3.5 h-3.5 ${completenessData.checklist.avatarUrl ? "text-emerald-500" : "text-gray-300"}`} />
+                {completenessData.checklist.avatarUrl ? "Uploaded" : "Required"}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between py-1">
+              <span className="font-semibold text-gray-700 dark:text-gray-300">Store Cover Banner (15%)</span>
+              <span className={`font-bold flex items-center gap-1 text-[11px] ${completenessData.checklist.bannerUrl ? "text-emerald-600" : "text-amber-600"}`}>
+                <CheckCircle2 className={`w-3.5 h-3.5 ${completenessData.checklist.bannerUrl ? "text-emerald-500" : "text-gray-300"}`} />
+                {completenessData.checklist.bannerUrl ? "Uploaded" : "Required"}
               </span>
             </div>
           </div>
 
-          <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-1">
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-2">
             <Button
               onClick={() => {
                 setIsProfileGateModalOpen(false);
                 navigate("/vendor/profile");
               }}
-              className="w-full bg-[#FF5500] hover:bg-[#e54a00] text-white font-black text-xs h-10 rounded-none shadow-md uppercase tracking-wider"
+              className="w-full bg-[#FF5500] hover:bg-[#e54a00] text-white font-black text-xs h-11 rounded-xl shadow-md uppercase tracking-wider"
             >
-              Complete Store Profile Now →
+              Complete Store Profile ({completenessScore}%) Now →
             </Button>
           </DialogFooter>
         </DialogContent>

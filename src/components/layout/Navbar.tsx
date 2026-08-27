@@ -3,7 +3,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   X, ShoppingCart, Store, Heart, ChevronDown, User, ShoppingBag,
-  Zap, Phone, Truck, Search, Menu, LogOut, HelpCircle, MessageSquare, MessageCircle
+  Zap, Phone, Truck, Search, Menu, LogOut, HelpCircle, MessageSquare, MessageCircle,
+  ShieldCheck
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -252,6 +253,31 @@ const Navbar = () => {
                       </div>
                     </div>
                   )}
+                  {role === "admin" && (
+                    <>
+                      <Link to="/admin" className="flex items-center gap-3 px-3 py-2 bg-orange-50/60 dark:bg-orange-950/30 hover:bg-orange-100 dark:hover:bg-orange-950/50 text-sm font-bold text-[#FF5500] rounded transition-colors">
+                        <ShieldCheck className="w-4 h-4 text-[#FF5500]" /> Admin Portal
+                      </Link>
+                      <Link to="/vendor" className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-muted text-sm font-bold text-gray-900 dark:text-foreground rounded transition-colors">
+                        <Store className="w-4 h-4 text-[#FF5500]" /> Seller Dashboard
+                      </Link>
+                      <Link to="/vendor/profile" className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-muted text-sm text-gray-700 dark:text-foreground rounded transition-colors">
+                        <Store className="w-4 h-4 text-gray-400" /> My Vendor Store
+                      </Link>
+                      <DropdownMenuSeparator className="my-1 border-gray-100 dark:border-border" />
+                    </>
+                  )}
+                  {role === "vendor" && (
+                    <>
+                      <Link to="/vendor" className="flex items-center gap-3 px-3 py-2 bg-orange-50/60 dark:bg-orange-950/30 hover:bg-orange-100 dark:hover:bg-orange-950/50 text-sm font-bold text-[#FF5500] rounded transition-colors">
+                        <Store className="w-4 h-4 text-[#FF5500]" /> Seller Dashboard
+                      </Link>
+                      <Link to="/vendor/profile" className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-muted text-sm text-gray-700 dark:text-foreground rounded transition-colors">
+                        <Store className="w-4 h-4 text-gray-400" /> My Vendor Store
+                      </Link>
+                      <DropdownMenuSeparator className="my-1 border-gray-100 dark:border-border" />
+                    </>
+                  )}
                   <Link to="/account" className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-muted text-sm text-gray-700 dark:text-foreground rounded transition-colors">
                     <User className="w-4 h-4 text-gray-400" /> My Account
                   </Link>
@@ -407,6 +433,33 @@ const Navbar = () => {
             {/* TAB CONTENT: MENU */}
             {drawerTab === "menu" ? (
               <div className="divide-y divide-gray-200/90 dark:divide-border border-b border-gray-200 dark:border-border">
+                {role === "admin" && (
+                  <>
+                    <Link
+                      to="/admin"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="block px-4 py-3.5 text-xs font-bold uppercase tracking-wide text-[#FF5500] bg-orange-50/60 dark:bg-orange-950/30"
+                    >
+                      🛡️ ADMIN PORTAL
+                    </Link>
+                    <Link
+                      to="/vendor"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="block px-4 py-3.5 text-xs font-bold uppercase tracking-wide text-gray-900 dark:text-white"
+                    >
+                      🏪 SELLER DASHBOARD
+                    </Link>
+                  </>
+                )}
+                {role === "vendor" && (
+                  <Link
+                    to="/vendor"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block px-4 py-3.5 text-xs font-bold uppercase tracking-wide text-[#FF5500] bg-orange-50/60 dark:bg-orange-950/30"
+                  >
+                    🏪 SELLER DASHBOARD
+                  </Link>
+                )}
                 <Link
                   to="/"
                   onClick={() => setIsMobileMenuOpen(false)}

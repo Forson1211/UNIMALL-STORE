@@ -50,8 +50,14 @@ export function ProtectedRoute({
       return <>{children}</>;
     }
 
+    // Allow access to vendor route so DashboardLayout can render the active dashboard, pending, or suspended UI
+    const localVendorStatus = user?.id ? localStorage.getItem(`unimall_vendor_status_${user.id}`) : null;
+    const isVendorRoute = allowedRoles.includes("vendor");
+    const isVendorUser = role === "vendor" || localVendorStatus === "approved" || localVendorStatus === "suspended" || vendorStatus === "approved" || vendorStatus === "suspended" || user?.user_metadata?.role === "vendor";
+    const isVendorAllowed = isVendorRoute && isVendorUser;
+
     // Normal role check
-    if (allowedRoles.includes(role)) {
+    if (allowedRoles.includes(role) || isVendorAllowed) {
       return <>{children}</>;
     }
 

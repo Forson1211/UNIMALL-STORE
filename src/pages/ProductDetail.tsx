@@ -20,7 +20,9 @@ import { UnimallProductCard } from "@/components/home/UnimallProductCard";
 import { UnimallVerifiedBadge } from "@/components/common/UnimallVerifiedBadge";
 import { Users, User, ThumbsUp, PenSquare } from "lucide-react";
 
-/* ─────────────────── Fallback Rich Products Catalog ─────────────────── */
+import { REAL_VENDOR_PRODUCTS } from "@/data/realVendorProducts";
+
+/* ─────────────────── Fallback Real Products Catalog ─────────────────── */
 const MOCK_PRODUCTS_DATA: Record<string, Partial<StorefrontProduct> & {
   gallery?: string[];
   colors?: { name: string; hex: string; img?: string }[];
@@ -28,97 +30,16 @@ const MOCK_PRODUCTS_DATA: Record<string, Partial<StorefrontProduct> & {
   ranking?: string;
   vendorCampus?: string;
   vendorPhone?: string;
-}> = {
-  "power-magpower-1": {
-    id: "power-magpower-1",
-    name: "oraimo MagPower 15 oraimo MagPower 15 10000mAh Wireless Power Bank",
-    description: "Strong Magnetic Attachment • 15W Wireless Fast Charge • Foldable Stand • Wide Compatibility",
-    price: 280.00,
-    original_price: 310.00,
-    category: "Power",
-    rating: 4.9,
-    reviews: 1393,
-    ranking: "TOP Power Best Seller #1",
-    vendor: "oraimo Official Ghana",
-    vendorCampus: "UG Legon & Nationwide Hubs",
-    bulletFeatures: [
-      "Strong Magnetic Attachment",
-      "15W Wireless Charge",
-      "Foldable Stand",
-      "Wide Compatibility"
-    ],
-    colors: [
-      { name: "Olive Green", hex: "#7E9070" },
-      { name: "Sand Gold", hex: "#F3E3B6" },
-      { name: "Obsidian Black", hex: "#1A1A1A" },
-    ],
-    gallery: [
-      "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=900&auto=format&fit=crop&q=85",
-      "https://images.unsplash.com/photo-1609592424368-b8084a4a8cb8?w=900&auto=format&fit=crop&q=85",
-      "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=900&auto=format&fit=crop&q=85",
-      "https://images.unsplash.com/photo-1585338107529-13afc5f02586?w=900&auto=format&fit=crop&q=85",
-    ],
-  },
-  "prod-megacarry-1": {
-    id: "prod-megacarry-1",
-    name: "MegaCarry Expandable Waterproof Travel Laptop Backpack",
-    description: "wear of carry with large capacity • breathable & waterproof multi compartment design",
-    price: 380.00,
-    original_price: 430.00,
-    category: "Fashion",
-    rating: 4.8,
-    reviews: 124,
-    ranking: "TOP Backpacks #1",
-    vendor: "Campus Bags & Trends",
-    vendorCampus: "UG Legon - Night Market Hub",
-    bulletFeatures: [
-      "Wear of carry with large capacity",
-      "Breathable & waterproof multi compartment design",
-      "Anti-Theft Hidden Zipper Pocket",
-      "Padded 16\" Laptop Sleeve"
-    ],
-    colors: [
-      { name: "Classic Black", hex: "#111827" },
-      { name: "Charcoal Gray", hex: "#4B5563" },
-    ],
-    gallery: [
-      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=900&auto=format&fit=crop&q=85",
-      "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?w=900&auto=format&fit=crop&q=85",
-      "https://images.unsplash.com/photo-1581605405669-fcdf81165afa?w=900&auto=format&fit=crop&q=85",
-      "https://images.unsplash.com/photo-1546938576-6e6a64f317cc?w=900&auto=format&fit=crop&q=85",
-    ],
-  },
-  "new-magstand-1": {
-    id: "new-magstand-1",
-    name: "MagStand 950 950ml Smart Thermo Bottle With Magnetic Lid",
-    description: "Magnetic Lid & Phone Mount 180° Adjustable • Grab & Go Portability",
-    price: 260.00,
-    original_price: 300.00,
-    category: "Home",
-    rating: 4.8,
-    reviews: 5,
-    ranking: "TOP Campus Living #1",
-    vendor: "oraimo home Official",
-    vendorCampus: "KNUST & UG Delivery",
-    bulletFeatures: [
-      "Magnetic Lid & Phone Mount 180° Adjustable",
-      "Grab & Go Portability",
-      "24-Hour Hot & Cold Temp Lock",
-      "BPA Free Stainless Steel"
-    ],
-    colors: [
-      { name: "Stainless Silver", hex: "#D1D5DB" },
-      { name: "Forest Green", hex: "#16A34A" },
-      { name: "Matte Black", hex: "#1F2937" },
-    ],
-    gallery: [
-      "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=900&auto=format&fit=crop&q=85",
-      "https://images.unsplash.com/photo-1544816155-12df9643f363?w=900&auto=format&fit=crop&q=85",
-      "https://images.unsplash.com/photo-1570831739435-6601aa3fa4fb?w=900&auto=format&fit=crop&q=85",
-      "https://images.unsplash.com/photo-1523362628745-0c100150b504?w=900&auto=format&fit=crop&q=85"
-    ],
-  },
-};
+}> = REAL_VENDOR_PRODUCTS.reduce((acc, p) => {
+  acc[p.id] = {
+    ...p,
+    ranking: `TOP ${p.category} #1`,
+    vendorCampus: "UG Legon & Nationwide Delivery",
+    gallery: p.image ? [p.image] : [],
+    bulletFeatures: p.features || [],
+  };
+  return acc;
+}, {} as Record<string, any>);
 
 /* ─────────────────── Dynamic Smart Bullets Generator ─────────────────── */
 const getSmartFeatures = (prod: Partial<StorefrontProduct>): string[] => {
@@ -221,7 +142,7 @@ const getProductGallery = (prod: Partial<StorefrontProduct>): string[] => {
     if (valid.length > 0) return valid;
   }
 
-  const primaryImage = prod.image || "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=900&auto=format&fit=crop&q=85";
+  const primaryImage = prod.image_url || prod.image || (Array.isArray(prod.images) && prod.images.length > 0 ? prod.images[0] : "") || "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=900&auto=format&fit=crop&q=85";
   const name = (prod.name || "").toLowerCase();
   const cat = (prod.category || "").toLowerCase();
 
@@ -391,18 +312,17 @@ const ProductDetail = () => {
     enabled: !!vendorId || !!product.vendor,
   });
 
+  const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str || "");
+  const rawVendorName = dbVendorProfile?.store_name || dbVendorProfile?.full_name || product.vendor || "";
+  const cleanVendorName = (!rawVendorName || isUUID(rawVendorName) || rawVendorName === "Store") ? "Campus Merchant" : rawVendorName;
+
   const vendorData = {
-    id: vendorId || dbVendorProfile?.user_id || dbVendorProfile?.id || "vendor-store",
-    name: dbVendorProfile?.store_name || dbVendorProfile?.full_name || product.vendor || "Campus Merchant",
-    campus: dbVendorProfile?.campus || mockFallback?.vendorCampus || "University of Ghana",
-    avatar_url: dbVendorProfile?.avatar_url || null,
-    phone: dbVendorProfile?.phone || whatsappNumber || supportPhone || "+233241234567",
-    is_pro: Boolean(
-      dbVendorProfile?.is_pro || 
-      dbVendorProfile?.is_subscribed || 
-      (vendorId && localStorage.getItem(`unimall_vendor_pro_${vendorId}`) === "true") ||
-      product.is_pro
-    ),
+    id: vendorId || dbVendorProfile?.user_id || dbVendorProfile?.id || cleanVendorName,
+    name: cleanVendorName,
+    campus: dbVendorProfile?.campus || "Campus Verified Merchant",
+    avatar_url: dbVendorProfile?.avatar_url || "",
+    phone: dbVendorProfile?.phone || "+233 24 000 0000",
+    is_pro: dbVendorProfile?.verified !== false,
   };
 
   // 5. Vendor Follow System (100% Real ID Tracking)

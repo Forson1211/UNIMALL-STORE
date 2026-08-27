@@ -51,9 +51,20 @@ const SWIPE_THRESHOLD = 40;
 const HeroSection = () => {
   const { getSetting } = useSiteSettingsContext();
   const configuredSlides = getSetting("hero_slider_images", DEFAULT_SLIDES);
-  const slides = Array.isArray(configuredSlides) && configuredSlides.length === DEFAULT_SLIDES.length
-    ? configuredSlides.map((slide, index) => ({ ...DEFAULT_SLIDES[index], ...slide }))
+  const slides = Array.isArray(configuredSlides) && configuredSlides.length > 0
+    ? configuredSlides.map((slide, index) => {
+        const defaultSlide = DEFAULT_SLIDES[index % DEFAULT_SLIDES.length];
+        return {
+          ...defaultSlide,
+          ...slide,
+          image: slide.image || (slide as any).src || defaultSlide.image,
+          title: slide.title || defaultSlide.title,
+          subtitle: slide.subtitle || defaultSlide.subtitle,
+          discount: slide.discount || defaultSlide.discount,
+        };
+      })
     : DEFAULT_SLIDES;
+
   const [index, setIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const dragDeltaX = useRef(0);
@@ -65,10 +76,10 @@ const HeroSection = () => {
   const prev = () => goTo(index - 1);
 
   useEffect(() => {
-    if (isDragging) return;
+    if (isDragging || slides.length <= 1) return;
     const timer = setInterval(() => setIndex((i) => (i + 1) % slides.length), 6000);
     return () => clearInterval(timer);
-  }, [isDragging]);
+  }, [isDragging, slides.length]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     touchStartX.current = e.clientX;
@@ -200,68 +211,88 @@ const HeroSection = () => {
                   transition: isDragging ? "none" : "transform 550ms cubic-bezier(0.22, 1, 0.36, 1)",
                 }}
               >
-                {slides.map((s, i) => (
-                  <div key={s.image} className="relative h-full shrink-0" style={{ width: `${100 / slides.length}%` }}>
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#FF5500]/90 via-[#FF5500]/60 to-transparent z-10" />
-                    <img
-                      src={s.image}
-                      alt={`${s.title.join(" ")} Promotion`}
-                      draggable={false}
-                      className={`absolute inset-0 w-full h-full object-cover ${i === index ? "animate-kenburns" : ""}`}
-                    />
-                    <div className="relative z-20 h-full flex flex-col justify-center px-8 md:px-12 py-8 space-y-3 pointer-events-none">
-                      <div>
-                        <h2 className="text-white text-4xl md:text-5xl font-black tracking-tight leading-tight uppercase drop-shadow-sm">
-                          {s.title[0]}<br />{s.title[1]}
-                        </h2>
-                        <p className="text-white/95 text-base md:text-lg font-semibold mt-2">
-                          {s.subtitle}
-                        </p>
+                {slides.map((s, i) => {
+                  const titleFormatted = Array.isArray(s.title)
+                    ? s.title
+                    : typeof s.title === "string"
+                    ? s.title.split(" ")
+                    : ["Shopping", "Spree"];
+                  const line1 = titleFormatted[0] || "Featured";
+                  const line2 = titleFormatted.slice(1).join(" ") || "Deals";
+                  const altTitle = Array.isArray(s.title) ? s.title.join(" ") : String(s.title || "Promotion");
+                  const imgSrc = s.image || (s as any).src;
+
+                  return (
+                    <div key={imgSrc || i} className="relative h-full shrink-0" style={{ width: `${100 / slides.length}%` }}>
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#FF5500]/90 via-[#FF5500]/60 to-transparent z-10" />
+                      {imgSrc && (
+                        <img
+                          src={imgSrc}
+                          alt={`${altTitle} Promotion`}
+                          draggable={false}
+                          className={`absolute inset-0 w-full h-full object-cover ${i === index ? "animate-kenburns" : ""}`}
+                        />
+                      )}
+                      <div className="relative z-20 h-full flex flex-col justify-center px-8 md:px-12 py-8 space-y-3 pointer-events-none">
+                        <div>
+                          <h2 className="text-white text-4xl md:text-5xl font-black tracking-tight leading-tight uppercase drop-shadow-sm">
+                            {line1}<br />{line2}
+                          </h2>
+                          <p className="text-white/95 text-base md:text-lg font-semibold mt-2">
+                            {s.subtitle}
+                          </p>
+                        </div>
+                        <div className="bg-[#FF5500] border-2 border-white/30 inline-flex items-center px-3 py-1.5 w-fit shadow-md">
+                          <span className="text-white font-black text-xl md:text-2xl tracking-tight">
+                            UP TO <span className="text-yellow-300">{s.discount}</span>
+                          </span>
+                        </div>
+                        <p className="text-white/80 text-xs font-medium">Limited time offer. T&Cs apply</p>
+                        <Link
+                          to="/products"
+                          className="mt-1 inline-flex items-center justify-center bg-white text-gray-900 font-black text-xs uppercase tracking-widest px-6 py-2.5 hover:bg-gray-100 transition-colors shadow-lg w-fit pointer-events-auto"
+                        >
+                          Shop Now
+                        </Link>
                       </div>
-                      <div className="bg-[#FF5500] border-2 border-white/30 inline-flex items-center px-3 py-1.5 w-fit shadow-md">
-                        <span className="text-white font-black text-xl md:text-2xl tracking-tight">
-                          UP TO <span className="text-yellow-300">{s.discount}</span>
-                        </span>
-                      </div>
-                      <p className="text-white/80 text-xs font-medium">Limited time offer. T&Cs apply</p>
-                      <Link
-                        to="/products"
-                        className="mt-1 inline-flex items-center justify-center bg-white text-gray-900 font-black text-xs uppercase tracking-widest px-6 py-2.5 hover:bg-gray-100 transition-colors shadow-lg w-fit pointer-events-auto"
-                      >
-                        Shop Now
-                      </Link>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Prev / Next arrows */}
-              <button
-                onClick={prev}
-                aria-label="Previous slide"
-                className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 items-center justify-center bg-white/15 hover:bg-white/30 text-white transition-colors opacity-0 group-hover:opacity-100"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                onClick={next}
-                aria-label="Next slide"
-                className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 items-center justify-center bg-white/15 hover:bg-white/30 text-white transition-colors opacity-0 group-hover:opacity-100"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              {slides.length > 1 && (
+                <>
+                  <button
+                    onClick={prev}
+                    aria-label="Previous slide"
+                    className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 items-center justify-center bg-white/15 hover:bg-white/30 text-white transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={next}
+                    aria-label="Next slide"
+                    className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 items-center justify-center bg-white/15 hover:bg-white/30 text-white transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </>
+              )}
 
               {/* Dots */}
-              <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-20">
-                {slides.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => goTo(i)}
-                    aria-label={`Go to slide ${i + 1}`}
-                    className={`h-1.5 rounded-full transition-all ${i === index ? "bg-white w-4" : "bg-white/40 w-1.5"}`}
-                  />
-                ))}
-              </div>
+              {slides.length > 1 && (
+                <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-20">
+                  {slides.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => goTo(i)}
+                      aria-label={`Go to slide ${i + 1}`}
+                      className={`h-1.5 rounded-full transition-all ${i === index ? "bg-white w-4" : "bg-white/40 w-1.5"}`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* ── 2C. RIGHT: Quick Links + Mini Banner ── */}

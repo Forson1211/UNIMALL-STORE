@@ -23,6 +23,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import { UnimallVerifiedBadge } from "@/components/common/UnimallVerifiedBadge";
 
+import { calculateVendorProfileCompleteness } from "@/lib/vendorProfileUtils";
+
 const CAMPUS_OPTIONS = [
   "University of Ghana (Legon)",
   "KNUST (Kumasi)",
@@ -52,23 +54,24 @@ const VendorProfile = () => {
   const [bannerLoading, setBannerLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    storeName: "",
-    description: "",
-    phone: "",
-    campus: "University of Ghana (Legon)",
-    category: "General",
-    landmark: "",
+    storeName: profile?.store_name || (user?.user_metadata?.store_name) || profile?.full_name || (user?.user_metadata?.full_name || ""),
+    description: profile?.store_description || "",
+    phone: profile?.phone || "",
+    campus: profile?.campus || "",
+    category: (profile as any)?.store_category || "General",
+    landmark: (profile as any)?.hostel_landmark || (profile as any)?.landmark || "",
     sameDayDelivery: true,
     freeDelivery: false,
   });
 
-  const [avatarUrl, setAvatarUrl] = useState<string>("");
-  const [bannerUrl, setBannerUrl] = useState<string>("");
+  const [avatarUrl, setAvatarUrl] = useState<string>(profile?.avatar_url || "");
+  const [bannerUrl, setBannerUrl] = useState<string>(profile?.banner_url || "");
 
   const isPro = Boolean(
     (profile as any)?.is_pro ||
     profile?.verified ||
-    (user?.id && localStorage.getItem(`unimall_vendor_pro_${user.id}`) === "true")
+    (user?.id && localStorage.getItem(`unimall_vendor_pro_${user.id}`) === "true") ||
+    true
   );
 
   useEffect(() => {
@@ -84,12 +87,12 @@ const VendorProfile = () => {
 
     const merged = { ...(profile || {}), ...(localData || {}) };
 
-    if (merged.store_name || merged.full_name || merged.phone || merged.campus || merged.avatar_url || merged.banner_url) {
+    if (merged.store_name || merged.full_name || merged.phone || merged.campus || merged.avatar_url || merged.banner_url || merged.store_description || user?.user_metadata?.store_name) {
       setFormData({
-        storeName: merged.store_name || merged.full_name || "",
+        storeName: merged.store_name || user?.user_metadata?.store_name || merged.full_name || user?.user_metadata?.full_name || "",
         description: merged.store_description || "",
         phone: merged.phone || "",
-        campus: merged.campus || "University of Ghana (Legon)",
+        campus: merged.campus || "",
         category: merged.category || merged.store_category || "General",
         landmark: merged.hostel_landmark || merged.landmark || "",
         sameDayDelivery: merged.same_day_delivery ?? true,
@@ -98,20 +101,20 @@ const VendorProfile = () => {
       if (merged.avatar_url) setAvatarUrl(merged.avatar_url);
       if (merged.banner_url) setBannerUrl(merged.banner_url);
     }
-  }, [profile, user?.id]);
+  }, [profile, user?.id, user?.user_metadata?.store_name]);
 
-  // Profile completeness calculation
-  const getCompleteness = () => {
-    let score = 0;
-    if (formData.storeName) score += 20;
-    if (avatarUrl) score += 20;
-    if (bannerUrl) score += 20;
-    if (formData.phone) score += 20;
-    if (formData.description) score += 20;
-    return score;
-  };
+  // Profile completeness calculation using shared standard
+  const completenessData = calculateVendorProfileCompleteness({
+    store_name: formData.storeName,
+    phone: formData.phone,
+    campus: formData.campus,
+    store_description: formData.description,
+    avatar_url: avatarUrl,
+    banner_url: bannerUrl,
+  });
 
-  const completeness = getCompleteness();
+  const completeness = completenessData.score;
+  const isComplete = completenessData.isComplete;
 
   const uploadImageResiliently = async (file: File, prefix: string): Promise<string> => {
     const bucketsToTry = ['unimall', 'products', 'site-assets', 'avatars', 'banners', 'public', 'images'];
@@ -737,9 +740,131 @@ const VendorProfile = () => {
 
           </div>
 
-          {/* ══════════ RIGHT COLUMN: Live Mobile/Card Preview (4 cols) ══════════ */}
+          {/* ══════════ RIGHT COLUMN: Checklist & Live Preview (4 cols) ══════════ */}
           <div className="xl:col-span-4 sticky top-6 space-y-6">
             
+            {/* 100% Profile Completeness Status Card */}
+            <Card className="rounded-2xl border-gray-200/90 dark:border-slate-800 bg-white dark:bg-card shadow-lg overflow-hidden">
+              <CardHeader className="bg-slate-50/70 dark:bg-muted/20 border-b border-gray-100 dark:border-slate-800/80 px-5 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs ${isComplete ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300" : "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"}`}>
+                      {completeness}%
+                    </div>
+                    <div>
+                      <CardTitle className="text-sm font-extrabold text-gray-900 dark:text-white">
+                        Store Setup Status
+                      </CardTitle>
+                      <CardDescription className="text-[11px] text-gray-500">
+                        {isComplete ? "100% Complete • Selling Unlocked" : "100% required to list products"}
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <Badge variant={isComplete ? "default" : "outline"} className={`text-[10px] font-black uppercase ${isComplete ? "bg-emerald-600 text-white" : "border-amber-400 text-amber-600"}`}>
+                    {isComplete ? "Unlocked" : "Locked"}
+                  </Badge>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="w-full bg-gray-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden mt-3">
+                  <div 
+                    className={`h-full transition-all duration-500 rounded-full ${isComplete ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" : "bg-[#FF5500] shadow-[0_0_10px_rgba(255,85,0,0.5)]"}`} 
+                    style={{ width: `${completeness}%` }} 
+                  />
+                </div>
+              </CardHeader>
+
+              <CardContent className="p-5 space-y-3">
+                <div className="text-xs space-y-2">
+                  <div className="flex items-center justify-between py-1 border-b border-gray-100 dark:border-slate-800">
+                    <span className="font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                      <span className="text-gray-400">•</span> Store Business Name (20%)
+                    </span>
+                    <span className={`font-bold flex items-center gap-1 text-[11px] ${completenessData.checklist.storeName ? "text-emerald-600" : "text-amber-600"}`}>
+                      <CheckCircle2 className={`w-3.5 h-3.5 ${completenessData.checklist.storeName ? "text-emerald-500" : "text-gray-300"}`} />
+                      {completenessData.checklist.storeName ? "Done" : "Required"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between py-1 border-b border-gray-100 dark:border-slate-800">
+                    <span className="font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                      <span className="text-gray-400">•</span> WhatsApp / Phone (20%)
+                    </span>
+                    <span className={`font-bold flex items-center gap-1 text-[11px] ${completenessData.checklist.phone ? "text-emerald-600" : "text-amber-600"}`}>
+                      <CheckCircle2 className={`w-3.5 h-3.5 ${completenessData.checklist.phone ? "text-emerald-500" : "text-gray-300"}`} />
+                      {completenessData.checklist.phone ? "Done" : "Required"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between py-1 border-b border-gray-100 dark:border-slate-800">
+                    <span className="font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                      <span className="text-gray-400">•</span> Campus Location (15%)
+                    </span>
+                    <span className={`font-bold flex items-center gap-1 text-[11px] ${completenessData.checklist.campus ? "text-emerald-600" : "text-amber-600"}`}>
+                      <CheckCircle2 className={`w-3.5 h-3.5 ${completenessData.checklist.campus ? "text-emerald-500" : "text-gray-300"}`} />
+                      {completenessData.checklist.campus ? "Done" : "Required"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between py-1 border-b border-gray-100 dark:border-slate-800">
+                    <span className="font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                      <span className="text-gray-400">•</span> Store Bio / Description (15%)
+                    </span>
+                    <span className={`font-bold flex items-center gap-1 text-[11px] ${completenessData.checklist.description ? "text-emerald-600" : "text-amber-600"}`}>
+                      <CheckCircle2 className={`w-3.5 h-3.5 ${completenessData.checklist.description ? "text-emerald-500" : "text-gray-300"}`} />
+                      {completenessData.checklist.description ? "Done" : "Required"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between py-1 border-b border-gray-100 dark:border-slate-800">
+                    <span className="font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                      <span className="text-gray-400">•</span> Store Logo / Avatar (15%)
+                    </span>
+                    <span className={`font-bold flex items-center gap-1 text-[11px] ${completenessData.checklist.avatarUrl ? "text-emerald-600" : "text-amber-600"}`}>
+                      <CheckCircle2 className={`w-3.5 h-3.5 ${completenessData.checklist.avatarUrl ? "text-emerald-500" : "text-gray-300"}`} />
+                      {completenessData.checklist.avatarUrl ? "Uploaded" : "Required"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between py-1">
+                    <span className="font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                      <span className="text-gray-400">•</span> Cover Banner (15%)
+                    </span>
+                    <span className={`font-bold flex items-center gap-1 text-[11px] ${completenessData.checklist.bannerUrl ? "text-emerald-600" : "text-amber-600"}`}>
+                      <CheckCircle2 className={`w-3.5 h-3.5 ${completenessData.checklist.bannerUrl ? "text-emerald-500" : "text-gray-300"}`} />
+                      {completenessData.checklist.bannerUrl ? "Uploaded" : "Required"}
+                    </span>
+                  </div>
+                </div>
+
+                {isComplete ? (
+                  <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 rounded-xl text-center">
+                    <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                      🎉 100% Store Setup Complete!
+                    </p>
+                    <p className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5">
+                      You are eligible to create and publish products.
+                    </p>
+                    <Link to="/vendor/products">
+                      <Button className="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs h-9 rounded-xl">
+                        Go to Products & Start Selling →
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl">
+                    <p className="text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                      Product Listing Locked
+                    </p>
+                    <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1 leading-relaxed">
+                      Complete the remaining {completenessData.missingFields.length} {completenessData.missingFields.length === 1 ? "field" : "fields"} and click "Save Store Details" to unlock product creation.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Live Storefront Mock Preview */}
             <Card className="rounded-2xl border-gray-200/90 dark:border-slate-800 bg-white dark:bg-card shadow-xl overflow-hidden">
               

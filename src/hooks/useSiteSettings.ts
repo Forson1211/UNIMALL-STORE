@@ -46,7 +46,7 @@ export function useSiteSettings() {
                 .select("*");
             if (error) throw error;
             return data;
-        }, null, { retries: 2, baseDelay: 2000 });
+        }, null, { retries: 1, baseDelay: 500, timeoutMs: 2500 });
 
         if (data) {
             const settingsObj: Record<string, Json> = { ...DEFAULT_SETTINGS };

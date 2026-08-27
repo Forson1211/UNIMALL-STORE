@@ -4,6 +4,7 @@ import { Star, ShoppingCart, ChevronRight } from "lucide-react";
 import { productService, StorefrontProduct } from "@/services/productService";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
+import FastImage from "@/components/common/FastImage";
 
 interface PromoTile {
   title: string;
@@ -44,10 +45,11 @@ const ShowcaseCard = ({ product }: { product: StorefrontProduct }) => {
       className="group flex flex-col bg-white border border-gray-100 hover:border-primary/40 hover:shadow-xl transition-all duration-300"
     >
       <div className="relative aspect-square overflow-hidden bg-[#fafafa]">
-        <img
+        <FastImage
           src={product.image}
           alt={product.name}
           className="w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-105"
+          loading="lazy"
         />
         <button
           onClick={handleAddToCart}

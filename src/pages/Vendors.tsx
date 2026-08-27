@@ -89,17 +89,24 @@ const mockVendors = [
 const VendorCard = ({ vendor }: { vendor: any }) => (
   <div className="group bg-white rounded-none border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col h-full">
     {/* Banner Image */}
-    <div className="relative h-32 md:h-36 overflow-hidden bg-gray-100 shrink-0">
-      <img 
-        src={vendor.banner} 
-        alt={vendor.name} 
-        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+    <div className="relative h-32 md:h-36 overflow-hidden bg-slate-900 shrink-0">
+      {vendor.banner ? (
+        <img 
+          src={vendor.banner} 
+          alt={vendor.name} 
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+        />
+      ) : (
+        <div className="w-full h-full bg-gradient-to-br from-[#0B132B] via-[#1C2541] to-[#3A506B] flex items-center justify-center">
+          <div className="absolute inset-0 bg-[radial-gradient(#FF5500_1px,transparent_1px)] [background-size:16px_16px] opacity-15" />
+          <Store className="w-10 h-10 text-white/20" />
+        </div>
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
       
       {/* Category Badge */}
-      <span className="absolute top-3 right-3 px-2 py-0.5 bg-black/30 border border-white/20 text-white text-[9px] font-black uppercase tracking-widest rounded-none">
-        {vendor.category}
+      <span className="absolute top-3 right-3 px-2 py-0.5 bg-black/40 backdrop-blur-sm border border-white/20 text-white text-[9px] font-black uppercase tracking-widest rounded-none">
+        {vendor.category || "General"}
       </span>
     </div>
 
@@ -183,14 +190,15 @@ const Vendors = () => {
   const { data: dbVendors = [], isLoading } = useQuery({
     queryKey: ["vendors-list", user?.id, profile?.store_name, profile?.avatar_url],
     queryFn: async () => {
-      let profiles: any[] = [];
       let vendorProductCounts: Record<string, number> = {};
+      const profileMap = new Map<string, any>();
+      const publicVendorsMap = new Map<string, any>();
 
       // 1. Fetch real product counts per vendor
       try {
         const { data: prods } = await supabase
           .from("products")
-          .select("vendor_id");
+          .select("id, vendor_id");
         if (prods) {
           prods.forEach((p: any) => {
             if (p.vendor_id) {
@@ -206,56 +214,100 @@ const Vendors = () => {
           .from("profiles")
           .select("*");
         if (!error && data) {
-          profiles = data;
+          data.forEach((p: any) => {
+            if (p.user_id) profileMap.set(p.user_id, p);
+            if (p.id) profileMap.set(p.id, p);
+          });
         }
       } catch (e) {}
 
-      // 3. Include active user's local store profile if present
-      if (user?.id) {
-        const raw = localStorage.getItem(`unimall_vendor_profile_${user.id}`);
-        if (raw) {
-          try {
-            const parsed = JSON.parse(raw);
-            const idx = profiles.findIndex((p: any) => p.user_id === user.id || p.id === user.id);
-            if (idx >= 0) {
-              profiles[idx] = { ...profiles[idx], ...parsed };
-            } else if (parsed.store_name) {
-              profiles.unshift({ user_id: user.id, id: user.id, ...parsed });
+      // 3. Scan local storage for any custom vendor profiles
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith("unimall_vendor_profile_")) {
+            const uid = key.replace("unimall_vendor_profile_", "");
+            const raw = localStorage.getItem(key);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (parsed.store_name) {
+                const existing = profileMap.get(uid) || {};
+                profileMap.set(uid, { ...existing, ...parsed });
+              }
             }
-          } catch (err) {}
+          }
         }
-      }
+      } catch (e) {}
 
-      // Filter to only genuine registered vendor stores (having store_name or role==='vendor')
-      const realVendors = profiles.filter((p: any) => {
-        return Boolean(p.store_name?.trim() || p.role === "vendor" || p.is_vendor);
+      // 4. Fetch vendor management view & admin users view
+      let vViewData: any[] = [];
+      try {
+        const { data } = await (supabase
+          .from("vendor_management_view" as any)
+          .select("*"));
+        if (data) vViewData = data;
+      } catch (e) {}
+
+      let allUsers: any[] = [];
+      try {
+        const { data } = await (supabase
+          .from("admin_users_view" as any)
+          .select("*"));
+        if (data) allUsers = data;
+      } catch (e) {}
+
+      // Add from vendor view
+      vViewData.forEach((v: any) => {
+        const prof = profileMap.get(v.user_id) || {};
+        const pCount = vendorProductCounts[v.user_id] || v.product_count || 0;
+        const storeName = prof.store_name || v.store_name || prof.full_name || v.full_name || "Campus Merchant";
+        
+        publicVendorsMap.set(v.user_id, {
+          id: v.user_id,
+          name: storeName,
+          banner: prof.banner_url || v.banner_url || "",
+          avatar: storeName.charAt(0).toUpperCase(),
+          avatar_url: prof.avatar_url || v.avatar_url || null,
+          description: prof.store_description || v.store_description || "Official campus merchant storefront on Unimall.",
+          campus: prof.campus || v.campus || "University Campus",
+          rating: Number(prof.rating) || 5.0,
+          products: pCount,
+          verified: true,
+          is_pro: true,
+          category: prof.category || prof.store_category || "General",
+        });
       });
 
-      return realVendors.map((v: any) => {
-        const vId = v?.user_id || v?.id || "unknown";
-        const hasSubscribed = Boolean(
-          v?.is_pro || 
-          v?.is_subscribed ||
-          (v?.verified && v?.is_pro) || 
-          localStorage.getItem(`unimall_vendor_pro_${vId}`) === "true"
-        );
-        const prodCount = vendorProductCounts[vId] || (vId === user?.id ? (localStorage.getItem("unimall_vendor_prods_count") ? parseInt(localStorage.getItem("unimall_vendor_prods_count")!) : 0) : 0);
+      // Include all users who have vendor role OR uploaded products OR created a store
+      allUsers.forEach((u: any) => {
+        const prof = profileMap.get(u.user_id) || {};
+        const pCount = vendorProductCounts[u.user_id] || 0;
+        const hasStore = u.role === "vendor" || pCount > 0 || Boolean(u.store_name || prof.store_name);
 
-        return {
-          id: vId,
-          name: v?.store_name || v?.full_name || "Campus Merchant",
-          banner: v?.banner_url || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=800",
-          avatar: (v?.store_name || v?.full_name || "V").charAt(0).toUpperCase(),
-          avatar_url: v?.avatar_url || null,
-          description: v?.store_description || "Official campus merchant storefront on Unimall.",
-          campus: v?.campus || "University Campus",
-          rating: 5.0,
-          products: prodCount,
-          verified: hasSubscribed,
-          is_pro: hasSubscribed,
-          category: v?.store_category || v?.category || "General"
-        };
+        if (hasStore) {
+          const existing = publicVendorsMap.get(u.user_id);
+          const storeName = prof.store_name || u.store_name || existing?.name || prof.full_name || u.full_name || "Campus Store";
+          
+          publicVendorsMap.set(u.user_id, {
+            id: u.user_id,
+            name: storeName,
+            banner: prof.banner_url || existing?.banner || "",
+            avatar: storeName.charAt(0).toUpperCase(),
+            avatar_url: prof.avatar_url || existing?.avatar_url || null,
+            description: prof.store_description || existing?.description || "Official campus merchant storefront on Unimall.",
+            campus: prof.campus || existing?.campus || "University Campus",
+            rating: Number(prof.rating) || existing?.rating || 5.0,
+            products: pCount,
+            verified: true,
+            is_pro: true,
+            category: prof.category || prof.store_category || existing?.category || "General",
+          });
+        }
       });
+
+      const list = Array.from(publicVendorsMap.values());
+      // Sort: vendors with products first, then alphabetically
+      return list.sort((a, b) => b.products - a.products);
     }
   });
 
