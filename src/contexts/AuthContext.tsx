@@ -7,6 +7,20 @@ import { useToast } from "@/hooks/use-toast";
 type UserRole = "admin" | "moderator" | "vendor_manager" | "order_manager" | "content_manager" | "support_agent" | "vendor" | "buyer";
 type VendorStatus = "pending" | "approved" | "suspended" | null;
 
+const ACTIVE_SESSION_STORAGE_KEY = "unimall_active_session_id";
+const ACTIVE_SESSION_HEARTBEAT_MS = 60_000;
+
+function getActiveSessionId() {
+  const existing = sessionStorage.getItem(ACTIVE_SESSION_STORAGE_KEY);
+  if (existing) return existing;
+
+  const sessionId = typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  sessionStorage.setItem(ACTIVE_SESSION_STORAGE_KEY, sessionId);
+  return sessionId;
+}
+
 interface Profile {
   id: string;
   user_id: string;
@@ -201,6 +215,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Maintain a short-lived presence row for the live admin health monitor.
+  // The health query treats sessions without a heartbeat for 15 minutes as inactive.
+  useEffect(() => {
+    if (!user) return;
+
+    const sessionId = getActiveSessionId();
+    const heartbeat = async () => {
+      const { error } = await supabase
+        .from("active_sessions")
+        .upsert(
+          {
+            session_id: sessionId,
+            user_id: user.id,
+            last_seen_at: new Date().toISOString(),
+          },
+          { onConflict: "session_id" },
+        );
+
+      if (error) {
+        console.warn("Active session heartbeat unavailable:", error.message);
+      }
+    };
+
+    void heartbeat();
+    const interval = window.setInterval(() => void heartbeat(), ACTIVE_SESSION_HEARTBEAT_MS);
+
+    return () => {
+      window.clearInterval(interval);
+      void supabase
+        .from("active_sessions")
+        .delete()
+        .eq("session_id", sessionId)
+        .eq("user_id", user.id);
+    };
+  }, [user]);
 
   // 2. Real-time Subscription for User Roles
   useEffect(() => {

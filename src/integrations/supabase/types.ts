@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      active_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          last_seen_at: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       campus_news: {
         Row: {
           author_id: string | null
@@ -313,6 +337,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          setting_category: string
           setting_key: string
           setting_value: Json
           updated_at: string
@@ -321,6 +346,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          setting_category: string
           setting_key: string
           setting_value: Json
           updated_at?: string
@@ -329,6 +355,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          setting_category?: string
           setting_key?: string
           setting_value?: Json
           updated_at?: string

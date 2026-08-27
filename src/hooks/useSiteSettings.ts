@@ -11,7 +11,9 @@ export interface SiteSetting {
     setting_key: string;
     setting_value: Json;
     setting_category: string;
+    created_at?: string;
     updated_at: string;
+    updated_by?: string | null;
 }
 
 const DEFAULT_SETTINGS: Record<string, Json> = {
@@ -24,7 +26,10 @@ const DEFAULT_SETTINGS: Record<string, Json> = {
     dark_mode_enabled: false,
     maintenance_mode: false,
     allow_vendor_registration: true,
+    require_vendor_verification: true,
+    review_moderation_enabled: false,
     commission_rate: 10,
+    minimum_order_value: 10,
 };
 
 export function useSiteSettings() {
@@ -40,6 +45,7 @@ export function useSiteSettings() {
     const [error, setError] = useState<Error | null>(null);
 
     const fetchSettings = useCallback(async () => {
+        setIsLoading(true);
         const data = await withRetry(async () => {
             const { data, error } = await (supabase as any)
                 .from("site_settings")
@@ -67,9 +73,10 @@ export function useSiteSettings() {
 
     const updateSetting = useCallback(async (key: string, value: Json, category: string) => {
         try {
+            const { data: { user } } = await supabase.auth.getUser();
             const { error } = await (supabase as any)
                 .from("site_settings")
-                .upsert({ setting_key: key, setting_value: value, setting_category: category });
+                .upsert({ setting_key: key, setting_value: value, setting_category: category, updated_by: user?.id ?? null }, { onConflict: "setting_key" });
             if (error) throw error;
             setSettings((prev) => ({ ...prev, [key]: value }));
             toast.success("Setting updated successfully");
@@ -83,10 +90,12 @@ export function useSiteSettings() {
 
     const updateSettings = useCallback(async (updates: Record<string, { value: Json; category: string }>) => {
         try {
+            const { data: { user } } = await supabase.auth.getUser();
             const upsertData = Object.entries(updates).map(([key, { value, category }]) => ({
                 setting_key: key,
                 setting_value: value,
                 setting_category: category,
+                updated_by: user?.id ?? null,
             }));
 
             const { error } = await (supabase as any)
@@ -95,6 +104,10 @@ export function useSiteSettings() {
 
             if (error) throw error;
 
+            setSettings((previous) => ({
+                ...previous,
+                ...Object.fromEntries(Object.entries(updates).map(([key, { value }]) => [key, value])),
+            }));
             await fetchSettings();
             return { success: true };
         } catch (err) {

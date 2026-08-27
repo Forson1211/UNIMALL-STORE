@@ -34,9 +34,34 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
+import { useSystemHealth, type HealthStatus } from "@/hooks/useSystemHealth";
+
+const healthStatusLabels: Record<HealthStatus, string> = {
+  healthy: "Healthy",
+  degraded: "Degraded",
+  offline: "Offline",
+  unknown: "Checking",
+};
+
+const healthStatusClasses: Record<HealthStatus, string> = {
+  healthy: "bg-emerald-500 text-white",
+  degraded: "bg-amber-500 text-white",
+  offline: "bg-destructive text-destructive-foreground",
+  unknown: "bg-muted text-muted-foreground",
+};
+
+const HealthBadge = ({ status }: { status: HealthStatus }) => (
+  <Badge className={healthStatusClasses[status]}>{healthStatusLabels[status]}</Badge>
+);
 
 const AdminSettings = () => {
-  const { getSetting, updateSettings } = useSiteSettingsContext();
+  const { getSetting, updateSettings, settings, isLoading: isSettingsLoading } = useSiteSettingsContext();
+  const {
+    health,
+    isLoading: isHealthLoading,
+    isRefreshing: isHealthRefreshing,
+    refetch: refetchHealth,
+  } = useSystemHealth();
 
   // General tab
   const [platformName, setPlatformName] = useState(() => getSetting("site_name", "Unimall"));
@@ -72,6 +97,18 @@ const AdminSettings = () => {
   const [maintenanceEstimatedTime, setMaintenanceEstimatedTime] = useState(() => getSetting("maintenance_estimated_completion", ""));
   const [maintenanceAllowAdminAccess, setMaintenanceAllowAdminAccess] = useState(() => getSetting("maintenance_allow_admin_access", true));
   const [isSavingMaintenance, setIsSavingMaintenance] = useState(false);
+
+  // Rehydrate form controls whenever the database-backed settings cache changes.
+  // This keeps the admin form aligned with realtime updates and post-save refetches.
+  useEffect(() => {
+    if (isSettingsLoading) return;
+
+    setAllowVendorRegistration(Boolean(getSetting("allow_vendor_registration", true)));
+    setRequireVendorVerification(Boolean(getSetting("require_vendor_verification", true)));
+    setReviewModerationEnabled(Boolean(getSetting("review_moderation_enabled", false)));
+    setCommissionRate(String(getSetting("commission_rate", 10)));
+    setMinimumOrderValue(String(getSetting("minimum_order_value", 10)));
+  }, [getSetting, isSettingsLoading, settings]);
 
   const handleSaveGeneral = async () => {
     setIsSavingGeneral(true);
@@ -109,13 +146,26 @@ const AdminSettings = () => {
   };
 
   const handleSavePlatform = async () => {
+    const parsedCommissionRate = Number(commissionRate);
+    const parsedMinimumOrderValue = Number(minimumOrderValue);
+
+    if (!Number.isFinite(parsedCommissionRate) || parsedCommissionRate < 0 || parsedCommissionRate > 100) {
+      toast.error("Commission rate must be between 0 and 100");
+      return;
+    }
+
+    if (!Number.isFinite(parsedMinimumOrderValue) || parsedMinimumOrderValue < 0) {
+      toast.error("Minimum order value must be zero or greater");
+      return;
+    }
+
     setIsSavingPlatform(true);
     const result = await updateSettings({
       allow_vendor_registration: { value: allowVendorRegistration, category: "platform" },
       require_vendor_verification: { value: requireVendorVerification, category: "platform" },
       review_moderation_enabled: { value: reviewModerationEnabled, category: "platform" },
-      commission_rate: { value: Number(commissionRate) || 0, category: "platform" },
-      minimum_order_value: { value: Number(minimumOrderValue) || 0, category: "platform" },
+      commission_rate: { value: parsedCommissionRate, category: "platform" },
+      minimum_order_value: { value: parsedMinimumOrderValue, category: "platform" },
     });
     setIsSavingPlatform(false);
     if (result?.success !== false) toast.success("Platform settings saved successfully");
@@ -595,73 +645,76 @@ const AdminSettings = () => {
           </Card>
         </TabsContent>
 
-        {/* NEW: System Health Tab */}
+        {/* System Health Tab */}
         <TabsContent value="system">
           <Card>
-            <CardHeader>
-              <CardTitle>System Health</CardTitle>
-              <CardDescription>Monitor system performance and health</CardDescription>
+            <CardHeader className="flex flex-row items-start justify-between gap-4">
+              <div>
+                <CardTitle>System Health</CardTitle>
+                <CardDescription>Live Supabase connectivity, API latency, and session activity.</CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void refetchHealth()}
+                disabled={isHealthRefreshing}
+                className="gap-2 shrink-0"
+              >
+                <RefreshCw className={`w-4 h-4 ${isHealthRefreshing ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-3">
                 <div className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-medium">Database Status</p>
-                    <Badge className="bg-green-500">Healthy</Badge>
+                  <div className="flex items-center justify-between mb-2 gap-2">
+                    <p className="text-sm font-medium">Database Connection</p>
+                    <HealthBadge status={health.database.status} />
                   </div>
-                  <p className="text-2xl font-bold">99.9%</p>
-                  <p className="text-xs text-muted-foreground">Uptime</p>
+                  <p className="text-2xl font-bold">
+                    {isHealthLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : health.database.latencyMs !== null ? `${health.database.latencyMs}ms` : "—"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Latest probe latency</p>
+                  {health.database.error && <p className="mt-2 text-xs text-destructive">{health.database.error}</p>}
                 </div>
                 <div className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-2 gap-2">
                     <p className="text-sm font-medium">API Response Time</p>
-                    <Badge variant="outline">Normal</Badge>
+                    <HealthBadge status={health.api.status} />
                   </div>
-                  <p className="text-2xl font-bold">142ms</p>
-                  <p className="text-xs text-muted-foreground">Average</p>
+                  <p className="text-2xl font-bold">
+                    {health.api.averageResponseTimeMs !== null ? `${health.api.averageResponseTimeMs}ms` : "—"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Average across {health.api.sampleCount} probes</p>
+                  {health.api.error && <p className="mt-2 text-xs text-destructive">{health.api.error}</p>}
                 </div>
                 <div className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-medium">Storage Used</p>
-                    <Badge variant="outline">56%</Badge>
+                  <div className="flex items-center justify-between mb-2 gap-2">
+                    <p className="text-sm font-medium">Active Sessions</p>
+                    <HealthBadge status={health.activeSessions.status} />
                   </div>
-                  <p className="text-2xl font-bold">5.6GB</p>
-                  <p className="text-xs text-muted-foreground">of 10GB</p>
-                </div>
-                <div className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-medium">Active Users</p>
-                    <Badge className="bg-blue-500">Live</Badge>
-                  </div>
-                  <p className="text-2xl font-bold">1,247</p>
-                  <p className="text-xs text-muted-foreground">Now online</p>
+                  <p className="text-2xl font-bold">{health.activeSessions.count ?? "—"}</p>
+                  <p className="text-xs text-muted-foreground">Seen in the last {health.activeSessions.windowMinutes} minutes</p>
+                  {health.activeSessions.error && <p className="mt-2 text-xs text-destructive">{health.activeSessions.error}</p>}
                 </div>
               </div>
 
               <Separator />
 
-              <div className="space-y-2">
-                <h4 className="font-semibold">Recent Activity Logs</h4>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {[
-                    "User login: admin@example.com",
-                    "Product created: iPhone 15 Pro",
-                    "Order placed: #ORD-12345",
-                    "Vendor approved: Tech Store",
-                    "Settings updated: Platform settings"
-                  ].map((log, i) => (
-                    <div key={i} className="flex items-start gap-2 text-sm p-2 hover:bg-accent rounded">
-                      <Activity className="w-4 h-4 mt-0.5 text-muted-foreground" />
-                      <div className="flex-1">
-                        <p>{log}</p>
-                        <p className="text-xs text-muted-foreground">2 minutes ago</p>
-                      </div>
-                    </div>
-                  ))}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-medium">Monitoring is live</span>
+                  <span className="text-muted-foreground">Health checks refresh every 30 seconds.</span>
                 </div>
+                <span className="text-xs text-muted-foreground">
+                  Last checked {health.checkedAt ? new Date(health.checkedAt).toLocaleTimeString() : "—"}
+                </span>
               </div>
 
-              <Button variant="outline" className="w-full">View Full System Logs</Button>
+              <Link to="/admin/logs" className="block">
+                <Button variant="outline" className="w-full">View Full System Logs</Button>
+              </Link>
             </CardContent>
           </Card>
         </TabsContent>
