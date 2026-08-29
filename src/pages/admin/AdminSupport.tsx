@@ -22,7 +22,7 @@ const AdminSupport = () => {
     const { data: tickets, isLoading } = useQuery({
         queryKey: ['admin-support'],
         queryFn: adminService.getSupportTickets,
-        refetchInterval: 15000,
+        staleTime: 1000 * 60 * 3,
     });
     const [statusFilter, setStatusFilter] = useState("all");
     const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);

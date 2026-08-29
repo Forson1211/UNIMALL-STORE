@@ -15,7 +15,7 @@ const AdminReviews = () => {
     const { data: reviews, isLoading } = useQuery({
         queryKey: ['admin-reviews'],
         queryFn: adminService.getReviews,
-        refetchInterval: 20000,
+        staleTime: 1000 * 60 * 3,
     });
 
     const moderateMutation = useMutation({

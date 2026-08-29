@@ -39,12 +39,13 @@ const AdminNotifications = () => {
             if (error) throw error;
             return data;
         },
-        refetchInterval: 10000,
+        staleTime: 1000 * 60 * 2,
     });
 
     // Fetch profiles for target selector
     const { data: profiles = [] } = useQuery<any[]>({
         queryKey: ['profiles-list-for-notifications'],
+        staleTime: 1000 * 60 * 10,
         queryFn: async () => {
             const { data, error } = await (supabase as any)
                 .from('admin_users_view')

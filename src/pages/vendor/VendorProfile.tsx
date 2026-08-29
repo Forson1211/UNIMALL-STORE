@@ -22,6 +22,7 @@ import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import { UnimallVerifiedBadge } from "@/components/common/UnimallVerifiedBadge";
+import { uploadOptimizedImage, optimizeImageForUpload, IMAGE_PRESETS, validateImageFile } from "@/lib/imageOptimizer";
 
 import { calculateVendorProfileCompleteness } from "@/lib/vendorProfileUtils";
 
@@ -117,16 +118,25 @@ const VendorProfile = () => {
   const isComplete = completenessData.isComplete;
 
   const uploadImageResiliently = async (file: File, prefix: string): Promise<string> => {
-    const bucketsToTry = ['unimall', 'products', 'site-assets', 'avatars', 'banners', 'public', 'images'];
-    const fileExt = file.name.split('.').pop() || 'jpg';
-    const fileName = `${prefix}-${user?.id || 'vendor'}-${Date.now()}.${fileExt}`;
+    const isLogo = prefix === "logo" || prefix === "avatar";
+    const preset = isLogo ? IMAGE_PRESETS.avatar : IMAGE_PRESETS.banner;
+    const fileName = `${prefix}-${user?.id || 'vendor'}-${Date.now()}.webp`;
     const filePath = `uploads/${fileName}`;
+
+    // Optimize image to WebP with target dimension & quality
+    const { file: optimizedFile, dataUrl } = await optimizeImageForUpload(file, preset);
+
+    const bucketsToTry = ['products', 'unimall', 'site-assets', 'avatars', 'banners', 'public', 'images'];
 
     for (const bucketName of bucketsToTry) {
       try {
         const { error: uploadError } = await (supabase.storage as any)
           .from(bucketName)
-          .upload(filePath, file, { upsert: true });
+          .upload(filePath, optimizedFile, {
+            upsert: true,
+            cacheControl: '31536000, immutable',
+            contentType: 'image/webp',
+          });
 
         if (!uploadError) {
           const { data: { publicUrl } } = (supabase.storage as any)
@@ -135,31 +145,21 @@ const VendorProfile = () => {
           if (publicUrl) return publicUrl;
         }
       } catch (e) {
-        // continue to fallback
+        // continue to next bucket
       }
     }
 
-    // High-performance Base64 fallback if storage buckets are not initialized
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          resolve(reader.result);
-        } else {
-          reject(new Error("Failed to process image file"));
-        }
-      };
-      reader.onerror = () => reject(new Error("Could not read image file"));
-      reader.readAsDataURL(file);
-    });
+    // High-performance compact preview fallback (small compressed WebP)
+    return dataUrl;
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image too large. Please select an image under 5MB.");
+    const { valid, error: valErr } = validateImageFile(file, 15 * 1024 * 1024);
+    if (!valid) {
+      toast.error(valErr || "Invalid image file");
       return;
     }
 
@@ -171,6 +171,7 @@ const VendorProfile = () => {
       const updates = { avatar_url: finalUrl };
       if (updateProfile) await updateProfile(updates as any);
 
+      // Only save clean storage URL (or compact WebP) to profiles table
       await supabase
         .from("profiles")
         .upsert({ user_id: user.id, avatar_url: finalUrl } as any);
@@ -194,8 +195,9 @@ const VendorProfile = () => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Banner image too large. Maximum size is 5MB.");
+    const { valid, error: valErr } = validateImageFile(file, 15 * 1024 * 1024);
+    if (!valid) {
+      toast.error(valErr || "Invalid image file");
       return;
     }
 

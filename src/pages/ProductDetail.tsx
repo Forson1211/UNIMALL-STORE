@@ -291,7 +291,7 @@ const ProductDetail = () => {
         if (vendorId) {
           const { data, error } = await supabase
             .from("profiles")
-            .select("*")
+            .select("id, user_id, full_name, store_name, avatar_url, phone, campus, verified")
             .or(`user_id.eq.${vendorId},id.eq.${vendorId}`)
             .maybeSingle();
           if (!error && data) return data;
@@ -300,7 +300,7 @@ const ProductDetail = () => {
         if (product.vendor) {
           const { data: byName } = await supabase
             .from("profiles")
-            .select("*")
+            .select("id, user_id, full_name, store_name, avatar_url, phone, campus, verified")
             .ilike("store_name", product.vendor)
             .maybeSingle();
           if (byName) return byName;
@@ -380,7 +380,7 @@ const ProductDetail = () => {
       try {
         const { data, error } = await supabase
           .from("reviews")
-          .select("*")
+          .select("id, product_id, user_id, reviewer_name, campus, rating, comment, created_at")
           .eq("product_id", product.id)
           .order("created_at", { ascending: false });
         if (!error && data) {

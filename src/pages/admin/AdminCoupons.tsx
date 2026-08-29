@@ -36,7 +36,7 @@ const AdminCoupons = () => {
     const { data: coupons, isLoading } = useQuery({
         queryKey: ['admin-coupons'],
         queryFn: adminService.getCoupons,
-        refetchInterval: 30000,
+        staleTime: 1000 * 60 * 5,
     });
 
     const createMutation = useMutation({

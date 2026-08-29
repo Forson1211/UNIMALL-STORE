@@ -192,7 +192,7 @@ const AdminVendors = () => {
         return b.product_count - a.product_count;
       });
     },
-    refetchInterval: 15000,
+    staleTime: 1000 * 60 * 3,
   });
 
   // Update vendor status mutation (robust against DB RLS recursive policies)

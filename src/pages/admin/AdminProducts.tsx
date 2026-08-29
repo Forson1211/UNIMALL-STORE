@@ -179,7 +179,7 @@ const AdminProducts = () => {
 
       return (basicData || []).map(normalizeProduct);
     },
-    refetchInterval: 15000,
+    staleTime: 1000 * 60 * 3,
   });
 
   // Filter out locally deleted products

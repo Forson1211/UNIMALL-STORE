@@ -182,15 +182,15 @@ const VendorStore = () => {
         let data: any = null;
 
         if (isUUID) {
-          const { data: byId } = await supabase.from("profiles").select("*").eq("id", id).maybeSingle();
+          const { data: byId } = await supabase.from("profiles").select("id, user_id, full_name, store_name, avatar_url, banner_url, campus, store_description, phone, rating, verified, role").eq("id", id).maybeSingle();
           if (byId) {
             data = byId;
           } else {
-            const { data: byUserId } = await supabase.from("profiles").select("*").eq("user_id", id).maybeSingle();
+            const { data: byUserId } = await supabase.from("profiles").select("id, user_id, full_name, store_name, avatar_url, banner_url, campus, store_description, phone, rating, verified, role").eq("user_id", id).maybeSingle();
             if (byUserId) data = byUserId;
           }
         } else {
-          const { data: byName } = await supabase.from("profiles").select("*").ilike("store_name", `%${id}%`).limit(1);
+          const { data: byName } = await supabase.from("profiles").select("id, user_id, full_name, store_name, avatar_url, banner_url, campus, store_description, phone, rating, verified, role").ilike("store_name", `%${id}%`).limit(1);
           if (byName && byName.length > 0) {
             data = byName[0];
           }
@@ -341,7 +341,7 @@ const VendorStore = () => {
       try {
         const { data } = await supabase
           .from("reviews")
-          .select("*")
+          .select("id, product_id, user_id, reviewer_name, rating, comment, created_at")
           .in("product_id", productIds);
         return data || [];
       } catch (e) {

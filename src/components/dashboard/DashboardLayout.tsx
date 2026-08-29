@@ -54,79 +54,38 @@ export function DashboardLayout({ children, type, title, userName, userRole }: D
     }
   }, [vendorStatus, isSuspended, user?.id, isVendor]);
 
-  // Universal status monitor — detects both approval AND suspension in real-time
+  // Universal status monitor — event-driven synchronization (0 continuous polling)
   useEffect(() => {
     if (!isVendor || !user?.id || role === "admin") return;
 
-    let lastCheckedRole: string | null = null;
+    // Check local storage on mount
+    const local = localStorage.getItem(`unimall_vendor_status_${user.id}`);
+    if (local === "suspended" && vendorStatus !== "suspended") {
+      refreshProfile();
+    } else if (local === "approved" && vendorStatus !== "approved") {
+      refreshProfile();
+    }
 
-    const checkStatus = async () => {
-      // 1. Check local storage first
-      const local = localStorage.getItem(`unimall_vendor_status_${user.id}`);
-      if (local === "suspended" && vendorStatus !== "suspended") {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === `unimall_vendor_status_${user.id}`) {
         refreshProfile();
-        return;
       }
-      if (local === "approved" && vendorStatus !== "approved") {
-        refreshProfile();
-        return;
-      }
-
-      // 2. Direct query on user_roles
-      try {
-        const { data: roleRow } = await supabase
-          .from("user_roles")
-          .select("role, vendor_status")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (roleRow?.vendor_status === "suspended") {
-          localStorage.setItem(`unimall_vendor_status_${user.id}`, "suspended");
-          refreshProfile();
-          return;
-        }
-        if (roleRow?.vendor_status === "approved" && vendorStatus !== "approved") {
-          localStorage.setItem(`unimall_vendor_status_${user.id}`, "approved");
-          refreshProfile();
-          return;
-        }
-      } catch (e) {}
-
-      // 3. Direct query on profiles
-      try {
-        const { data: pData } = await (supabase
-          .from("profiles" as any)
-          .select("vendor_status, verified")
-          .or(`id.eq.${user.id},user_id.eq.${user.id}`)
-          .maybeSingle() as any);
-
-        if (pData?.vendor_status === "suspended") {
-          localStorage.setItem(`unimall_vendor_status_${user.id}`, "suspended");
-          refreshProfile();
-          return;
-        }
-      } catch (e) {}
-
-      // 4. RPC role check
-      try {
-        const { data: currentVendorStatus } = await (supabase.rpc as any)("get_vendor_status", { _user_id: user.id });
-        if (!currentVendorStatus) return;
-
-        const roleChanged = currentVendorStatus !== lastCheckedRole;
-        lastCheckedRole = currentVendorStatus;
-
-        if (roleChanged || currentVendorStatus !== vendorStatus) {
-          localStorage.setItem(`unimall_vendor_status_${user.id}`, currentVendorStatus);
-          refreshProfile();
-        }
-      } catch (e) {}
     };
 
-    // Run immediately on mount to catch suspended state before first interval
-    checkStatus();
-    const timer = setInterval(checkStatus, 3000);
-    return () => clearInterval(timer);
-  }, [isVendor, user?.id, role, refreshProfile]);
+    const handleCustom = (e: any) => {
+      if (e?.detail?.vendorId === user.id || !e?.detail?.vendorId) {
+        refreshProfile();
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("unimall_vendor_status_updated", handleCustom);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("unimall_vendor_status_updated", handleCustom);
+    };
+  }, [isVendor, user?.id, role, refreshProfile, vendorStatus]);
 
   useEffect(() => {
     const rootEl = document.getElementById("root");

@@ -70,7 +70,7 @@ const AdminOrders = () => {
       if (error) throw error;
       return data as Order[];
     },
-    refetchInterval: 10000,
+    staleTime: 1000 * 60 * 2,
   });
 
   // Update order status mutation

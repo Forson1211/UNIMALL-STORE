@@ -34,6 +34,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import { analyzeImageWithAI, ProductIntelliSenseResult } from "@/services/imageIntelliSense";
+import { uploadOptimizedImage, optimizeImageForUpload, IMAGE_PRESETS, validateImageFile } from "@/lib/imageOptimizer";
 
 interface ProductFormProps {
   open: boolean;
@@ -114,91 +115,49 @@ export const ProductForm = ({ open, onClose, product, onSave, isSubmitting = fal
     }
   }, [product, open]);
 
-  // Instant Client Image Compression Helper (<10ms)
-  const compressAndReadImage = (file: File, maxDim = 1000): Promise<string> => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const src = e.target?.result as string;
-        if (!src) return resolve("");
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          let { width, height } = img;
-          if (width > maxDim || height > maxDim) {
-            if (width > height) {
-              height = Math.round((height * maxDim) / width);
-              width = maxDim;
-            } else {
-              width = Math.round((width * maxDim) / height);
-              height = maxDim;
-            }
-          }
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          if (ctx) {
-            ctx.drawImage(img, 0, 0, width, height);
-            resolve(canvas.toDataURL("image/jpeg", 0.85));
-          } else {
-            resolve(src);
-          }
-        };
-        img.onerror = () => resolve(src);
-        img.src = src;
-      };
-      reader.onerror = () => resolve("");
-      reader.readAsDataURL(file);
+  // Fast direct storage upload helper with client-side WebP compression and 1-year cache
+  const processFileUpload = async (file: File, isSlot = false): Promise<string> => {
+    const filePath = `products/prod-${Date.now()}-${Math.random().toString(36).substring(2, 6)}.webp`;
+    const preset = isSlot ? IMAGE_PRESETS.productSlot : IMAGE_PRESETS.productMain;
+
+    const { publicUrl, error } = await uploadOptimizedImage('products', filePath, file, {
+      ...preset,
+      cacheControl: '31536000, immutable',
     });
-  };
 
-  // Fast direct storage upload helper
-  const processFileUpload = async (file: File): Promise<string> => {
-    const fileExt = file.name.split('.').pop() || 'jpg';
-    const filePath = `products/prod-${Date.now()}-${Math.random().toString(36).substring(2, 6)}.${fileExt}`;
-
-    try {
-      const { error } = await (supabase.storage as any)
-        .from('products')
-        .upload(filePath, file, { upsert: true });
-
-      if (!error) {
-        const { data: { publicUrl } } = (supabase.storage as any)
-          .from('products')
-          .getPublicUrl(filePath);
-        if (publicUrl) return publicUrl;
-      }
-    } catch (e) {}
-
+    if (!error && publicUrl) {
+      return publicUrl;
+    }
     return "";
   };
 
-  // Instant Main Image Upload Handler (0ms perceived latency)
+  // Instant Main Image Upload Handler (0ms perceived latency with WebP optimization)
   const handleMainImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Image size must be less than 10MB");
+    const { valid, error: valErr } = validateImageFile(file, 15 * 1024 * 1024);
+    if (!valid) {
+      toast.error(valErr || "Invalid image file");
       return;
     }
 
     try {
-      // 1. Instant ultra-fast preview (< 10ms)
-      const compressedDataUrl = await compressAndReadImage(file);
-      if (compressedDataUrl) {
-        setFormData((prev) => ({ ...prev, image_url: compressedDataUrl }));
+      // 1. Instant client-side optimized WebP preview (< 15ms)
+      const { dataUrl } = await optimizeImageForUpload(file, IMAGE_PRESETS.productMain);
+      if (dataUrl) {
+        setFormData((prev) => ({ ...prev, image_url: dataUrl }));
       }
 
-      // 2. Background Cloud Storage Upload (Non-blocking)
-      processFileUpload(file).then((publicUrl) => {
+      // 2. Background Cloud Storage Upload (Non-blocking with 1-year cache)
+      processFileUpload(file, false).then((publicUrl) => {
         if (publicUrl) {
           setFormData((prev) => ({ ...prev, image_url: publicUrl }));
         }
       }).catch(() => {});
 
       // 3. Parallel AI Neural Vision Analysis
-      const targetToAnalyze = compressedDataUrl || file;
+      const targetToAnalyze = dataUrl || file;
       analyzeImageWithAI(targetToAnalyze, formData.category).then((suggestions) => {
         if (suggestions.length > 0) {
           setAiSuggestions(suggestions);
@@ -221,6 +180,8 @@ export const ProductForm = ({ open, onClose, product, onSave, isSubmitting = fal
         console.warn("AI Vision analysis failed:", err);
       });
 
+    } catch (err: any) {
+      console.warn("Image processing error:", err);
     } finally {
       if (mainFileInputRef.current) mainFileInputRef.current.value = "";
     }
@@ -231,21 +192,27 @@ export const ProductForm = ({ open, onClose, product, onSave, isSubmitting = fal
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const { valid, error: valErr } = validateImageFile(file, 15 * 1024 * 1024);
+    if (!valid) {
+      toast.error(valErr || "Invalid image file");
+      return;
+    }
+
     const slotIndex = activeSlotRef.current;
 
     try {
-      // 1. Instant preview (< 10ms)
-      const compressedDataUrl = await compressAndReadImage(file);
-      if (compressedDataUrl) {
+      // 1. Instant preview (< 15ms)
+      const { dataUrl } = await optimizeImageForUpload(file, IMAGE_PRESETS.productSlot);
+      if (dataUrl) {
         setPreviewImages((prev) => {
           const copy = [...prev];
-          copy[slotIndex] = compressedDataUrl;
+          copy[slotIndex] = dataUrl;
           return copy;
         });
       }
 
-      // 2. Background Cloud Storage Upload (Non-blocking)
-      processFileUpload(file).then((publicUrl) => {
+      // 2. Background Cloud Storage Upload (Non-blocking with 1-year cache)
+      processFileUpload(file, true).then((publicUrl) => {
         if (publicUrl) {
           setPreviewImages((prev) => {
             const copy = [...prev];
@@ -255,6 +222,8 @@ export const ProductForm = ({ open, onClose, product, onSave, isSubmitting = fal
         }
       }).catch(() => {});
 
+    } catch (err: any) {
+      console.warn("Slot image processing error:", err);
     } finally {
       if (slotFileInputRef.current) slotFileInputRef.current.value = "";
     }

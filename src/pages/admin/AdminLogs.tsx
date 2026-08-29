@@ -10,7 +10,7 @@ const AdminLogs = () => {
     const { data: logs, isLoading } = useQuery({
         queryKey: ['admin-logs'],
         queryFn: adminService.getSystemLogs,
-        refetchInterval: 5000, // Live poll every 5s
+        staleTime: 1000 * 60 * 2,
     });
 
     const getIcon = (type: string) => {

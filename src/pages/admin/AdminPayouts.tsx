@@ -15,7 +15,7 @@ const AdminPayouts = () => {
     const { data: payouts, isLoading } = useQuery({
         queryKey: ['admin-payout-requests'],
         queryFn: adminService.getPayoutRequests,
-        refetchInterval: 15000,
+        staleTime: 1000 * 60 * 3,
     });
 
     const processMutation = useMutation({

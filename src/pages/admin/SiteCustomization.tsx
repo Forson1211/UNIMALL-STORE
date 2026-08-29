@@ -8,9 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { Separator } from "@/components/ui/separator";
 import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
+import { uploadOptimizedImage, IMAGE_PRESETS, validateImageFile } from "@/lib/imageOptimizer";
+import { supabase } from "@/integrations/supabase/client";
 import {
     Palette,
     Image as ImageIcon,
@@ -40,7 +42,6 @@ import {
     Plus,
     Trash2
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 const HERO_SLIDE_DEFAULTS = [
     { title: ["Shopping", "Spree"], subtitle: "Fresh Deals, Hot Prices", discount: "-45%", src: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop" },
@@ -320,66 +321,42 @@ export default function SiteCustomization() {
         toast.success(enabled ? "Dark mode enabled" : "Light mode enabled");
     };
 
-    // Handle file upload
+    // Handle file upload with client-side WebP optimization & 1-year immutable cache
     const handleFileUpload = async (file: File, type: string) => {
         try {
-            console.log(`📤 Starting ${type} upload:`, {
-                fileName: file.name,
-                fileSize: file.size,
-                fileType: file.type
-            });
-
-            // Validate file
-            if (!file) {
-                toast.error("Please select a file to upload");
+            const { valid, error: valErr } = validateImageFile(file, 15 * 1024 * 1024);
+            if (!valid) {
+                toast.error(valErr || "Invalid image file");
                 return null;
             }
 
-            // Check file size (max 5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                toast.error("File size must be less than 5MB");
-                return null;
-            }
-
-            // Check file type
-            if (!file.type.startsWith('image/')) {
-                toast.error("Only image files are allowed");
-                return null;
-            }
-
-            // Upload to Supabase Storage
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${type}_${Date.now()}.${fileExt}`;
+            const fileName = `${type}_${Date.now()}.webp`;
             const filePath = `${fileName}`;
 
-            console.log(`Uploading to bucket 'site-assets', path: ${filePath}`);
+            const { publicUrl, error: uploadError } = await uploadOptimizedImage('site-assets', filePath, file, {
+                ...IMAGE_PRESETS.siteAsset,
+                cacheControl: '31536000, immutable',
+            });
 
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('site-assets')
-                .upload(filePath, file, {
-                    cacheControl: '3600',
-                    upsert: true // Replace if exists
+            if (uploadError || !publicUrl) {
+                // Fallback attempt to 'products' or 'unimall' if site-assets is not created
+                const fallbackRes = await uploadOptimizedImage('products', `site-assets/${fileName}`, file, {
+                    ...IMAGE_PRESETS.siteAsset,
+                    cacheControl: '31536000, immutable',
                 });
-
-            if (uploadError) {
-                console.error('❌ Supabase upload error:', uploadError);
-                throw new Error(uploadError.message);
+                if (fallbackRes.publicUrl) {
+                    toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} uploaded successfully`);
+                    return fallbackRes.publicUrl;
+                }
+                throw uploadError || new Error("Failed to upload image");
             }
 
-            // Get public URL
-            const { data } = supabase.storage
-                .from('site-assets')
-                .getPublicUrl(filePath);
-
-            console.log(`✅ Upload successful! URL:`, data.publicUrl);
             toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} uploaded successfully`);
-
-            return data.publicUrl;
+            return publicUrl;
         } catch (error: any) {
             console.error(`❌ Upload error for ${type}:`, error);
             const errorMessage = error.message || error.error_description || "Unknown error";
 
-            // Provide more helpful error messages
             if (errorMessage.includes('not found')) {
                 toast.error(`Storage bucket not configured. Please contact administrator.`);
             } else if (errorMessage.includes('JWT')) {
@@ -439,10 +416,6 @@ export default function SiteCustomization() {
                 faviconUrl,
                 heroBackgroundUrl,
                 heroOverlayOpacity,
-                storefrontTiles,
-                storefrontPromos,
-                vendorsCtaImageUrl,
-                campusDirectory,
                 announcementEnabled,
                 announcementText,
                 announcementLink,

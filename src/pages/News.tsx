@@ -21,7 +21,7 @@ const News = () => {
         const fetchNews = async () => {
             const { data, error } = await (supabase as any)
                 .from("campus_news")
-                .select("*")
+                .select("id, title, category, author, publish_date, summary, image_url, views_count, read_time")
                 .eq("is_published", true)
                 .order("publish_date", { ascending: false });
 

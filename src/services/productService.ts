@@ -144,7 +144,7 @@ async function getVendorProfileMap(vendorIds: string[]): Promise<Map<string, any
         try {
             const { data: vendorProfiles } = await supabase
                 .from("profiles")
-                .select("id, user_id, full_name, store_name, avatar_url")
+                .select("id, user_id, full_name, store_name, avatar_url, verified")
                 .in("user_id", validUUIDs);
 
             vendorProfiles?.forEach((prof: any) => {
@@ -234,10 +234,11 @@ export const productService = {
         category?: string;
         search?: string;
         limit?: number;
+        page?: number;
         sortBy?: "created_at" | "rating" | "price";
         sortOrder?: "asc" | "desc";
     }) {
-        const isDefaultQuery = (!filters?.category || filters.category === "All") && !filters?.search && !filters?.sortBy;
+        const isDefaultQuery = (!filters?.category || filters.category === "All") && !filters?.search && !filters?.sortBy && (!filters?.page || filters.page === 1);
 
         // Deduplicate concurrent in-flight requests (e.g. 3 homepage sections querying simultaneously)
         if (isDefaultQuery && activeDefaultFetchPromise) {
@@ -257,16 +258,17 @@ export const productService = {
         category?: string;
         search?: string;
         limit?: number;
+        page?: number;
         sortBy?: "created_at" | "rating" | "price";
         sortOrder?: "asc" | "desc";
     }) {
         const cached = this.getCachedProducts();
 
         return withRetry(async () => {
-            // Direct query to indexed products table (ultra-fast 20-40ms response)
+            // Direct query to indexed products table with explicit column projection
             let query = supabase
                 .from("products")
-                .select("*");
+                .select("id, name, description, price, category, image_url, stock, is_active, created_at, vendor_id, vendor");
 
             if (filters?.category && filters.category !== "All") {
                 query = query.eq("category", filters.category);
@@ -279,8 +281,14 @@ export const productService = {
             } else {
                 query = query.order("created_at", { ascending: false });
             }
-            if (filters?.limit) {
-                query = query.limit(filters.limit);
+
+            const limit = filters?.limit || 50;
+            if (filters?.page && filters.page > 1) {
+                const from = (filters.page - 1) * limit;
+                const to = from + limit - 1;
+                query = query.range(from, to);
+            } else {
+                query = query.limit(limit);
             }
 
             const { data, error } = await query;

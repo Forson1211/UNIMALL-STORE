@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
-import { useSiteSettings } from '@/hooks/useSiteSettings';
+import { useSiteSettingsContext } from '@/contexts/SiteSettingsContext';
 import { hexToHSL } from '@/lib/theme-utils';
 
 export const ThemeApplicator = () => {
-    const { getSetting, settings, isLoading } = useSiteSettings();
+    const { getSetting, settings, isLoading } = useSiteSettingsContext();
 
     useEffect(() => {
         if (isLoading) return;

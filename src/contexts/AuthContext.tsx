@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const profileData = await withRetry(async () => {
         const { data, error } = await supabase
           .from("profiles")
-          .select("*")
+          .select("id, user_id, full_name, store_name, phone, store_description, avatar_url, address")
           .or(`user_id.eq.${userId},id.eq.${userId}`)
           .maybeSingle();
         if (error && error.code !== "PGRST116") throw error;
@@ -319,24 +319,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log("vendor-approval channel status:", status);
       });
 
-    // Persistent status monitor — polls get_vendor_status (SECURITY DEFINER) every 4s
-    // This reads user_roles.vendor_status which admin writes via update_vendor_status
-    let lastKnownStatus: string | null = null;
-    const persistentMonitor = setInterval(async () => {
-      try {
-        const { data: currentVendorStatus } = await (supabase.rpc as any)("get_vendor_status", { _user_id: user.id });
-        if (!currentVendorStatus) return;
-
-        if (currentVendorStatus !== lastKnownStatus) {
-          lastKnownStatus = currentVendorStatus;
-          const status = currentVendorStatus as VendorStatus;
-          setVendorStatus(status);
-          try { localStorage.setItem(`unimall_vendor_status_${user.id}`, status!); } catch (e) {}
-          await fetchProfile(user.id);
-        }
-      } catch (e) {}
-    }, 4000);
-
     // Instant local custom event listener (same browser)
     const handleStatusUpdate = (e: any) => {
       if (e?.detail?.vendorId === user.id || !e?.detail?.vendorId) {
@@ -355,14 +337,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    // Gentle window focus refresh (only if tab was inactive for > 60s)
+    let lastFocusCheck = Date.now();
+    const handleWindowFocus = () => {
+      const now = Date.now();
+      if (now - lastFocusCheck > 60_000) {
+        lastFocusCheck = now;
+        fetchProfile(user.id);
+      }
+    };
+
     window.addEventListener("unimall_vendor_status_updated", handleStatusUpdate);
     window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("focus", handleWindowFocus);
 
     return () => {
       supabase.removeChannel(channel);
-      clearInterval(persistentMonitor);
       window.removeEventListener("unimall_vendor_status_updated", handleStatusUpdate);
       window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("focus", handleWindowFocus);
     };
   }, [user]);
 

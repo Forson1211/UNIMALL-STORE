@@ -16,7 +16,7 @@ const AdminTransactions = () => {
     const { data: transactions, isLoading } = useQuery({
         queryKey: ['admin-transactions'],
         queryFn: adminService.getTransactions,
-        refetchInterval: 15000,
+        staleTime: 1000 * 60 * 3,
     });
     const [search, setSearch] = useState("");
     const [selectedTrx, setSelectedTrx] = useState<any | null>(null);

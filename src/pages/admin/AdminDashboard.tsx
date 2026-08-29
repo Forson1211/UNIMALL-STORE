@@ -111,7 +111,7 @@ const AdminDashboard = () => {
       if (error) throw error;
       return data as DashboardStats;
     },
-    refetchInterval: 30000,
+    staleTime: 1000 * 60 * 3,
   });
 
   // 2. Fetch all orders for status distribution and recent list
@@ -124,7 +124,7 @@ const AdminDashboard = () => {
       if (error) throw error;
       return data as RecentOrder[];
     },
-    refetchInterval: 30000,
+    staleTime: 1000 * 60 * 3,
   });
 
   // 3. Fetch analytical charts data via RPC
@@ -138,7 +138,7 @@ const AdminDashboard = () => {
       }
       return data;
     },
-    refetchInterval: 300000, // 5 mins
+    staleTime: 1000 * 60 * 10, // 10 mins
   });
 
   // 3b. Fetch real daily revenue for the last 7 days
@@ -152,7 +152,7 @@ const AdminDashboard = () => {
       }
       return data as { name: string; revenue: number }[];
     },
-    refetchInterval: 300000,
+    staleTime: 1000 * 60 * 10,
   });
 
   // 4. Fetch top vendors
@@ -168,7 +168,7 @@ const AdminDashboard = () => {
       if (error) throw error;
       return data;
     },
-    refetchInterval: 60000,
+    staleTime: 1000 * 60 * 5,
   });
 
   const isRefreshing = isRefetchingStats || isRefetchingOrders || isRefetchingVendors;
@@ -519,6 +519,7 @@ const AdminDashboard = () => {
               </div>
 
               <DataTable
+                title="Recent Orders"
                 data={recentOrders.slice(0, 5)}
                 columns={orderColumns}
               />
