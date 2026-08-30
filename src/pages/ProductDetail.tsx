@@ -201,7 +201,8 @@ const getProductGallery = (prod: Partial<StorefrontProduct>): string[] => {
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { siteName, whatsappNumber, supportPhone } = useSiteSettingsContext();
+  const { siteName, whatsappNumber, supportPhone, getSetting } = useSiteSettingsContext();
+  const reviewModerationEnabled = Boolean(getSetting("review_moderation_enabled", false));
   const { user } = useAuth();
   const { addItem } = useCart();
   const { toast } = useToast();
@@ -373,7 +374,7 @@ const ProductDetail = () => {
 
   // 6. Live Interactive Reviews System
   const { data: dbReviews = [], refetch: refetchReviews } = useQuery<any[]>({
-    queryKey: ["product-reviews", product.id],
+    queryKey: ["product-reviews", product.id, reviewModerationEnabled],
     queryFn: async () => {
       if (!product.id) return [];
       let list: any[] = [];
@@ -393,7 +394,7 @@ const ProductDetail = () => {
         if (localRaw) {
           const parsed = JSON.parse(localRaw);
           parsed.forEach((pr: any) => {
-            if (!list.some((a) => a.id === pr.id)) {
+            if ((!reviewModerationEnabled || pr.status === "approved") && !list.some((a) => a.id === pr.id)) {
               list.unshift(pr);
             }
           });
@@ -437,6 +438,7 @@ const ProductDetail = () => {
       campus: user?.user_metadata?.campus || "University Campus",
       rating: reviewRating,
       comment: reviewComment.trim(),
+      status: reviewModerationEnabled ? "pending" : "approved",
       created_at: new Date().toISOString(),
     };
 
@@ -446,6 +448,7 @@ const ProductDetail = () => {
         user_id: user?.id || null,
         rating: reviewRating,
         comment: reviewComment.trim(),
+        status: reviewModerationEnabled ? "pending" : "approved",
       }]);
     } catch (err) {}
 
@@ -461,8 +464,10 @@ const ProductDetail = () => {
     refetchReviews();
 
     toast({
-      title: "Review Published ⭐",
-      description: "Thank you for helping fellow campus students make smart shopping decisions.",
+      title: reviewModerationEnabled ? "Review Submitted" : "Review Published ⭐",
+      description: reviewModerationEnabled
+        ? "Your review is awaiting administrator approval before it is published."
+        : "Thank you for helping fellow campus students make smart shopping decisions.",
     });
   };
 

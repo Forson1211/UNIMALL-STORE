@@ -34,7 +34,21 @@ const Signup = () => {
   const { signUp, user, role, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { siteName, logoUrl, authLogoUrl } = useSiteSettingsContext();
+  const {
+    siteName,
+    logoUrl,
+    authLogoUrl,
+    getSetting,
+    isLoading: settingsLoading,
+  } = useSiteSettingsContext();
+  const vendorRegistrationEnabled = Boolean(getSetting("allow_vendor_registration", true));
+  const verificationRequired = Boolean(getSetting("require_vendor_verification", true));
+
+  useEffect(() => {
+    if (!settingsLoading && !vendorRegistrationEnabled && selectedRole === "vendor") {
+      setSelectedRole("buyer");
+    }
+  }, [settingsLoading, vendorRegistrationEnabled, selectedRole]);
 
   useEffect(() => {
     if (!authLoading && user && role) {
@@ -62,6 +76,15 @@ const Signup = () => {
       toast({ title: "Terms Required", description: "Please agree to the Terms of Service.", variant: "destructive" });
       return;
     }
+
+    if (selectedRole === "vendor" && !vendorRegistrationEnabled) {
+      toast({
+        title: "Vendor registration unavailable",
+        description: "Vendor registration is currently disabled by the administrator.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
       setIsLoading(true);
@@ -71,7 +94,13 @@ const Signup = () => {
         console.error("Signup submission error:", error);
         toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
       } else {
-        toast({ title: "Account created!", description: "Please check your email to verify your account." });
+        const vendorDescription = verificationRequired
+          ? "Please check your email. Your vendor application will be reviewed by an administrator."
+          : "Please check your email. Your vendor account is ready once your email is verified.";
+        toast({
+          title: "Account created!",
+          description: selectedRole === "vendor" ? vendorDescription : "Please check your email to verify your account.",
+        });
         navigate("/login");
       }
     } catch (err: any) {
@@ -117,8 +146,10 @@ const Signup = () => {
               Buyer
             </button>
             <button
+              type="button"
               onClick={() => setSelectedRole("vendor")}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-none text-[10px] font-black uppercase tracking-widest transition-all ${
+              disabled={settingsLoading || !vendorRegistrationEnabled}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-none text-[10px] font-black uppercase tracking-widest transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                 selectedRole === "vendor" ? "bg-white text-gray-900 shadow-sm" : "text-gray-400"
               }`}
             >
@@ -126,6 +157,11 @@ const Signup = () => {
               Vendor
             </button>
           </div>
+          {!settingsLoading && !vendorRegistrationEnabled && (
+            <p className="-mt-5 mb-5 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400">
+              Vendor registration is currently closed
+            </p>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Full Name */}

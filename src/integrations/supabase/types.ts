@@ -281,6 +281,7 @@ export type Database = {
           is_verified_purchase: boolean | null
           product_id: string
           rating: number
+          status: string
           title: string | null
           updated_at: string
           user_id: string
@@ -293,6 +294,7 @@ export type Database = {
           is_verified_purchase?: boolean | null
           product_id: string
           rating: number
+          status?: string
           title?: string | null
           updated_at?: string
           user_id: string
@@ -305,6 +307,7 @@ export type Database = {
           is_verified_purchase?: boolean | null
           product_id?: string
           rating?: number
+          status?: string
           title?: string | null
           updated_at?: string
           user_id?: string

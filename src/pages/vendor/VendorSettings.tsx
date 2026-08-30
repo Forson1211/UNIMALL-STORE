@@ -20,6 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { vendorService } from "@/services/vendorService";
+import { recordPasswordUpdate, validatePasswordUpdate } from "@/services/securityService";
 import { useState, useEffect } from "react";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 
@@ -192,8 +193,15 @@ const VendorSettings = () => {
       toast.error("Please fill in all password fields");
       return;
     }
-    if (passwordForm.next.length < 6) {
-      toast.error("New password must be at least 6 characters");
+    try {
+      const passwordPolicy = await validatePasswordUpdate(passwordForm.next.length);
+      if (!passwordPolicy.allowed) {
+        toast.error(passwordPolicy.message || `New password must be at least ${passwordPolicy.minimumLength} characters`);
+        return;
+      }
+    } catch (policyError: unknown) {
+      const message = policyError instanceof Error ? policyError.message : "Unable to validate password policy";
+      toast.error(message);
       return;
     }
     if (passwordForm.next !== passwordForm.confirm) {
@@ -215,6 +223,11 @@ const VendorSettings = () => {
       const { error: updateError } = await supabase.auth.updateUser({ password: passwordForm.next });
       if (updateError) throw updateError;
 
+      try {
+        await recordPasswordUpdate();
+      } catch (auditError) {
+        console.warn("Password updated but audit logging failed:", auditError);
+      }
       toast.success("Password updated successfully");
       setPasswordForm({ current: "", next: "", confirm: "" });
     } catch (error: any) {

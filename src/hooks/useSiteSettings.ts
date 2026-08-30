@@ -28,6 +28,13 @@ const DEFAULT_SETTINGS: Record<string, Json> = {
     allow_vendor_registration: true,
     require_vendor_verification: true,
     review_moderation_enabled: false,
+    require_2fa_admin: false,
+    session_timeout_enabled: true,
+    session_timeout_minutes: 30,
+    login_attempt_limit_enabled: true,
+    max_failed_login_attempts: 5,
+    password_update_enabled: true,
+    password_min_length: 8,
     commission_rate: 10,
     minimum_order_value: 10,
 };

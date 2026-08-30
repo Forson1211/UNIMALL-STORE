@@ -77,10 +77,14 @@ const AdminSettings = () => {
   const [notifyUserReports, setNotifyUserReports] = useState(() => getSetting("notify_user_reports", true));
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
 
-  // Security tab (toggles only -- password change is a separate auth action, not a site setting)
+  // Security tab settings are persisted to site_settings and consumed by backend auth routines.
   const [require2fa, setRequire2fa] = useState(() => getSetting("require_2fa_admin", false));
   const [sessionTimeoutEnabled, setSessionTimeoutEnabled] = useState(() => getSetting("session_timeout_enabled", true));
+  const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = useState(() => String(getSetting("session_timeout_minutes", 30)));
   const [loginAttemptLimitEnabled, setLoginAttemptLimitEnabled] = useState(() => getSetting("login_attempt_limit_enabled", true));
+  const [maxFailedLoginAttempts, setMaxFailedLoginAttempts] = useState(() => String(getSetting("max_failed_login_attempts", 5)));
+  const [passwordUpdateEnabled, setPasswordUpdateEnabled] = useState(() => getSetting("password_update_enabled", true));
+  const [passwordMinLength, setPasswordMinLength] = useState(() => String(getSetting("password_min_length", 8)));
   const [isSavingSecurity, setIsSavingSecurity] = useState(false);
 
   // Platform tab
@@ -106,6 +110,12 @@ const AdminSettings = () => {
     setAllowVendorRegistration(Boolean(getSetting("allow_vendor_registration", true)));
     setRequireVendorVerification(Boolean(getSetting("require_vendor_verification", true)));
     setReviewModerationEnabled(Boolean(getSetting("review_moderation_enabled", false)));
+    setSessionTimeoutEnabled(Boolean(getSetting("session_timeout_enabled", true)));
+    setSessionTimeoutMinutes(String(getSetting("session_timeout_minutes", 30)));
+    setLoginAttemptLimitEnabled(Boolean(getSetting("login_attempt_limit_enabled", true)));
+    setMaxFailedLoginAttempts(String(getSetting("max_failed_login_attempts", 5)));
+    setPasswordUpdateEnabled(Boolean(getSetting("password_update_enabled", true)));
+    setPasswordMinLength(String(getSetting("password_min_length", 8)));
     setCommissionRate(String(getSetting("commission_rate", 10)));
     setMinimumOrderValue(String(getSetting("minimum_order_value", 10)));
   }, [getSetting, isSettingsLoading, settings]);
@@ -135,11 +145,32 @@ const AdminSettings = () => {
   };
 
   const handleSaveSecurity = async () => {
+    const parsedTimeoutMinutes = Number(sessionTimeoutMinutes);
+    const parsedMaxFailedAttempts = Number(maxFailedLoginAttempts);
+    const parsedPasswordMinLength = Number(passwordMinLength);
+
+    if (!Number.isInteger(parsedTimeoutMinutes) || parsedTimeoutMinutes < 5 || parsedTimeoutMinutes > 1_440) {
+      toast.error("Session timeout must be a whole number between 5 and 1,440 minutes");
+      return;
+    }
+    if (!Number.isInteger(parsedMaxFailedAttempts) || parsedMaxFailedAttempts < 1 || parsedMaxFailedAttempts > 20) {
+      toast.error("Maximum failed login attempts must be a whole number between 1 and 20");
+      return;
+    }
+    if (!Number.isInteger(parsedPasswordMinLength) || parsedPasswordMinLength < 6 || parsedPasswordMinLength > 128) {
+      toast.error("Password minimum length must be a whole number between 6 and 128");
+      return;
+    }
+
     setIsSavingSecurity(true);
     const result = await updateSettings({
       require_2fa_admin: { value: require2fa, category: "security" },
       session_timeout_enabled: { value: sessionTimeoutEnabled, category: "security" },
+      session_timeout_minutes: { value: parsedTimeoutMinutes, category: "security" },
       login_attempt_limit_enabled: { value: loginAttemptLimitEnabled, category: "security" },
+      max_failed_login_attempts: { value: parsedMaxFailedAttempts, category: "security" },
+      password_update_enabled: { value: passwordUpdateEnabled, category: "security" },
+      password_min_length: { value: parsedPasswordMinLength, category: "security" },
     });
     setIsSavingSecurity(false);
     if (result?.success !== false) toast.success("Security settings saved successfully");
@@ -469,31 +500,68 @@ const AdminSettings = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Session Timeout</p>
-                  <p className="text-sm text-muted-foreground">Auto-logout after 30 minutes of inactivity</p>
+                  <p className="text-sm text-muted-foreground">Auto-logout inactive sessions after the configured duration</p>
                 </div>
                 <Switch checked={sessionTimeoutEnabled} onCheckedChange={setSessionTimeoutEnabled} />
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="sessionTimeoutMinutes">Timeout Duration (minutes)</Label>
+                  <Input
+                    id="sessionTimeoutMinutes"
+                    type="number"
+                    min="5"
+                    max="1440"
+                    value={sessionTimeoutMinutes}
+                    onChange={(e) => setSessionTimeoutMinutes(e.target.value)}
+                    disabled={!sessionTimeoutEnabled}
+                  />
+                </div>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Login Attempt Limit</p>
-                  <p className="text-sm text-muted-foreground">Lock account after 5 failed attempts</p>
+                  <p className="text-sm text-muted-foreground">Lock sign-in after the configured number of failed attempts</p>
                 </div>
                 <Switch checked={loginAttemptLimitEnabled} onCheckedChange={setLoginAttemptLimitEnabled} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="maxFailedLoginAttempts">Maximum Failed Attempts</Label>
+                <Input
+                  id="maxFailedLoginAttempts"
+                  type="number"
+                  min="1"
+                  max="20"
+                  value={maxFailedLoginAttempts}
+                  onChange={(e) => setMaxFailedLoginAttempts(e.target.value)}
+                  disabled={!loginAttemptLimitEnabled}
+                />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Password Updates</p>
+                  <p className="text-sm text-muted-foreground">Allow users to update their password from account settings</p>
+                </div>
+                <Switch checked={passwordUpdateEnabled} onCheckedChange={setPasswordUpdateEnabled} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="passwordMinLength">Minimum Password Length</Label>
+                <Input
+                  id="passwordMinLength"
+                  type="number"
+                  min="6"
+                  max="128"
+                  value={passwordMinLength}
+                  onChange={(e) => setPasswordMinLength(e.target.value)}
+                  disabled={!passwordUpdateEnabled}
+                />
               </div>
               <Separator />
               <Button onClick={handleSaveSecurity} disabled={isSavingSecurity}>
                 {isSavingSecurity ? "Saving..." : "Update Security Settings"}
               </Button>
-              <Separator />
-              <div className="space-y-2">
-                <Label>Change Password</Label>
-                <p className="text-xs text-muted-foreground">Not yet available here — admins can reset their password from the standard login flow.</p>
-                <div className="grid gap-4 md:grid-cols-2 opacity-50 pointer-events-none">
-                  <Input type="password" placeholder="Current password" disabled />
-                  <Input type="password" placeholder="New password" disabled />
-                </div>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>

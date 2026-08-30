@@ -3,6 +3,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { withRetry } from "@/lib/dbUtils";
 import { useToast } from "@/hooks/use-toast";
+import { DEFAULT_SECURITY_CONFIG, getSecurityConfig, checkLoginAllowed, recordLoginAttempt, type SecurityConfig } from "@/services/securityService";
 
 type UserRole = "admin" | "moderator" | "vendor_manager" | "order_manager" | "content_manager" | "support_agent" | "vendor" | "buyer";
 type VendorStatus = "pending" | "approved" | "suspended" | null;
@@ -82,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const [vendorStatus, setVendorStatus] = useState<VendorStatus>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [securityConfig, setSecurityConfig] = useState<SecurityConfig>(DEFAULT_SECURITY_CONFIG);
   const { toast } = useToast();
 
   const fetchProfile = async (userId: string) => {
@@ -273,6 +275,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Load security policy from the backend for session enforcement and login throttling.
+  useEffect(() => {
+    let active = true;
+
+    if (!user) {
+      setSecurityConfig(DEFAULT_SECURITY_CONFIG);
+      return () => {
+        active = false;
+      };
+    }
+
+    void getSecurityConfig()
+      .then((config) => {
+        if (active) setSecurityConfig(config);
+      })
+      .catch((error) => {
+        console.warn("Security policy unavailable; using safe defaults:", error);
+        if (active) setSecurityConfig(DEFAULT_SECURITY_CONFIG);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
+  // Enforce inactivity timeout in the browser while the backend remains the source of policy.
+  useEffect(() => {
+    if (!user) return;
+
+    let lastActivityAt = Date.now();
+    const markActivity = () => {
+      lastActivityAt = Date.now();
+    };
+    const activityEvents = ["pointerdown", "keydown", "touchstart"] as const;
+    activityEvents.forEach((eventName) => window.addEventListener(eventName, markActivity, { passive: true }));
+
+    const interval = window.setInterval(() => {
+      if (!securityConfig.sessionTimeoutEnabled) return;
+      const timeoutMs = securityConfig.sessionTimeoutMinutes * 60 * 1000;
+      if (Date.now() - lastActivityAt < timeoutMs) return;
+
+      window.clearInterval(interval);
+      void supabase.auth.signOut().finally(() => {
+        toast({
+          title: "Session expired",
+          description: "You were signed out after a period of inactivity.",
+        });
+      });
+    }, 15_000);
+
+    return () => {
+      window.clearInterval(interval);
+      activityEvents.forEach((eventName) => window.removeEventListener(eventName, markActivity));
+    };
+  }, [securityConfig, toast, user]);
 
   // Maintain a short-lived presence row for the live admin health monitor.
   // The health query treats sessions without a heartbeat for 15 minutes as inactive.
@@ -500,16 +558,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       console.log("Attempting signIn for:", email);
+      try {
+        const loginCheck = await checkLoginAllowed(email);
+        if (!loginCheck.allowed) {
+          throw new Error("Too many failed attempts. Please try again in 15 minutes.");
+        }
+      } catch (policyError) {
+        if (policyError instanceof Error && policyError.message.startsWith("Too many failed attempts")) {
+          throw policyError;
+        }
+        console.warn("Login attempt policy unavailable; continuing with Supabase authentication:", policyError);
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        void recordLoginAttempt(email, false).catch((loggingError) => {
+          console.warn("Failed to record login attempt:", loggingError);
+        });
         console.error("signIn error:", error);
         throw error;
       }
 
+      void recordLoginAttempt(email, true).catch((loggingError) => {
+        console.warn("Failed to record successful login:", loggingError);
+      });
       console.log("signIn success:", data);
 
       if (data?.user?.id) {
