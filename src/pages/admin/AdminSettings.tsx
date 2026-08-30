@@ -34,6 +34,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
+import { buildPlatformSettingsUpdates, validatePlatformSettings } from "@/lib/platformSettings";
 import { useSystemHealth, type HealthStatus } from "@/hooks/useSystemHealth";
 
 const healthStatusLabels: Record<HealthStatus, string> = {
@@ -177,27 +178,21 @@ const AdminSettings = () => {
   };
 
   const handleSavePlatform = async () => {
-    const parsedCommissionRate = Number(commissionRate);
-    const parsedMinimumOrderValue = Number(minimumOrderValue);
-
-    if (!Number.isFinite(parsedCommissionRate) || parsedCommissionRate < 0 || parsedCommissionRate > 100) {
-      toast.error("Commission rate must be between 0 and 100");
-      return;
-    }
-
-    if (!Number.isFinite(parsedMinimumOrderValue) || parsedMinimumOrderValue < 0) {
-      toast.error("Minimum order value must be zero or greater");
+    const input = {
+      allowVendorRegistration,
+      requireVendorVerification,
+      reviewModerationEnabled,
+      commissionRate,
+      minimumOrderValue,
+    };
+    const validation = validatePlatformSettings(input);
+    if (!validation.valid) {
+      toast.error(validation.error);
       return;
     }
 
     setIsSavingPlatform(true);
-    const result = await updateSettings({
-      allow_vendor_registration: { value: allowVendorRegistration, category: "platform" },
-      require_vendor_verification: { value: requireVendorVerification, category: "platform" },
-      review_moderation_enabled: { value: reviewModerationEnabled, category: "platform" },
-      commission_rate: { value: parsedCommissionRate, category: "platform" },
-      minimum_order_value: { value: parsedMinimumOrderValue, category: "platform" },
-    });
+    const result = await updateSettings(buildPlatformSettingsUpdates(input));
     setIsSavingPlatform(false);
     if (result?.success !== false) toast.success("Platform settings saved successfully");
   };
