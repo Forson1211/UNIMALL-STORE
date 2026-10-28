@@ -1,0 +1,52 @@
+.dashboard-shell {
+  --background: 252 20% 97%;
+  --foreground: 252 10% 36%;
+  --card: 0 0% 100%;
+  --card-foreground: 252 10% 36%;
+  --muted: 252 14% 95%;
+  --muted-foreground: 252 7% 59%;
+  --border: 252 12% 91%;
+  --input: 252 12% 88%;
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 252 10% 36%;
+  --sidebar-accent: 252 14% 95%;
+  --sidebar-accent-foreground: 252 10% 30%;
+  --sidebar-border: 252 12% 91%;
+  --radius: 0.4rem;
+  color: hsl(var(--foreground));
+  font-size: 14px;
+  background: hsl(var(--background));
+}
+.dark .dashboard-shell {
+  --background: 230 23% 15%;
+  --foreground: 228 17% 82%;
+  --card: 230 22% 19%;
+  --card-foreground: 228 17% 82%;
+  --muted: 230 18% 23%;
+  --muted-foreground: 230 12% 65%;
+  --border: 230 16% 26%;
+  --input: 230 16% 30%;
+  --sidebar-background: 230 22% 19%;
+  --sidebar-foreground: 228 17% 82%;
+  --sidebar-accent: 230 18% 24%;
+  --sidebar-accent-foreground: 228 17% 90%;
+  --sidebar-border: 230 16% 26%;
+}
+.dashboard-panel {
+  border: 1px solid hsl(var(--border));
+  border-radius: 7px;
+  background: hsl(var(--card));
+  box-shadow: 0 2px 5px -3px rgb(47 43 61 / 12%);
+}
+.dashboard-shell .dashboard-panel h2 { line-height: 1.35; }
+.dashboard-shell input, .dashboard-shell select, .dashboard-shell textarea { font-size: 13px; }
+.dashboard-shell [data-sidebar="content"] { scrollbar-width: thin; scrollbar-color: hsl(var(--border)) transparent; }
+.dashboard-shell .recharts-cartesian-axis-tick-value { font-family: inherit; }
+.dashboard-shell .dashboard-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.dashboard-shell .dashboard-table th { padding: 12px 20px; background: hsl(var(--muted) / 0.5); color: hsl(var(--muted-foreground)); font-weight: 500; text-align: left; white-space: nowrap; }
+.dashboard-shell .dashboard-table td { padding: 15px 20px; border-top: 1px solid hsl(var(--border)); }
+.dashboard-shell .dashboard-table tbody tr:hover { background: hsl(var(--muted) / 0.35); }
+.dashboard-shell .dashboard-stat-label { color: hsl(var(--muted-foreground)); font-size: 12px; }
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-shell *, .dashboard-shell *::before, .dashboard-shell *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

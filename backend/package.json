@@ -1,0 +1,27 @@
+{
+  "name": "unimall-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs",
+    "server": "node index.mjs",
+    "dev": "node --watch index.mjs",
+    "server:dev": "node --watch index.mjs",
+    "admin": "node admin.mjs",
+    "seed": "node seed.mjs",
+    "check": "node check.mjs",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
+    "mongodb": "^7.7.0",
+    "multer": "^2.5.0",
+    "nodemailer": "^10.2.1"
+  }
+}
