@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
+import shopBanner from "../../../dist/Images/6.png";
 
 export interface ShopHeroSlide {
+  banner?: boolean;
   eyebrow: string;
   title: string;
   highlight: string;
@@ -17,31 +19,14 @@ export interface ShopHeroSlide {
 
 const DEFAULT_SHOP_SLIDES: ShopHeroSlide[] = [
   {
-    eyebrow: "Unimall Marketplace Event",
-    title: "Hot Campus Deals",
-    highlight: "Up to 40% off",
-    subtitle: "Tech, fashion and essentials from verified student vendors.",
-    image: "https://images.unsplash.com/photo-1526170315870-ef6876b84782?q=80&w=1600&auto=format&fit=crop",
-    cta: "Shop Now",
-    ctaLink: "/products",
-  },
-  {
-    eyebrow: "New This Week",
-    title: "Fresh Vendor Drops",
-    highlight: "Just arrived",
-    subtitle: "Be first to grab the newest listings before they sell out.",
-    image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1600&auto=format&fit=crop",
-    cta: "See What's New",
-    ctaLink: "/products",
-  },
-  {
-    eyebrow: "Student Exclusive",
-    title: "Sell On Unimall",
-    highlight: "Start earning today",
-    subtitle: "Open your own storefront and reach thousands of students.",
-    image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=1600&auto=format&fit=crop",
-    cta: "Become a Vendor",
-    ctaLink: "/signup?role=vendor",
+    eyebrow: "",
+    title: "Find it.\nLove it.",
+    highlight: "",
+    subtitle: "Your next favourite is here.",
+    image: shopBanner,
+    cta: "Shop Now!",
+    ctaLink: "#all-products",
+    banner: true,
   },
 ];
 
@@ -70,6 +55,26 @@ const ShopHeroCarousel = () => {
 
   const prev = () => setIndex((i) => (i - 1 + slides.length) % slides.length);
   const next = () => setIndex((i) => (i + 1) % slides.length);
+
+  if (slide.banner) {
+    return (
+      <section aria-label="Shop banner" className="relative mb-6 w-full overflow-hidden bg-[#ffda9b]">
+        <img src={slideImage} alt="Shopping trolley filled with colourful bags" className="block h-auto w-full" loading="eager" fetchPriority="high" />
+        <div className="absolute inset-0 mx-auto grid max-w-[1280px] grid-cols-2 items-center px-4 xl:px-0">
+          <div className="space-y-2 py-2 text-left md:space-y-4 md:py-6">
+            <h1 className="whitespace-pre-line text-[clamp(1.125rem,5.2vw,1.75rem)] font-black leading-[1.05] tracking-tight text-gray-900 sm:text-4xl md:text-5xl lg:text-6xl">
+              {slide.title}
+            </h1>
+            <p className="text-[9px] font-medium text-gray-700 sm:text-xs md:text-base lg:text-lg">{slide.subtitle}</p>
+            <a href={slide.ctaLink || "#all-products"} className="inline-flex items-center gap-1 bg-[#FF5500] px-3 py-2 text-[8px] font-bold uppercase tracking-wider text-white transition-colors hover:bg-[#df4900] sm:text-[10px] md:px-6 md:py-3 md:text-xs">
+              {slide.cta}
+              <ChevronRight className="h-3 w-3 md:h-4 md:w-4" />
+            </a>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <div className="relative w-full h-64 sm:h-72 md:h-80 lg:h-[320px] bg-gradient-to-r from-orange-600 via-[#FF5500] to-amber-600 rounded-none overflow-hidden mb-6 group shadow-md">

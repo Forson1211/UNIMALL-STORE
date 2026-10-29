@@ -9,6 +9,16 @@ lerna-debug.log*
 
 node_modules
 dist
+# Banner source images kept at the user-selected paths.
+!frontend/dist/
+frontend/dist/*
+!frontend/dist/Images/
+frontend/dist/Images/*
+!frontend/dist/Images/1.png
+!frontend/dist/Images/2.png
+!frontend/dist/Images/4.png
+!frontend/dist/Images/5.png
+!frontend/dist/Images/6.png
 dist-ssr
 *.local
 .env

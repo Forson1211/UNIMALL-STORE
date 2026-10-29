@@ -2,6 +2,12 @@
 
 The app uses `frontend/` for React and `backend/` for the MongoDB API. Run npm commands from the repository root. Database credentials belong in `backend/.env`; keep that file private. The frontend uses `/api` by default.
 
+The Vendors page imports its banner directly from `frontend/dist/Images/5.png`; the Shop banner uses `frontend/dist/Images/6.png`. Replace these files to update the banners automatically while the Vite development server is running. These source images are explicitly included in Git and Docker despite their folder name; the production build output remains the separate root `dist/` directory. Changes to the live site require a new build and deployment, which gives each image a new cache-busting asset URL.
+
+The first homepage hero slide similarly imports `frontend/dist/Images/4.png` directly, with its text and Shop Now button on the right on desktop. The student stores slide imports `frontend/dist/Images/1.png`, with its copy on the left and a link to `/vendors`. Replace either file to update its slide locally; build and redeploy for the live site.
+
+The homepage phone promotion imports `frontend/dist/Images/2.png` directly and links to the Phones & Tablets category. It follows the same local update and deployment workflow.
+
 ## Local startup
 
 1. Install Node.js 22.12 or newer and run `npm ci`.

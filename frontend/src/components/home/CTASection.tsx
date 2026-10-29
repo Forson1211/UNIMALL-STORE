@@ -3,89 +3,38 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Store, ShoppingBag, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-const LegonLogo = () => (
-  <svg className="w-auto h-8 text-foreground/20 hover:text-blue-900 dark:hover:text-blue-400 transition-all duration-300 transform hover:scale-105 cursor-default shrink-0" viewBox="0 0 160 40">
-    <g transform="translate(5, 5)">
-      <path d="M 0,0 L 24,0 C 24,18 12,28 12,28 C 12,28 0,18 0,0" fill="none" stroke="currentColor" strokeWidth="2.5" />
-      <path d="M 6,10 Q 12,7 18,10 L 18,18 Q 12,15 6,18 Z" fill="currentColor" opacity="0.8" />
-      <path d="M 12,10 L 12,18" stroke="currentColor" strokeWidth="1.5" />
-    </g>
-    <text x="40" y="24" fontFamily="sans-serif" fontSize="13" fontWeight="900" letterSpacing="2" fill="currentColor">LEGON</text>
-    <text x="40" y="34" fontFamily="sans-serif" fontSize="8" fontWeight="600" letterSpacing="1" opacity="0.6" fill="currentColor">UNIV. OF GHANA</text>
-  </svg>
-);
+const universities = [
+  { name: "University of Ghana", label: "University of Ghana", logo: "ug.svg", size: [3408, 1058], crest: "25 35 805 980" },
+  { name: "Kwame Nkrumah University of Science and Technology", label: "KNUST", logo: "knust.png", size: [433, 100], crest: "18 10 65 90" },
+  { name: "Ashesi University", label: "Ashesi University", logo: "ashesi.webp", size: [550, 128], crest: "6 4 140 121" },
+  { name: "University of Cape Coast", label: "University of Cape Coast", logo: "ucc.png", size: [180, 180], crest: "13 3 154 175" },
+  { name: "Ghana Institute of Management and Public Administration", label: "GIMPA", logo: "gimpa.png", size: [420, 79], crest: "0 0 82 79" },
+  { name: "University of Professional Studies, Accra", label: "UPSA", logo: "upsa.png", size: [300, 99], crest: "15 8 62 83" },
+  { name: "Pentecost University", label: "Pentecost University", logo: "pentecost.png", size: [501, 222], crest: "0 0 209 222" },
+];
 
-const KnustLogo = () => (
-  <svg className="w-auto h-8 text-foreground/20 hover:text-amber-600 dark:hover:text-amber-400 transition-all duration-300 transform hover:scale-105 cursor-default shrink-0" viewBox="0 0 160 40">
-    <g transform="translate(5, 5)">
-      <circle cx="15" cy="15" r="12" fill="none" stroke="currentColor" strokeWidth="2.5" />
-      <path d="M 15,0 L 15,30 M 0,15 L 30,15 M 4,4 L 26,26 M 4,26 L 26,4" stroke="currentColor" strokeWidth="2.5" />
-      <circle cx="15" cy="15" r="4" fill="currentColor" />
-    </g>
-    <text x="45" y="24" fontFamily="sans-serif" fontSize="13" fontWeight="900" letterSpacing="2" fill="currentColor">KNUST</text>
-    <text x="45" y="34" fontFamily="sans-serif" fontSize="8" fontWeight="600" letterSpacing="1" opacity="0.6" fill="currentColor">SCIENCE & TECH</text>
-  </svg>
-);
-
-const AshesiLogo = () => (
-  <svg className="w-auto h-8 text-foreground/20 hover:text-red-700 dark:hover:text-red-400 transition-all duration-300 transform hover:scale-105 cursor-default shrink-0" viewBox="0 0 160 40">
-    <g transform="translate(5, 5)">
-      <path d="M 0,0 L 24,0 C 24,18 12,28 12,28 C 12,28 0,18 0,0" fill="none" stroke="currentColor" strokeWidth="2.5" />
-      <circle cx="12" cy="16" r="6" fill="currentColor" />
-      <path d="M 12,6 L 12,9 M 6,10 L 8,11 M 18,10 L 16,11 M 5,16 L 8,16 M 19,16 L 16,16" stroke="currentColor" strokeWidth="1.5" />
-    </g>
-    <text x="40" y="24" fontFamily="serif" fontSize="14" fontWeight="800" letterSpacing="1" fill="currentColor">ASHESI</text>
-    <text x="40" y="34" fontFamily="sans-serif" fontSize="8" fontWeight="600" letterSpacing="1.5" opacity="0.6" fill="currentColor">UNIVERSITY</text>
-  </svg>
-);
-
-const UccLogo = () => (
-  <svg className="w-auto h-8 text-foreground/20 hover:text-blue-700 dark:hover:text-blue-400 transition-all duration-300 transform hover:scale-105 cursor-default shrink-0" viewBox="0 0 160 40">
-    <g transform="translate(5, 5)">
-      <path d="M 0,0 L 24,0 L 24,20 C 24,26 12,28 12,28 C 12,28 0,26 0,20 Z" fill="none" stroke="currentColor" strokeWidth="2.5" />
-      <path d="M 5,20 Q 12,18 19,20 L 19,22 Q 12,20 5,22 Z M 12,5 L 12,18" stroke="currentColor" strokeWidth="1.5" fill="currentColor" />
-      <path d="M 12,6 Q 16,10 12,15 Z" fill="currentColor" />
-    </g>
-    <text x="40" y="24" fontFamily="sans-serif" fontSize="13" fontWeight="900" letterSpacing="2" fill="currentColor">UCC</text>
-    <text x="40" y="34" fontFamily="sans-serif" fontSize="8" fontWeight="600" letterSpacing="1" opacity="0.6" fill="currentColor">CAPE COAST</text>
-  </svg>
-);
-
-const GimpaLogo = () => (
-  <svg className="w-auto h-8 text-foreground/20 hover:text-emerald-800 dark:hover:text-emerald-400 transition-all duration-300 transform hover:scale-105 cursor-default shrink-0" viewBox="0 0 160 40">
-    <g transform="translate(5, 5)">
-      <rect x="2" y="22" width="22" height="3" fill="currentColor" />
-      <rect x="4" y="5" width="18" height="3" fill="currentColor" />
-      <rect x="6" y="8" width="2.5" height="14" fill="currentColor" />
-      <rect x="11.5" y="8" width="2.5" height="14" fill="currentColor" />
-      <rect x="17" y="8" width="2.5" height="14" fill="currentColor" />
-    </g>
-    <text x="40" y="24" fontFamily="sans-serif" fontSize="13" fontWeight="900" letterSpacing="2" fill="currentColor">GIMPA</text>
-    <text x="40" y="34" fontFamily="sans-serif" fontSize="8" fontWeight="600" letterSpacing="0.5" opacity="0.6" fill="currentColor">MANAGEMENT INST.</text>
-  </svg>
-);
-
-const UpsaLogo = () => (
-  <svg className="w-auto h-8 text-foreground/20 hover:text-indigo-800 dark:hover:text-indigo-400 transition-all duration-300 transform hover:scale-105 cursor-default shrink-0" viewBox="0 0 160 40">
-    <g transform="translate(5, 5)">
-      <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2.5" />
-      <path d="M 12,5 L 14,10 L 19,10 L 15,13 L 17,18 L 12,15 L 7,18 L 9,13 L 5,10 L 10,10 Z" fill="currentColor" />
-    </g>
-    <text x="40" y="24" fontFamily="sans-serif" fontSize="13" fontWeight="900" letterSpacing="2" fill="currentColor">UPSA</text>
-    <text x="40" y="34" fontFamily="sans-serif" fontSize="8" fontWeight="600" letterSpacing="1" opacity="0.6" fill="currentColor">PROF. STUDIES</text>
-  </svg>
-);
-
-const PentecostLogo = () => (
-  <svg className="w-auto h-8 text-foreground/20 hover:text-[#0033aa] dark:hover:text-[#3388ff] transition-all duration-300 transform hover:scale-105 cursor-default shrink-0" viewBox="0 0 160 40">
-    <g transform="translate(5, 5)">
-      <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2.5" />
-      <path d="M 12,5 Q 16,10 12,18 Q 8,10 12,5 Z" fill="currentColor" />
-      <path d="M 12,9 Q 14,12 12,17 Q 10,12 12,9 Z" fill="white" />
-    </g>
-    <text x="40" y="24" fontFamily="sans-serif" fontSize="13" fontWeight="900" letterSpacing="1.5" fill="currentColor">PENTECOST</text>
-    <text x="40" y="34" fontFamily="sans-serif" fontSize="8" fontWeight="600" letterSpacing="1" opacity="0.6" fill="currentColor">UNIVERSITY</text>
-  </svg>
+const UniversityLogos = () => (
+  <div className="flex shrink-0 items-center gap-6 px-3 sm:gap-8 sm:px-4">
+    {universities.map(university => (
+      <div key={university.logo} className="flex w-[140px] shrink-0 flex-col items-center justify-center gap-3 bg-white p-2 sm:w-[160px]">
+        <svg
+          viewBox={university.crest}
+          role="img"
+          aria-label={`${university.name} logo`}
+          className="h-14 w-14 shrink-0 overflow-hidden sm:h-16 sm:w-16"
+        >
+          <image
+            href={`/assets/universities/${university.logo}`}
+            width={university.size[0]}
+            height={university.size[1]}
+          />
+        </svg>
+        <span className="flex h-8 items-center text-center text-[10px] font-bold uppercase tracking-wide text-gray-700 sm:text-[11px]">
+          {university.label}
+        </span>
+      </div>
+    ))}
+  </div>
 );
 
 const CTASection = () => {
@@ -152,34 +101,18 @@ const CTASection = () => {
 
           {/* Trust strip */}
           <div className="mt-8 md:mt-16 pt-8 border-t border-border/20 overflow-hidden relative">
-            <p className="text-center text-[10px] md:text-xs font-black uppercase tracking-[0.5em] text-foreground/30 mb-8">Trusted by students across</p>
+            <p className="text-center text-[10px] md:text-xs font-black uppercase tracking-[0.5em] text-foreground/60 mb-6">Trusted by students across</p>
             
             {/* Infinite Marquee Wrapper */}
             <div className="w-full overflow-hidden relative select-none">
               {/* Fade masks for visual polish */}
-              <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-              <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+              <div className="absolute left-0 top-0 bottom-0 w-6 sm:w-10 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+              <div className="absolute right-0 top-0 bottom-0 w-6 sm:w-10 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
               
-              <div className="animate-marquee-ltr flex items-center gap-16 py-2">
-                {/* Loop 1 */}
-                <div className="flex items-center gap-16 shrink-0">
-                  <LegonLogo />
-                  <KnustLogo />
-                  <AshesiLogo />
-                  <UccLogo />
-                  <GimpaLogo />
-                  <UpsaLogo />
-                  <PentecostLogo />
-                </div>
-                {/* Loop 2 (Duplicate for infinite seamless scroll) */}
-                <div className="flex items-center gap-16 shrink-0" aria-hidden="true">
-                  <LegonLogo />
-                  <KnustLogo />
-                  <AshesiLogo />
-                  <UccLogo />
-                  <GimpaLogo />
-                  <UpsaLogo />
-                  <PentecostLogo />
+              <div className="animate-marquee-ltr motion-reduce:animate-none flex items-center py-2">
+                <UniversityLogos />
+                <div aria-hidden="true" className="shrink-0">
+                  <UniversityLogos />
                 </div>
               </div>
             </div>

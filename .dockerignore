@@ -1,5 +1,14 @@
 **/node_modules
 **/dist
+!frontend/dist
+frontend/dist/*
+!frontend/dist/Images
+frontend/dist/Images/*
+!frontend/dist/Images/1.png
+!frontend/dist/Images/2.png
+!frontend/dist/Images/4.png
+!frontend/dist/Images/5.png
+!frontend/dist/Images/6.png
 **/.env
 **/.env.*
 !**/.env.example

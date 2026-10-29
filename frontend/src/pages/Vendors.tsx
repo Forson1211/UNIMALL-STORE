@@ -19,6 +19,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/integrations/api/client";
 import { UnimallVerifiedBadge } from "@/components/common/UnimallVerifiedBadge";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
+import vendorsBanner from "../../dist/Images/5.png";
 
 
 const VendorCard = ({ vendor }: { vendor: any }) => (
@@ -159,93 +160,20 @@ const Vendors = () => {
       <Navbar />
 
       <main className="pb-16">
-        {/* Full-Bleed Hero Banner (Edge-to-Edge Background with Site-Aligned Content) */}
-        <div className="relative w-full bg-[#f4f6fa] border-b border-gray-200/80 shadow-2xs mb-6 overflow-hidden">
-          <div className="max-w-[1280px] mx-auto px-4 xl:px-0 relative min-h-[400px] md:min-h-[460px] flex items-center">
-            
-            {/* Left Nav Arrow Circle Button */}
-            <button
-              type="button"
-              onClick={() => {
-                const grid = document.getElementById("vendors-grid");
-                grid?.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="hidden sm:flex absolute left-3 xl:-left-14 top-1/2 -translate-y-1/2 w-9 h-9 md:w-11 md:h-11 rounded-full bg-white shadow-md border border-gray-200 items-center justify-center text-gray-400 hover:text-[#FF5500] hover:border-[#FF5500]/50 hover:scale-105 transition-all z-20"
-              aria-label="Previous"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-
-            {/* Right Nav Arrow Circle Button */}
-            <button
-              type="button"
-              onClick={() => {
-                const grid = document.getElementById("vendors-grid");
-                grid?.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="hidden sm:flex absolute right-3 xl:-right-14 top-1/2 -translate-y-1/2 w-9 h-9 md:w-11 md:h-11 rounded-full bg-white shadow-md border border-gray-200 items-center justify-center text-gray-400 hover:text-[#FF5500] hover:border-[#FF5500]/50 hover:scale-105 transition-all z-20"
-              aria-label="Next"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-
-            <div className="w-full flex flex-col md:flex-row items-center justify-between px-10 sm:px-14 xl:px-0 py-8 md:py-6">
-              
-              {/* Left Column: Aligns with site content line */}
-              <div className="w-full md:w-1/2 z-10 text-left py-4 md:py-6">
-                {/* Tag */}
-                <p className="text-sm md:text-base font-bold text-gray-800 tracking-tight mb-2.5">
-                  Trade-in Offer
-                </p>
-
-                {/* Main Heading with Site Color Accent */}
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[54px] font-black text-gray-950 tracking-tight leading-[1.08] mb-3">
-                  Supper Value <br />
-                  Deals <br />
-                  <span className="text-[#FF5500]">On All Products</span>
-                </h1>
-
-                {/* Subtitle */}
-                <p className="text-xs sm:text-sm md:text-base text-gray-500 font-medium mb-7 max-w-md">
-                  Save more with coupons &amp; up to 70% off
-                </p>
-
-                {/* SHOP NOW Button in Site Color */}
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => {
-                      const grid = document.getElementById("vendors-grid");
-                      grid?.scrollIntoView({ behavior: "smooth" });
-                    }}
-                    className="h-11 px-7 bg-[#FF5500] hover:bg-[#e54a00] text-white font-extrabold text-xs uppercase tracking-wider rounded-full shadow-md shadow-orange-500/25 transition-all flex items-center gap-2 group active:scale-95"
-                  >
-                    <span>SHOP NOW</span>
-                    <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Right Column: Student with Laptop Cutout (No background box!) */}
-              <div className="w-full md:w-1/2 flex justify-center md:justify-end relative mt-6 md:mt-0">
-                <div className="relative w-full max-w-[460px] md:max-w-[540px] aspect-[4/3] sm:aspect-[16/10] md:aspect-[16/11] flex items-center justify-center">
-                  <img
-                    src="/assets/student_laptop_cutout.png"
-                    alt="Super Value Deals on All Products"
-                    className="w-full h-full object-contain pointer-events-none select-none drop-shadow-md"
-                  />
-                </div>
-              </div>
-
-            </div>
-
-            {/* Bottom Center Indicator Dots in Site Color */}
-            <div className="absolute bottom-4 left-1/2 -translate-y-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10 select-none">
-              <span className="w-5 h-1.5 rounded-full bg-[#FF5500]" />
-              <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-            </div>
-
+        <section aria-label="Find your favourite vendor" className="relative mb-6 w-full overflow-hidden bg-[#ff573b]">
+          <img
+            src={vendorsBanner}
+            alt="Shopper holding colourful shopping bags"
+            className="block h-auto w-full"
+            loading="eager"
+            fetchPriority="high"
+          />
+          <div className="absolute inset-0 mx-auto grid max-w-[1280px] grid-cols-2 items-center px-4 xl:px-0">
+            <h1 className="text-[clamp(1.125rem,5.5vw,1.5rem)] font-black leading-[1.05] tracking-tight text-white sm:text-3xl md:text-5xl lg:text-6xl">
+              Find Your<br />Favourite Vendor
+            </h1>
           </div>
-        </div>
+        </section>
 
         <div id="vendors-grid" className="max-w-[1280px] mx-auto px-4 xl:px-0 space-y-6">
 

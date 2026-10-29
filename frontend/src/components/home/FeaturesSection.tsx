@@ -1,14 +1,8 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  ShieldCheck, Crown, Sparkles, CheckCircle2, QrCode,
-  Truck, MapPin, Headphones, ArrowUpRight, MessageCircle,
-  Coins, HeartHandshake, Zap
-} from "lucide-react";
-import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
+import { ArrowRight } from "lucide-react";
+import phoneBanner from "../../../dist/Images/2.png";
 
 const FeaturesSection = () => {
-  const { siteName } = useSiteSettingsContext();
 
   const instagramPosts = [
     {
@@ -38,180 +32,37 @@ const FeaturesSection = () => {
   ];
 
   return (
-    <section className="py-12 md:py-20 bg-[#F7F8FA] dark:bg-background border-t border-gray-100 dark:border-border">
-      <div className="max-w-[1280px] mx-auto px-4 xl:px-0 space-y-16 sm:space-y-20">
+    <section className="pb-12 md:pb-20 bg-[#F7F8FA] dark:bg-background border-t border-gray-100 dark:border-border">
 
-        {/* ═══════════════════ PART 1: BENTO TRUST GRID ═══════════════════ */}
-        <div className="space-y-3.5 sm:space-y-4">
-          
-          {/* Top Row: 3 Blocks (100% Protection + Big Center Radiant Banner + Reward Points) */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 sm:gap-4">
-            
-            {/* Block 1: 100% Buyer Warranty / Buyer Protection (md:col-span-3) */}
-            <div className="md:col-span-3 bg-white dark:bg-card p-5 sm:p-6 rounded-none shadow-2xs border border-gray-100 dark:border-border/60 flex flex-col justify-between min-h-[170px] sm:min-h-[210px] group hover:border-gray-300 transition-all">
-              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-gray-800 dark:text-gray-200">
-                100% BUYER WARRANTY,
-                <br />
-                VERIFIED STUDENT REFUND
-              </span>
-              <div className="text-center my-auto py-2">
-                <span className="block text-4xl sm:text-6xl font-black text-[#FF5500] leading-none tracking-tight">
-                  100%
-                </span>
-                <span className="block font-black text-xs sm:text-sm text-gray-900 dark:text-white uppercase tracking-widest mt-1">
-                  PROTECTED
-                </span>
-              </div>
+        <section aria-label="Campus phone deals" className="relative overflow-hidden bg-[#ff8500]">
+          <img
+            src={phoneBanner}
+            alt="Two smartphones on a bright orange and yellow background"
+            className="block h-auto w-full"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 z-10 mx-auto grid max-w-[1280px] grid-cols-[56%_44%] items-center px-3 md:grid-cols-2 md:px-4 xl:px-0">
+            <div className="col-start-2 w-full max-w-[420px] justify-self-end py-2 pl-2 sm:py-4 md:py-8 md:pl-0">
+              <p className="mb-1.5 text-[8px] font-black uppercase tracking-[0.08em] text-white sm:text-[10px] md:mb-3 md:text-sm md:tracking-[0.16em]">
+                YOUR NEXT UPGRADE
+              </p>
+              <h2 className="mb-2 text-[clamp(1.125rem,5.5vw,1.5rem)] font-black leading-[1.05] tracking-tight text-white sm:mb-3 sm:text-4xl md:mb-4 md:text-5xl lg:text-6xl">
+                New phone.<br />Who dis?
+              </h2>
+              <p className="mb-3 max-w-sm text-[10px] font-medium leading-snug text-white sm:text-sm md:mb-7 md:text-base lg:text-lg">
+                Fresh tech for campus life. Find your next favourite.
+              </p>
+              <Link
+                to="/products?category=Phones%20%26%20Tablets"
+                className="inline-flex items-center gap-1 bg-white px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-wider text-[#FF5500] transition-colors hover:bg-orange-50 sm:px-3 sm:py-2 sm:text-[10px] md:gap-2 md:px-6 md:py-3 md:text-xs"
+              >
+                Shop Now! <ArrowRight className="h-3 w-3 md:h-4 md:w-4" />
+              </Link>
             </div>
-
-            {/* Block 2: Wide Radiant Hero Banner — Ghana's No. 1 Student Marketplace (md:col-span-6) */}
-            <div className="md:col-span-6 relative overflow-hidden bg-gradient-to-br from-[#FF5500] via-[#FF6600] to-[#e54a00] text-white p-6 sm:p-8 rounded-none shadow-2xs flex flex-col items-center justify-center text-center min-h-[190px] sm:min-h-[210px] group">
-              {/* Concentric ripple rings graphic */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-25">
-                <div className="w-48 h-48 rounded-full border-2 border-white/60" />
-                <div className="absolute w-72 h-72 rounded-full border-2 border-white/40" />
-                <div className="absolute w-96 h-96 rounded-full border-2 border-white/20" />
-              </div>
-
-              <div className="relative z-10 space-y-1.5">
-                <span className="text-xs sm:text-sm font-bold tracking-widest uppercase opacity-90 block">
-                  {siteName || "unimall"}
-                </span>
-                
-                <div className="flex items-center justify-center gap-1 text-[11px] sm:text-xs font-black uppercase tracking-widest text-white/95">
-                  <Crown className="w-4 h-4 fill-yellow-300 text-yellow-300" />
-                  <span>GHANA'S</span>
-                </div>
-
-                <div className="flex items-center justify-center">
-                  <h3 className="text-4xl sm:text-6xl font-black tracking-tight leading-none text-white drop-shadow-sm">
-                    NO.1
-                  </h3>
-                </div>
-
-                <p className="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest text-white/90 pt-1">
-                  CAMPUS MARKETPLACE & STUDENT STORE
-                </p>
-              </div>
-            </div>
-
-            {/* Block 3: Student Points & Rewards (md:col-span-3) */}
-            <div className="md:col-span-3 bg-white dark:bg-card p-5 sm:p-6 rounded-none shadow-2xs border border-gray-100 dark:border-border/60 flex flex-col justify-between min-h-[170px] sm:min-h-[210px] group hover:border-gray-300 transition-all">
-              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-gray-800 dark:text-gray-200">
-                BUY TO GET UNIMALL REWARD
-                <br />
-                POINTS, EXTRA DISCOUNTS FOR MEMBERS
-              </span>
-              <div className="flex items-center justify-center gap-2 my-auto py-2">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-200 border-2 border-yellow-100 shadow-md flex items-center justify-center -rotate-12 group-hover:rotate-0 transition-transform duration-500">
-                  <span className="font-black text-amber-900 text-xs sm:text-sm tracking-tight">₵ COIN</span>
-                </div>
-                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-gradient-to-tr from-amber-300 to-yellow-100 border border-yellow-100 shadow-xs flex items-center justify-center rotate-12 -ml-3 group-hover:rotate-0 transition-transform duration-500">
-                  <span className="font-black text-amber-800 text-[10px] sm:text-xs">PTS</span>
-                </div>
-              </div>
-            </div>
-
           </div>
+        </section>
 
-          {/* Bottom Grid: Support Photo Card + 4 Sub Service Badges */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 sm:gap-4">
-            
-            {/* Tall Card: Accessible Customer Service (md:col-span-4) */}
-            <div className="md:col-span-4 bg-white dark:bg-card rounded-none shadow-2xs border border-gray-100 dark:border-border/60 overflow-hidden flex flex-col justify-between min-h-[280px] sm:min-h-[340px] group">
-              <div className="p-5 sm:p-6 pb-0">
-                <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-gray-800 dark:text-gray-200">
-                  ACCESSIBLE CAMPUS SUPPORT
-                </span>
-              </div>
-              <div className="relative w-full h-[220px] sm:h-[270px] mt-2 overflow-hidden">
-                <img
-                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&auto=format&fit=crop&q=85"
-                  alt="Unimall Support"
-                  className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700 ease-out"
-                />
-              </div>
-            </div>
-
-            {/* 2x2 Sub-Grid of Trust Tiles (md:col-span-8) */}
-            <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
-              
-              {/* Tile A: Authenticity & Best Price */}
-              <div className="bg-white dark:bg-card p-5 sm:p-6 rounded-none shadow-2xs border border-gray-100 dark:border-border/60 flex flex-col justify-between min-h-[135px] sm:min-h-[160px] group hover:border-gray-300 transition-all">
-                <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-gray-800 dark:text-gray-200">
-                  UNIMALL AUTHENTICITY & BEST PRICE GUARANTEED
-                </span>
-                <div className="flex items-center gap-2.5 my-auto pt-2">
-                  <div className="w-8 h-8 rounded-md bg-orange-50 dark:bg-orange-950/40 border border-orange-500/30 flex items-center justify-center shrink-0">
-                    <CheckCircle2 className="w-5 h-5 text-[#FF5500]" />
-                  </div>
-                  <div>
-                    <span className="block font-black text-xs sm:text-sm text-[#FF5500] uppercase tracking-wide leading-tight">
-                      AUTHENTICITY
-                    </span>
-                    <span className="block font-black text-[10px] sm:text-xs text-[#FF5500] uppercase tracking-wide leading-tight">
-                      & BEST PRICE
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Tile B: Community Events & WhatsApp QR Code */}
-              <div className="bg-white dark:bg-card p-5 sm:p-6 rounded-none shadow-2xs border border-gray-100 dark:border-border/60 flex flex-col justify-between min-h-[135px] sm:min-h-[160px] group hover:border-gray-300 transition-all">
-                <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-gray-800 dark:text-gray-200">
-                  CAMPUS COMMUNITY, JOIN UNIMALL GHANA
-                </span>
-                <div className="flex items-center justify-between gap-3 my-auto pt-2">
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 border-dashed border-[#FF5500] text-[#FF5500] font-extrabold text-xs">
-                    <MessageCircle className="w-4 h-4 fill-[#FF5500] text-white" />
-                    <span>U-CLUB GH</span>
-                  </div>
-                  <div className="w-11 h-11 border border-gray-200 dark:border-border p-1 bg-white flex items-center justify-center shadow-2xs">
-                    <QrCode className="w-full h-full text-gray-800" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Tile C: Free Campus Delivery */}
-              <div className="bg-white dark:bg-card p-5 sm:p-6 rounded-none shadow-2xs border border-gray-100 dark:border-border/60 flex flex-col justify-between min-h-[135px] sm:min-h-[160px] group hover:border-gray-300 transition-all">
-                <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-gray-800 dark:text-gray-200">
-                  FREE SHIPPING OVER ₵ 100 DOOR TO DOOR CAMPUS DELIVERY
-                </span>
-                <div className="flex items-center justify-center gap-2 my-auto pt-2">
-                  <div className="h-0.5 w-6 bg-[#FF5500]/40" />
-                  <span className="font-black text-2xl sm:text-3xl text-[#FF5500] tracking-wider not-italic">
-                    FREE
-                  </span>
-                  <div className="h-0.5 w-6 bg-[#FF5500]/40" />
-                </div>
-              </div>
-
-              {/* Tile D: Nationwide University Pickup Hubs */}
-              <div className="bg-white dark:bg-card p-5 sm:p-6 rounded-none shadow-2xs border border-gray-100 dark:border-border/60 flex flex-col justify-between min-h-[135px] sm:min-h-[160px] group hover:border-gray-300 transition-all">
-                <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-gray-800 dark:text-gray-200">
-                  ALL MAJOR UNIVERSITY HUBS & PICKUP OUTLETS
-                </span>
-                <div className="flex items-center gap-2 my-auto pt-2">
-                  <div className="w-8 h-8 rounded-full bg-orange-50 dark:bg-orange-950/40 flex items-center justify-center text-[#FF5500] font-black text-xs shrink-0">
-                    <MapPin className="w-4 h-4 stroke-[2.5]" />
-                  </div>
-                  <div className="leading-tight">
-                    <span className="block font-black text-xs sm:text-sm text-[#FF5500] tracking-wide">
-                      CAMPUS CARE
-                    </span>
-                    <span className="block font-bold text-[10px] text-[#FF5500]/90 tracking-widest uppercase">
-                      LEGON • KNUST • UCC • UPSA
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
+      <div className="max-w-[1280px] mx-auto mt-16 px-4 sm:mt-20 xl:px-0">
         {/* ═══════════════════ PART 2: SOCIAL COMMUNITY & LIFESTYLE SHOWCASE ═══════════════════ */}
         <div className="space-y-6 pt-4 border-t border-gray-200/60 dark:border-border">
           

@@ -312,9 +312,10 @@ const FeaturedProducts = () => {
           {/* Banner 1 */}
           <div className="relative rounded-none overflow-hidden shadow-xs group bg-gradient-to-r from-gray-950 via-gray-900 to-gray-800 min-h-[200px] sm:min-h-[220px] flex items-center p-5 sm:p-8">
             <img
-              src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1000&auto=format&fit=crop"
+              src="/assets/promo-audio.jpg"
               alt="Audio & Tech"
-              className="absolute right-0 top-0 w-1/2 h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700 mix-blend-luminosity"
+              className="absolute right-0 top-0 w-[70%] h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700 mix-blend-luminosity"
+              style={{ maskImage: 'linear-gradient(to right, transparent, rgba(0,0,0,0.25) 20%, #000 65%)' }}
             />
             <div className="relative z-10 max-w-[65%] space-y-2">
               <span className="inline-block px-2.5 py-0.5 rounded-none bg-[#FF5500] text-white text-[10px] font-bold uppercase tracking-wider">
@@ -336,11 +337,12 @@ const FeaturedProducts = () => {
           </div>
 
           {/* Banner 2 */}
-          <div className="relative rounded-none overflow-hidden shadow-xs group bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 min-h-[200px] sm:min-h-[220px] flex items-center p-5 sm:p-8">
+          <div className="relative rounded-none overflow-hidden shadow-xs group bg-gradient-to-r from-[#c2410c] via-[#ea580c] to-[#7c2d12] min-h-[200px] sm:min-h-[220px] flex items-center p-5 sm:p-8">
             <img
-              src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1000&auto=format&fit=crop"
+              src="/assets/promo-campus-wear.jpg"
               alt="Campus Lifestyle"
-              className="absolute right-0 top-0 w-1/2 h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700 mix-blend-luminosity"
+              className="absolute right-0 top-0 w-[70%] h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700 mix-blend-luminosity"
+              style={{ maskImage: 'linear-gradient(to right, transparent, rgba(0,0,0,0.25) 20%, #000 65%)' }}
             />
             <div className="relative z-10 max-w-[65%] space-y-2">
               <span className="inline-block px-2.5 py-0.5 rounded-none bg-black text-white text-[10px] font-bold uppercase tracking-wider">
@@ -349,7 +351,7 @@ const FeaturedProducts = () => {
               <h3 className="text-lg sm:text-2xl font-extrabold text-white leading-tight">
                 Daily Essentials & Wear
               </h3>
-              <p className="text-xs text-emerald-100 font-medium leading-relaxed">
+              <p className="text-xs text-orange-50 font-medium leading-relaxed">
                 Footwear, smart wearables & accessories tailored for your university journey.
               </p>
               <Link
