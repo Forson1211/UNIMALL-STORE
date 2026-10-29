@@ -37,7 +37,10 @@ export async function initializeDatabase(db) {
   }
 }
 
+let cached = null;
+
 export async function connectDatabase(config) {
+  if (cached) return cached;
   if (!/^mongodb(?:\+srv)?:\/\//.test(config.uri) || config.uri.includes('<')) {
     throw new Error('Set a real MONGODB_URI in backend/.env. Copy backend/.env.example to start.');
   }
@@ -49,9 +52,10 @@ export async function connectDatabase(config) {
     if (!hello.setName && hello.msg !== 'isdbgrid') throw new Error('Unimall requires a MongoDB replica set for checkout transactions. Use Atlas or the supplied local replica-set configuration.');
     const db = client.db(config.database);
     await initializeDatabase(db);
-    return { client, db };
+    cached = { client, db };
+    return cached;
   } catch (error) {
-    await client.close();
+    await client.close().catch(() => {});
     throw error;
   }
 }

@@ -8,7 +8,8 @@ if (existsSync(envPath)) loadEnvFile(envPath);
 
 export function configuration(env = process.env) {
   const production = env.NODE_ENV === 'production';
-  const origin = new URL(env.APP_ORIGIN || 'http://localhost:8080').origin;
+  const defaultOrigin = env.VERCEL_URL ? `https://${env.VERCEL_URL}` : 'http://localhost:8080';
+  const origin = new URL(env.APP_ORIGIN || defaultOrigin).origin;
   if (production && !origin.startsWith('https://')) throw new Error('APP_ORIGIN must use HTTPS in production.');
   const database = env.MONGODB_DATABASE || 'unimall';
   if (!/^[a-zA-Z0-9_-]{1,64}$/.test(database)) throw new Error('Use a simple MONGODB_DATABASE name.');
@@ -21,6 +22,6 @@ export function configuration(env = process.env) {
     cookieName: production ? '__Host-unimall_session' : 'unimall_session',
     sessionDays: 7, smtpUrl: env.SMTP_URL || '', mailFrom: env.MAIL_FROM || '',
     requireEmailVerification: env.REQUIRE_EMAIL_VERIFICATION === 'true',
-    trustProxy: env.TRUST_PROXY === 'true',
+    trustProxy: env.TRUST_PROXY === 'true' || Boolean(env.VERCEL),
   };
 }
