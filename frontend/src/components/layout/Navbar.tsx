@@ -126,10 +126,10 @@ const Navbar = () => {
         <div className="max-w-[1280px] mx-auto px-4 xl:px-0">
 
           {/* DESKTOP HEADER (md and up) */}
-          <div className="hidden md:flex items-center justify-between gap-4 h-[68px]">
+          <div className="hidden md:flex items-center justify-between gap-4 h-[72px]">
             {/* Logo */}
-            <Link to="/" className="shrink-0">
-              <img src="/LOGO.png" alt={siteName || "Unimall"} className="h-10 w-auto object-contain" />
+            <Link to="/" className="shrink-0 flex items-center">
+              <img src={logoUrl || "/LOGO.png"} alt={siteName || "Unimall"} className="h-10 md:h-14 w-auto object-contain" />
             </Link>
 
             {/* Search Bar */}

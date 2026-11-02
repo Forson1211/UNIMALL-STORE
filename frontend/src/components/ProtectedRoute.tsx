@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  allowedRoles?: ("admin" | "moderator" | "vendor_manager" | "order_manager" | "content_manager" | "support_agent" | "vendor" | "buyer")[];
+  allowedRoles?: ("super_admin" | "admin" | "moderator" | "vendor_manager" | "order_manager" | "content_manager" | "support_agent" | "vendor" | "buyer")[];
   requireAuth?: boolean;
 }
 

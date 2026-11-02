@@ -26,7 +26,11 @@
     "test:vendor": "node backend/test-vendor.mjs",
     "test:analytics": "node backend/test-analytics.mjs",
     "backend:check": "node --env-file-if-exists=backend/.env scripts/check-backend.mjs",
-    "typecheck": "tsc --noEmit -p frontend/tsconfig.app.json && tsc --noEmit -p frontend/tsconfig.node.json"
+    "typecheck": "tsc --noEmit -p frontend/tsconfig.app.json && tsc --noEmit -p frontend/tsconfig.node.json",
+    "finance:worker": "node backend/finance-worker.mjs",
+    "finance:once": "node backend/finance-worker.mjs --once",
+    "finance:migrate": "node backend/finance-migrate.mjs",
+    "finance:test-db": "node backend/test-finance.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

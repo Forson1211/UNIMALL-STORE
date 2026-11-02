@@ -26,7 +26,7 @@ On PowerShell, use `npm.cmd` if execution policy blocks `npm.ps1`.
 - Before adding products, save the store name, contact phone, campus, description, logo and banner. Publish products with a positive price, whole-number stock and a product image.
 - A published product appears in `/products` and `/vendors/:userId`. Approval, inventory and storefront pages refresh while open.
 - Sellers confirm orders, mark them shipped and then delivered. Buyers can cancel unpaid orders before any item is dispatched. Cancellation restores stock once. Sellers can cancel their own eligible lines in mixed-store orders.
-- Order staff record collected cash for delivered COD orders in `/admin/orders`. Payouts use delivered, collected earnings, less pending/approved/paid payouts. Staff payout approval and settlement record transfers; the site does not initiate a bank or MoMo transfer.
+- New COD orders require buyer delivery/payment confirmation and seller cash confirmation before order staff record collection. COD commission is a receivable and never an online payout balance. Online payments, buyer delivery confirmation, disputes, refunds and reviewed Friday transfers use the finance ledger. See [payment operations](docs/payments.md).
 
 ## Prices and discounts
 
@@ -55,7 +55,7 @@ Run `npm run build`, then `npm start` with `NODE_ENV=production`, an HTTPS `APP_
 
 Alternatively build the supplied Dockerfile and supply those environment variables to the container. Environment files and local credentials are excluded from its build context. Container builds need network access to npm and Atlas must allow the deployed service's outbound IP.
 
-Current payment support is cash on delivery. Online payment credentials can be added in a later integration. Password recovery emails require `SMTP_URL` and `MAIL_FROM`; enable `REQUIRE_EMAIL_VERIFICATION` only after mail is configured. No fake products, customers or orders are seeded into the live database.
+Paystack hosted checkout and reviewed Friday vendor payouts are implemented but default to disabled. Configure test credentials, encryption, webhooks and a persistent finance worker first; follow [payment setup and activation](docs/payments.md) before enabling live money. Password recovery emails require `SMTP_URL` and `MAIL_FROM`; enable `REQUIRE_EMAIL_VERIFICATION` only after mail is configured. No fake products, customers or orders are seeded into the live database.
 
 ## Validation on 26 October 2026
 

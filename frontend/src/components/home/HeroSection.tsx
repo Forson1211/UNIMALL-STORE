@@ -91,7 +91,7 @@ const HeroSection = () => {
           <img
             src={slide.image}
             alt={slide.alt}
-            className={`block h-[220px] w-full object-cover sm:h-[280px] md:h-auto ${slide.textSide === "left" ? "object-[75%_center] md:object-right" : "object-[40%_center] md:object-left"}`}
+            className={`block h-[220px] w-full object-cover sm:h-[280px] md:h-auto ${slide.textSide === "left" ? "object-[52%_center] sm:object-[68%_center] md:object-right" : "object-[40%_center] md:object-left"}`}
             loading="eager"
             fetchPriority="high"
             draggable={false}
@@ -100,15 +100,15 @@ const HeroSection = () => {
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 md:hidden"
-              style={{ background: "linear-gradient(90deg, #ea7900 0%, rgba(234,121,0,0.97) 35%, rgba(234,121,0,0.65) 48%, transparent 70%)" }}
+              style={{ background: "linear-gradient(90deg, rgba(242,138,0,0.55) 0%, rgba(242,138,0,0.4) 35%, rgba(242,138,0,0.2) 48%, transparent 70%)" }}
             />
           )}
-          <div className="absolute inset-0 mx-auto grid max-w-[1280px] grid-cols-[45%_45%] items-center gap-x-[10%] px-3 pb-10 md:grid-cols-2 md:gap-x-0 md:px-6 min-[1440px]:pb-0 xl:px-0">
+          <div className="absolute inset-0 mx-auto grid max-w-[1280px] grid-cols-[48%_48%] items-center gap-x-[4%] px-5 sm:px-6 md:grid-cols-2 md:gap-x-0 md:px-4 xl:px-0 pb-10 min-[1440px]:pb-0">
             <div className={`min-w-0 py-4 text-left xl:py-8 ${slide.textSide === "left" ? "col-start-1 pr-2 md:pr-8 lg:pr-12" : "col-start-2 pl-2 md:pl-8 lg:pl-12"}`}>
-              <p className={`mb-1.5 text-[8px] font-black uppercase tracking-[0.08em] sm:text-[10px] md:mb-3 md:tracking-[0.16em] ${slide.lightText ? "text-white md:text-sm" : "text-gray-700 md:text-xs"}`}>
+              <p className={`mb-1.5 text-[8px] font-black uppercase tracking-[0.08em] sm:text-[10px] md:mb-3 md:tracking-[0.16em] ${slide.lightText ? "text-black md:text-sm" : "text-gray-700 md:text-xs"}`}>
                 {slide.tagline}
               </p>
-              <h1 className={`mb-2 font-black leading-[1.05] tracking-tight sm:mb-3 sm:text-4xl md:mb-4 md:text-5xl lg:text-6xl ${slide.lightText ? "text-[clamp(1.125rem,5.5vw,1.5rem)] text-white" : "text-[clamp(1.125rem,5.2vw,1.5rem)] text-gray-900"}`}>
+              <h1 className={`mb-2 font-black leading-[1.05] tracking-tight sm:mb-3 sm:text-4xl md:mb-4 md:text-5xl lg:text-6xl ${slide.lightText ? "text-[clamp(1.125rem,5.5vw,1.5rem)] text-black" : "text-[clamp(1.125rem,5.2vw,1.5rem)] text-gray-900"}`}>
                 {slide.headline.split("\n").map((line, i, arr) => (
                   <span key={i}>
                     {line}
@@ -116,10 +116,10 @@ const HeroSection = () => {
                   </span>
                 ))}
               </h1>
-              <p className={`mb-3 max-w-sm text-[10px] font-medium leading-snug sm:text-sm md:mb-7 ${slide.lightText ? "text-white md:text-lg" : "text-gray-700 md:text-base"}`}>
+              <p className={`mb-3 max-w-sm text-[10px] font-medium leading-snug sm:text-sm md:mb-7 ${slide.lightText ? "text-black md:text-lg" : "text-gray-700 md:text-base"}`}>
                 {slide.subtext}
               </p>
-              <Link to={slide.buttonLink} className={`inline-flex items-center gap-1 whitespace-nowrap px-3 py-2 text-[8px] font-bold uppercase tracking-wider transition-colors sm:text-[10px] lg:gap-2 lg:px-6 lg:py-3 lg:text-xs ${slide.lightText ? "bg-white text-[#FF5500] hover:bg-orange-50" : "bg-[#FF5500] text-white hover:bg-[#df4900]"}`}>
+              <Link to={slide.buttonLink} className={`inline-flex items-center gap-1 whitespace-nowrap px-3 py-2 text-[8px] font-bold uppercase tracking-wider transition-colors sm:text-[10px] lg:gap-2 lg:px-6 lg:py-3 lg:text-xs ${slide.lightText ? "bg-[#FF5500] text-white hover:bg-[#df4900]" : "bg-[#FF5500] text-white hover:bg-[#df4900]"}`}>
                 {slide.buttonText}
                 <ArrowRight className="h-3 w-3 md:h-4 md:w-4" />
               </Link>

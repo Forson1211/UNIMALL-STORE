@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/integrations/api/client";
 import { useToast } from "@/hooks/use-toast";
 
-export type UserRole = "admin" | "moderator" | "vendor_manager" | "order_manager" | "content_manager" | "support_agent" | "vendor" | "buyer";
+export type UserRole = "super_admin" | "admin" | "moderator" | "vendor_manager" | "order_manager" | "content_manager" | "support_agent" | "vendor" | "buyer";
 type VendorStatus = "pending" | "approved" | "suspended" | null;
 interface Profile {
   id: string; user_id: string; full_name: string | null; avatar_url: string | null;
@@ -28,7 +28,7 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
 }
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const roles: UserRole[] = ["admin", "moderator", "vendor_manager", "order_manager", "content_manager", "support_agent", "vendor", "buyer"];
+const roles: UserRole[] = ["super_admin", "admin", "moderator", "vendor_manager", "order_manager", "content_manager", "support_agent", "vendor", "buyer"];
 type AuthRpc = (name: "get_user_role_text" | "get_vendor_status", params: { _user_id: string }) => Promise<{ data: string | null; error: Error | null }>;
 const authRpc = api.rpc.bind(api) as unknown as AuthRpc;
 

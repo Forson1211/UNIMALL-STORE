@@ -13,10 +13,12 @@ import { commerceRpc } from './commerce.mjs';
 import { commerceAnalytics } from './analytics.mjs';
 import { listManagedVendors, mutateQuery, readQuery } from './queries.mjs';
 import { ApiError, approved, cleanObject, fail, hasRole, identity, timestamp } from './security.mjs';
+import { financeDependencies, financeRouter, webhookHandler } from './finance-routes.mjs';
 
-export function createApp({ db, client, config, sendMail }) {
+export function createApp({ db, client, config, sendMail, financeProvider }) {
   const app = express();
   app.disable('x-powered-by');
+  const finance = financeDependencies({ db, client, config, financeProvider });
   if (config.trustProxy) app.set('trust proxy', 1);
   const isAllowedOrigin = (origin) => {
     if (!origin) return true;
@@ -32,6 +34,8 @@ export function createApp({ db, client, config, sendMail }) {
     next();
   });
 
+  app.use((req, res, next) => { req.requestId = crypto.randomUUID(); res.set('X-Request-ID', req.requestId); next(); });
+  app.post('/api/webhooks/paystack', ...webhookHandler(finance));
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' }, contentSecurityPolicy: {
     directives: { imgSrc: ["'self'", 'https:', 'data:', 'blob:'], fontSrc: ["'self'", 'https:', 'data:'], styleSrc: ["'self'", "'unsafe-inline'", 'https:'] },
   } }));
@@ -54,11 +58,12 @@ export function createApp({ db, client, config, sendMail }) {
   const apiLimit = rateLimit({ windowMs: 60000, limit: 600, standardHeaders: 'draft-8', legacyHeaders: false });
   const authLimit = rateLimit({ windowMs: 900000, limit: 30, standardHeaders: 'draft-8', legacyHeaders: false });
   app.use('/api', apiLimit, sessionMiddleware(db, config));
+  app.use('/api', financeRouter(finance));
   app.use('/api/auth', (req, res, next) => ['GET', 'HEAD'].includes(req.method) ? next() : authLimit(req, res, next), authRouter({ db, client, config, sendMail }));
 
   app.post('/api/query', async (req, res) => {
     if (!req.is('application/json') || typeof req.body.table !== 'string' || (req.body.selection && (typeof req.body.selection !== 'string' || req.body.selection.length > 3000))) fail(400, 'Invalid query.');
-    const context = { db, client, user: req.user };
+    const context = { db, client, config, user: req.user };
     const result = req.body.operation && req.body.operation !== 'select' ? await mutateQuery(context, req.body) : await readQuery(db, req.user, req.body);
     res.json({ ...result, error: null });
   });
@@ -77,7 +82,7 @@ export function createApp({ db, client, config, sendMail }) {
         return { name: date.toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' }), revenue: orders.filter(o => o.created_at.startsWith(key)).reduce((sum, o) => sum + Math.round(o.total_amount * 100), 0) / 100 };
       });
       data = req.params.name === 'get_admin_weekly_revenue' ? series : { revenue_data: series, growth_data: [] };
-    } else data = await commerceRpc({ db, client, user: req.user }, req.params.name, params);
+    } else data = await commerceRpc({ db, client, config, provider: finance.provider, user: req.user }, req.params.name, params);
     if (data === undefined) fail(404, 'Unknown server action.');
     res.json({ data, error: null });
   });

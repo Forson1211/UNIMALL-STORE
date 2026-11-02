@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useState, useRef, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { orderService } from "@/services/orderService";
 import { checkoutRequestId, clearCheckoutRequest } from "@/lib/checkoutRequest";
 import { useCartQuote } from "@/hooks/useCartQuote";
+import { financeRequest } from "@/integrations/api/client";
 
 const GHANA_REGIONS = [
   "Greater Accra", "Ashanti", "Western", "Central", "Eastern", "Volta",
@@ -35,6 +36,7 @@ const GHANA_REGIONS = [
 ];
 
 const PAYMENT_METHODS = [
+  { key: "paystack", label: "Pay online", description: "Secure provider checkout with your available payment channels", icon: CreditCard },
   { key: "cod", label: "Cash on Delivery", description: "Pay when you receive your order", icon: Banknote },
 ] as const;
 
@@ -63,6 +65,11 @@ const Checkout = () => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<typeof PAYMENT_METHODS[number]["key"]>("cod");
+  const paymentConfig = useQuery({ queryKey: ["payment-config"], queryFn: () => financeRequest<{ online_enabled: boolean; cod_enabled: boolean; test_mode: boolean }>("/payments/config") });
+  const paymentMethods = PAYMENT_METHODS.filter(m => m.key === "cod" ? paymentConfig.data?.cod_enabled : paymentConfig.data?.online_enabled);
+  useEffect(() => {
+    if (paymentConfig.data && !paymentMethods.some(m => m.key === paymentMethod) && paymentMethods[0]) setPaymentMethod(paymentMethods[0].key);
+  }, [paymentConfig.data, paymentMethod]);
   const [saveInfo, setSaveInfo] = useState(true);
 
   const [formData, setFormData] = useState({
@@ -112,6 +119,7 @@ const Checkout = () => {
     if (submitting.current) return;
     if (!quote || quoteError || checkingQuote) { toast({ title: "Check your cart", description: quoteError?.message || "Wait for current prices and stock to load.", variant: "destructive" }); return; }
     if (!shippingComplete) { handleContinueFromShipping(); setStep(1); return; }
+    if (!paymentMethods.some(m => m.key === paymentMethod)) { toast({ title: "Choose an available payment method", description: paymentConfig.error?.message || "Payments are not configured yet.", variant: "destructive" }); return; }
     if (!user) {
       toast({
         title: "Please sign in",
@@ -142,8 +150,20 @@ const Checkout = () => {
         vendor_id: item.vendorId
       }));
 
-      const cartSignature = JSON.stringify({ items: orderItems.map(({ id, quantity }) => ({ id, quantity })), couponCode });
+      const cartSignature = JSON.stringify({ items: orderItems.map(({ id, quantity }) => ({ id, quantity })), couponCode, paymentMethod });
       if (request.current.cart !== cartSignature) request.current = { cart: cartSignature, id: checkoutRequestId(user.id, cartSignature) };
+      if (paymentMethod === "paystack") {
+        const result = await financeRequest<{ order_id: string; payment: { id: string; status: string; authorization_url: string | null } }>("/checkout", {
+          request_id: request.current.id, payment_method: "paystack", items: orderItems.map(({ id, quantity }) => ({ id, quantity })), coupon_code: couponCode,
+          shipping_details: { fullName: formData.fullName, email: formData.email, phone: formData.phone.trim(), address: `${formData.addressLine1}, ${formData.city}, ${formData.region}`, digitalAddress: formData.digitalAddress },
+        });
+        try { sessionStorage.setItem('unimall_payment_cart_' + result.payment.id, JSON.stringify(orderItems.map(({ id, quantity }) => ({ id, quantity })))); } catch { /* The payment remains recoverable from order history. */ }
+        if (result.payment.status === "successful" || !result.payment.authorization_url) {
+          navigate(`/payment-return?payment=${encodeURIComponent(result.payment.id)}`); return;
+        }
+        window.location.assign(result.payment.authorization_url);
+        return;
+      }
       const orderId = await orderService.placeOrder({
         buyerId: user.id,
         totalAmount: quote.total,
@@ -367,7 +387,7 @@ const Checkout = () => {
                   <section>
                     <h2 className="text-lg font-bold text-gray-900 mb-4">Payment Method</h2>
                     <div className="space-y-3">
-                      {PAYMENT_METHODS.map((method) => {
+                      {paymentMethods.map((method) => {
                         const Icon = method.icon;
                         const isActive = paymentMethod === method.key;
                         return (
@@ -503,8 +523,9 @@ const Checkout = () => {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Shipping</span>
-                    <span className="text-gray-900 font-medium">GH₵0.00</span>
+                    <span className="text-gray-900 font-medium">GHS {(quote?.delivery_fee || 0).toFixed(2)}</span>
                   </div>
+                  {!!quote?.tax && <div className="flex justify-between text-sm"><span>Tax</span><span>GHS {quote.tax.toFixed(2)}</span></div>}
                   {!!quote?.discount && <div className="flex justify-between text-sm text-emerald-700"><span>Coupon savings</span><span>-GHS {quote.discount.toFixed(2)}</span></div>}
                 </div>
 
@@ -524,7 +545,7 @@ const Checkout = () => {
                   </div>
                   <div className="flex flex-col items-center gap-1.5">
                     <Truck className="w-5 h-5 text-gray-400" />
-                    <span className="text-[10px] font-medium text-gray-400 leading-tight">Free<br />Shipping</span>
+                    <span className="text-[10px] font-medium text-gray-400 leading-tight">Campus<br />Delivery</span>
                   </div>
                   <div className="flex flex-col items-center gap-1.5">
                     <RotateCcw className="w-5 h-5 text-gray-400" />

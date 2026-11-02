@@ -1,16 +1,12 @@
 import { Link } from "react-router-dom";
-import { ShoppingBag, Facebook, Twitter, Instagram, Youtube, ExternalLink, ShieldCheck, Globe } from "lucide-react";
+import { Facebook, Twitter, Instagram, Youtube, Globe, Truck, Headset, ShieldCheck } from "lucide-react";
 import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
-import { useLatestNews } from "@/hooks/useLatestNews";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import ManagedNavigation from "./ManagedNavigation";
 
 const Footer = () => {
   const { siteName, logoUrl, footerLogoUrl } = useSiteSettingsContext();
   const { user, role } = useAuth();
-  const { data: latestNews = [] } = useLatestNews();
-  const footerNews = latestNews.slice(0, 2);
 
   const isVendor = role === "vendor";
   const isAdmin = role === "admin";
@@ -104,7 +100,7 @@ const Footer = () => {
         className="full-width-breakout pt-8 pb-6 hidden lg:block"
         style={footerVars}
       >
-        <div className="container mx-auto px-6 max-w-[1400px]">
+        <div className="max-w-[1280px] mx-auto px-4 xl:px-0">
           {/* Top Bar: Brand & Socials */}
           <div className="flex flex-row items-center justify-between mb-6 md:mb-8 gap-4">
             <Link to="/" className="flex items-center gap-3">
@@ -152,94 +148,45 @@ const Footer = () => {
             ))}
           </div>
 
-          {/* Feature Row: Updates & Badges */}
-          <div className="grid lg:grid-cols-12 gap-6 items-center border-t border-white/10 pt-4 mb-6">
-            <div className="lg:col-span-8 flex flex-col">
-              <h4 className="text-xs font-bold tracking-[0.2em] uppercase text-white/40 mb-2">Latest Updates</h4>
-              <div className="flex flex-col md:flex-row gap-6">
-                {footerNews.length >= 2 ? (
-                  <>
-                    {footerNews.map((news, idx) => (
-                      <Link
-                        key={news.id}
-                        to={`/news/${news.id}`}
-                        className="bg-[#2a2a35] rounded-none p-2 flex items-center gap-3 flex-1 border border-white/5 hover:bg-[#323240] transition-all group cursor-pointer"
-                      >
-                        <div className="w-20 h-14 rounded-none overflow-hidden shrink-0 border border-white/5">
-                          {news.image_url ? (
-                            <img
-                              src={news.image_url}
-                              alt={news.title}
-                              loading="lazy"
-                              decoding="async"
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            />
-                          ) : (
-                            <div className={cn(
-                              "w-full h-full opacity-80",
-                              idx === 0 ? "bg-gradient-to-tr from-primary to-orange-400" : "bg-gradient-to-tr from-blue-500 to-indigo-600"
-                            )} />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-white/90 line-clamp-2 leading-snug group-hover:text-white transition-colors">
-                            {news.title}
-                          </p>
-                        </div>
-                        <div className="shrink-0 pr-2 opacity-50 group-hover:opacity-100 transition-opacity">
-                          <ExternalLink className="w-3.5 h-3.5 text-white" />
-                        </div>
-                      </Link>
-                    ))}
-                  </>
-                ) : (
-                  <>
-                    <Link to="/news" className="bg-white/5 rounded-none p-4 flex items-center gap-4 flex-1 border border-white/5 hover:bg-white/[0.08] transition-colors group cursor-pointer">
-                      <div className="w-16 h-12 md:w-12 md:h-12 rounded-none bg-primary/20 flex items-center justify-center overflow-hidden shrink-0">
-                        <div className="w-full h-full bg-gradient-to-tr from-primary to-orange-400 opacity-80" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold mb-1">Latest Community Hub Update</p>
-                        <p className="text-xs opacity-60 line-clamp-1">How students are saving 40% on textbooks this semester...</p>
-                      </div>
-                      <ExternalLink className="w-4 h-4 opacity-50 md:opacity-0 md:group-hover:opacity-40 transition-opacity" />
-                    </Link>
-                    <Link to="/news" className="bg-white/5 rounded-none p-4 flex items-center gap-4 flex-1 border border-white/5 hover:bg-white/[0.08] transition-colors group cursor-pointer">
-                      <div className="w-16 h-12 md:w-12 md:h-12 rounded-none bg-primary/20 flex items-center justify-center overflow-hidden shrink-0">
-                        <div className="w-full h-full bg-gradient-to-tr from-blue-500 to-indigo-600 opacity-80" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold mb-1">New Vendor Features</p>
-                        <p className="text-xs opacity-60 line-clamp-1">Optimizing your campus store for mobile users...</p>
-                      </div>
-                      <ExternalLink className="w-4 h-4 opacity-50 md:opacity-0 md:group-hover:opacity-40 transition-opacity" />
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="lg:col-span-4 flex flex-col gap-6 lg:items-end">
-              <div className="flex flex-wrap gap-6 items-center lg:justify-end">
-                <div className="group relative">
-                  <div className="absolute -inset-0.5 bg-green-500/20 rounded-full blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
-                  <div className="relative bg-white/[0.03] backdrop-blur-md border border-white/10 rounded-full px-4 py-1.5 flex items-center gap-2.5 shadow-xl transition-all duration-300 group-hover:bg-white/[0.08] group-hover:border-white/20">
-                    <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
-                      <ShieldCheck className="w-3.5 h-3.5 text-green-400" />
-                    </div>
-                    <span className="text-xs font-bold tracking-[0.1em] uppercase text-white/90">Verified Merchant</span>
-                  </div>
+          {/* Trust Features Bar */}
+          <div className="border-t border-white/10 py-7 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-center">
+              {/* Feature 1: Free Shipping & Return */}
+              <div className="flex items-center gap-4 justify-start">
+                <Truck className="w-10 h-10 sm:w-11 sm:h-11 text-white shrink-0 stroke-[1.5]" />
+                <div className="min-w-0">
+                  <h4 className="text-[15px] sm:text-[16px] font-bold text-white tracking-tight leading-snug">
+                    Free Shipping &amp; Return
+                  </h4>
+                  <p className="text-[12px] sm:text-[13px] text-white/60 leading-snug mt-0.5">
+                    Free shipping on orders over $99
+                  </p>
                 </div>
-                <div className="flex items-center gap-6 opacity-80 hover:opacity-100 transition-all duration-500">
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg"
-                    alt="PayPal"
-                    className="h-4 w-auto"
-                  />
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg"
-                    alt="MasterCard"
-                    className="h-6 w-auto"
-                  />
+              </div>
+
+              {/* Feature 2: Customer Support 24/7 */}
+              <div className="flex items-center gap-4 md:justify-center md:border-x md:border-white/10 md:px-4">
+                <Headset className="w-10 h-10 sm:w-11 sm:h-11 text-white shrink-0 stroke-[1.5]" />
+                <div className="min-w-0">
+                  <h4 className="text-[15px] sm:text-[16px] font-bold text-white tracking-tight leading-snug">
+                    Customer Support 24/7
+                  </h4>
+                  <p className="text-[12px] sm:text-[13px] text-white/60 leading-snug mt-0.5">
+                    Instant access to perfect support
+                  </p>
+                </div>
+              </div>
+
+              {/* Feature 3: 100% Secure Payment */}
+              <div className="flex items-center gap-4 md:justify-end">
+                <ShieldCheck className="w-10 h-10 sm:w-11 sm:h-11 text-white shrink-0 stroke-[1.5]" />
+                <div className="min-w-0">
+                  <h4 className="text-[15px] sm:text-[16px] font-bold text-white tracking-tight leading-snug">
+                    100% Secure Payment
+                  </h4>
+                  <p className="text-[12px] sm:text-[13px] text-white/60 leading-snug mt-0.5">
+                    We ensure secure payment!
+                  </p>
                 </div>
               </div>
             </div>
@@ -258,7 +205,7 @@ const Footer = () => {
               </div>
 
               {/* Center: Developers */}
-              <div className="flex items-center gap-1.5 text-xs font-bold tracking-[0.15em] uppercase text-white/40">
+              <div className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-white/50">
                 <span className="whitespace-nowrap">Developed by</span>
                 <a
                   href="#"

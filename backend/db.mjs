@@ -1,5 +1,6 @@
 import { MongoClient } from 'mongodb';
 import { configureMongoDns } from './mongo-dns.mjs';
+import { initializeFinance } from './finance-model.mjs';
 
 export const COLLECTIONS = ['users', 'profiles', 'sessions', 'auth_tokens', 'products', 'orders', 'order_items',
   'transactions', 'payout_requests', 'vendor_payment_methods', 'reviews', 'wishlists', 'coupons', 'deals',
@@ -7,6 +8,7 @@ export const COLLECTIONS = ['users', 'profiles', 'sessions', 'auth_tokens', 'pro
   'navigation_menus', 'media_library', 'uploads', 'revisions', 'vendor_delivery_contacts', 'vendor_follows'];
 
 export async function initializeDatabase(db) {
+  await initializeFinance(db);
   for (const name of COLLECTIONS) {
     await db.collection(name).createIndex({ id: 1 }, { unique: true, sparse: true });
   }

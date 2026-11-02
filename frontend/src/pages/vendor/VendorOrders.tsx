@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { vendorService } from "@/services/vendorService";
-import { api } from "@/integrations/api/client";
+import { api, financeRequest } from "@/integrations/api/client";
 import { Eye, MoreHorizontal, Truck, CheckCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -70,6 +70,11 @@ const VendorOrders = () => {
   const updateOrderStatus = (orderId: string, newStatus: string) => {
     updateStatusMutation.mutate({ orderId, newStatus });
   };
+  const confirmCash = useMutation({
+    mutationFn: (orderId: string) => financeRequest('/vendor/cod/' + orderId + '/confirm', {}),
+    onSuccess: () => { toast.success('Cash receipt confirmed. Buyer confirmation and staff verification are also required.'); void queryClient.invalidateQueries({ queryKey: ['vendor-orders'] }); },
+    onError: (error: Error) => toast.error(error.message),
+  });
 
   const orderColumns = [
     {
@@ -137,6 +142,7 @@ const VendorOrders = () => {
               View Details
             </DropdownMenuItem>
             <DropdownMenuSeparator />
+            {order.payment_method === 'cod' && order.order_status === 'delivered' && order.payment_status === 'pending' && <DropdownMenuItem disabled={confirmCash.isPending} onClick={() => confirmCash.mutate(order.order_id)}>Confirm cash received from buyer</DropdownMenuItem>}
             {order.order_status === 'pending' && (
               <DropdownMenuItem onClick={() => updateOrderStatus(order.order_id, 'confirmed')}>
                 <CheckCircle className="w-4 h-4 mr-2" />

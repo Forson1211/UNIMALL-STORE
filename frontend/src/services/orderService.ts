@@ -38,6 +38,9 @@ export const orderService = {
 };
 
 export interface CartQuote {
+    merchandise_total?: number;
+    delivery_fee?: number;
+    tax?: number;
     items: { id: string; quantity: number; price: number; base_price: number; subtotal: number; discount: number; total: number; stock: number }[];
     subtotal: number;
     discount: number;

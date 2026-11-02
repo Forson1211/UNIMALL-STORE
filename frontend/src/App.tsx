@@ -29,6 +29,8 @@ const About = lazy(() => import("./pages/About"));
 const HowItWorks = lazy(() => import("./pages/HowItWorks"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Checkout = lazy(() => import("./pages/Checkout"));
+const PaymentReturn = lazy(() => import("./pages/PaymentReturn"));
+const Finance = lazy(() => import("./pages/Finance"));
 const Cart = lazy(() => import("./pages/Cart"));
 const PasswordRecovery = lazy(() => import("./pages/PasswordRecovery"));
 const ContentPage = lazy(() => import("./pages/ContentPage"));
@@ -138,6 +140,9 @@ const App = () => (
                     <Route path="/terms" element={<ContentPage slug="terms" fallback={<Terms />} />} />
                     <Route path="/faqs" element={<ContentPage slug="faqs" fallback={<Faqs />} />} />
 
+                    <Route path="/payment-return" element={<PaymentReturn />} />
+                    <Route path="/vendor/finance" element={<ProtectedRoute allowedRoles={["vendor"]}><Finance scope="vendor" /></ProtectedRoute>} />
+                    <Route path="/admin/finance" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><Finance scope="admin" /></ProtectedRoute>} />
                     {/* Buyer Account Routes - Protected for authenticated users */}
                     <Route path="/account" element={
                       <ProtectedRoute>
@@ -212,7 +217,7 @@ const App = () => (
                       </ProtectedRoute>
                     } />
                     <Route path="/admin/payouts" element={
-                      <ProtectedRoute allowedRoles={["admin", "order_manager"]}>
+                      <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
                         <AdminPayouts />
                       </ProtectedRoute>
                     } />

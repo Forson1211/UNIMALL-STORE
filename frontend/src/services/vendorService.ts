@@ -1,4 +1,4 @@
-import { api } from "@/integrations/api/client";
+import { financeRequest, api } from "@/integrations/api/client";
 import { calculateVendorProfileCompleteness } from "@/lib/vendorProfileUtils";
 
 export const packProductMetadata = (product: any) => {
@@ -250,26 +250,9 @@ export const vendorService = {
     },
 
     async getAvailableBalance(vendorId: string) {
-        // Vendors cannot directly read buyers' order rows under RLS. The scoped
-        // view exposes their own totals and excludes cancelled lines on the server.
-        const orders = await this.getOrders(vendorId);
-        const totalEarned = orders.filter(isCollectedVendorOrder)
-            .reduce((sum: number, order: any) => sum + order.vendor_total, 0);
-
-        const { data: payouts, error: pError } = await ((api as any)
-            .from("payout_requests")
-            .select("amount, status")
-            .eq("vendor_id", vendorId)
-            .in("status", ["pending", "approved", "paid"]));
-
-        if (pError) throw pError;
-
-        const totalWithdrawnOrPending = (payouts || []).reduce(
-            (sum: number, p: any) => sum + Number(p.amount),
-            0
-        );
-
-        return Math.max(0, Math.round((totalEarned - totalWithdrawnOrPending) * 100) / 100);
+        if (!vendorId) return 0;
+        const summary = await financeRequest<{ eligible_pesewas: number }>("/vendor/finance/summary");
+        return summary.eligible_pesewas / 100;
     },
 
     async getPayoutRequests(vendorId: string) {

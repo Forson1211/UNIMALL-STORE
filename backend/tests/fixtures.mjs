@@ -13,6 +13,9 @@ export function fixture(seed = {}) {
         if (op === '$gte') return actual >= expected;
         if (op === '$gt') return actual > expected;
         if (op === '$lte') return actual <= expected;
+        if (op === '$lt') return actual < expected;
+        if (op === '$exists') return (actual !== undefined) === expected;
+        if (op === '$nin') return !expected.includes(actual);
         throw new Error('Unimplemented fixture operator: ' + op);
       });
     }
@@ -21,6 +24,7 @@ export function fixture(seed = {}) {
   const rows = name => records[name] ||= [];
   const update = (row, change) => {
     Object.assign(row, structuredClone(change.$set || {}));
+    for (const key of Object.keys(change.$unset || {})) delete row[key];
     for (const [key, value] of Object.entries(change.$inc || {})) row[key] = (row[key] || 0) + value;
     return row;
   };
@@ -29,7 +33,8 @@ export function fixture(seed = {}) {
       findOne: async filter => structuredClone(rows(name).find(row => matches(row, filter)) || null),
       find(filter) {
         let selected = rows(name).filter(row => matches(row, filter));
-        return { limit(value) { selected = selected.slice(0, value); return this; }, toArray: async () => structuredClone(selected) };
+        return { sort(spec) { selected.sort((a, b) => { for (const [key, direction] of Object.entries(spec)) { if (a[key] < b[key]) return -direction; if (a[key] > b[key]) return direction; } return 0; }); return this; },
+          skip(value) { selected = selected.slice(value); return this; }, limit(value) { selected = selected.slice(0, value); return this; }, toArray: async () => structuredClone(selected) };
       },
       countDocuments: async filter => rows(name).filter(row => matches(row, filter)).length,
       insertOne: async row => { rows(name).push(structuredClone(row)); return { insertedId: row.id }; },

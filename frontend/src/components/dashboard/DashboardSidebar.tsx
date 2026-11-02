@@ -55,6 +55,7 @@ interface DashboardSidebarProps {
 }
 
 const adminMenuItems = [
+  { title: "Finance", url: "/admin/finance", icon: Banknote, allowedRoles: ["admin", "super_admin"] },
   { 
     title: "Dashboard", 
     url: "/admin", 
@@ -98,7 +99,7 @@ const adminMenuItems = [
     title: "Payouts",
     url: "/admin/payouts",
     icon: Banknote,
-    allowedRoles: ["admin", "order_manager"]
+    allowedRoles: ["admin", "super_admin"]
   },
   { 
     title: "Reviews", 
@@ -163,6 +164,7 @@ const adminMenuItems = [
 ];
 
 const vendorMenuItems = [
+  { title: "Earnings & Payouts", url: "/vendor/finance", icon: Banknote },
   { title: "Dashboard", url: "/vendor", icon: LayoutDashboard },
   { title: "Store Profile", url: "/vendor/profile", icon: Store },
   { title: "Products", url: "/vendor/products", icon: Package },
@@ -193,12 +195,12 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
   const sections = type === "admin" ? [
     { label: "Overview", paths: ["/admin", "/admin/analytics"] },
     { label: "Marketplace", paths: ["/admin/users", "/admin/vendors", "/admin/products", "/admin/orders", "/admin/reviews", "/admin/coupons", "/admin/deals"] },
-    { label: "Operations", paths: ["/admin/transactions", "/admin/payouts", "/admin/messages", "/admin/support", "/admin/notifications"] },
+    { label: "Operations", paths: ["/admin/finance", "/admin/transactions", "/admin/payouts", "/admin/messages", "/admin/support", "/admin/notifications"] },
     { label: "Website & settings", paths: ["/admin/content", "/admin/site-customization", "/admin/logs", "/admin/settings"] },
   ] : [
     { label: "Overview", paths: ["/vendor", "/vendor/sales-insights"] },
     { label: "Store management", paths: ["/vendor/products", "/vendor/orders", "/vendor/catalog-health", "/vendor/inventory", "/vendor/coupons", "/vendor/reviews"] },
-    { label: "Your account", paths: ["/vendor/profile", "/vendor/notifications", "/vendor/settings"] },
+    { label: "Your account", paths: ["/vendor/finance", "/vendor/profile", "/vendor/notifications", "/vendor/settings"] },
   ];
   const closeMobile = () => { if (isMobile) setOpenMobile(false); };
   const logout = async () => {

@@ -1,6 +1,7 @@
 import { transact } from './db.mjs';
 import { approved, cents, fail, hasRole, identity, staff, text, timestamp } from './security.mjs';
 import { lineCents, quoteCart } from './pricing.mjs';
+import { account, balance, commission, financeSettings, id as financeId, money } from './finance-model.mjs';
 
 export const ORDER_STAFF = ['order_manager'];
 export const VENDOR_STAFF = ['vendor_manager'];
@@ -25,7 +26,7 @@ export async function lockAccount(db, session, userId) {
   return user;
 }
 
-async function checkout(ctx, params) {
+export async function checkout(ctx, params) {
   const { db, client, user } = ctx;
   const buyerId = identity(user);
   if (params._buyer_id !== buyerId) fail(403, 'The buyer must match the signed-in account.');
@@ -34,7 +35,8 @@ async function checkout(ctx, params) {
     await lockAccount(db, session, buyerId);
     const previous = await db.collection('orders').findOne({ buyer_id: buyerId, checkout_request_id: requestId }, { session });
     if (previous) return previous.id;
-    if (params._payment_method !== 'cod') fail(400, 'Only cash on delivery is currently supported.');
+    const financial = ctx.finance;
+    if (!financial && params._payment_method !== 'cod') fail(400, 'Use the secure checkout endpoint for online payments.');
     const shipping = params._shipping_details || {};
     const details = { fullName: text(shipping.fullName, 'full name', 2, 120), email: text(shipping.email, 'email address', 3, 254),
       phone: text(shipping.phone, 'phone number', 9, 30), address: text(shipping.address, 'delivery address', 4, 1000), digitalAddress: typeof shipping.digitalAddress === 'string' ? shipping.digitalAddress.slice(0, 100) : '' };
@@ -42,13 +44,22 @@ async function checkout(ctx, params) {
     const quote = await quoteCart(db, params._items, params._coupon_code, session);
     const items = quote.items;
     for (const sellerId of [...new Set(items.map(item => item.vendor_id))].sort()) {
-      if (!approved(await lockAccount(db, session, sellerId))) fail(409, 'A store is no longer available. Refresh your cart.');
+      const vendor = await lockAccount(db, session, sellerId);
+      if (!approved(vendor)) fail(409, 'A store is no longer available. Refresh your cart.');
+      if (financial && params._payment_method === 'cod') {
+        if (!financial.settings.cod_enabled || vendor.cod_enabled === false || (financial.settings.cod_vendor_ids.length && !financial.settings.cod_vendor_ids.includes(sellerId))) fail(400, 'Cash on delivery is unavailable for this seller.');
+        if (await balance(db, account('cod_receivable', sellerId), session, true) >= financial.settings.max_cod_receivable_pesewas) fail(409, 'This seller is temporarily unavailable for cash on delivery.');
+      }
     }
     const snapshots = [];
     let total = 0;
     for (const item of [...items].sort((a, b) => String(a.id).localeCompare(String(b.id)))) {
       if (typeof item.id !== 'string' || !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 99) fail(400, 'Invalid product quantity.');
       const product = { id: item.id, vendor_id: item.vendor_id, name: item.name, image_url: item.image, stock: item.stock };
+      if (financial && params._payment_method === 'cod' && financial.settings.cod_categories.length) {
+        const stored = await db.collection('products').findOne({ id: item.id }, { session });
+        if (!financial.settings.cod_categories.includes(stored.category)) fail(400, 'Cash on delivery is unavailable for this category.');
+      }
       const unit = cents(item.price);
       if (unit <= 0 || product.stock < item.quantity) fail(409, `Not enough available stock for ${product.name}.`);
       const result = await db.collection('products').updateOne({ id: product.id, stock: { $gte: item.quantity } }, { $inc: { stock: -item.quantity }, $set: { updated_at: timestamp() } }, { session });
@@ -58,9 +69,18 @@ async function checkout(ctx, params) {
         price_at_purchase: unit / 100, unit_price: unit / 100,
         discount_amount: item.discount, total_price: item.total,
         product_name: product.name, product_image: product.image_url, fulfillment_status: 'pending', created_at: timestamp() });
+      if (financial) {
+        const gross = cents(item.total), fee = commission(gross, financial.settings.commission_bps);
+        Object.assign(snapshots.at(-1), { finance_version: 1, currency: 'GHS', gross_pesewas: gross, commission_bps: financial.settings.commission_bps,
+          commission_pesewas: fee, entitlement_pesewas: gross - fee, refunded_pesewas: 0, stock_released: false, version: 1 });
+      }
       if (product.stock > 3 && product.stock - item.quantity <= 3) await notify(db, session, product.vendor_id, 'low_stock', 'Low Stock', `${product.name} is running low.`, '/vendor/products', 'warning');
     }
-    if (cents(params._total_amount) !== total) fail(409, 'Prices have changed. Refresh your cart before ordering.');
+    if (!financial && cents(params._total_amount) !== total) fail(409, 'Prices have changed. Refresh your cart before ordering.');
+    const merchandise = total, delivery = financial?.settings.delivery_fee_pesewas || 0, tax = financial ? commission(total, financial.settings.tax_bps) : 0;
+    total += delivery + tax;
+    if (financial) money(total, 'checkout total');
+    if (financial && params._payment_method === 'paystack' && !total) fail(400, 'A zero-total order cannot use online payment. Choose cash on delivery.');
     if (quote.coupon_id) {
       // All orders using a code write the same document, so transaction retries enforce its usage limit.
       const result = await db.collection('coupons').updateOne({ id: quote.coupon_id, status: 'active' }, { $inc: { usage_count: 1 } }, { session });
@@ -69,9 +89,14 @@ async function checkout(ctx, params) {
     const id = crypto.randomUUID();
     await db.collection('orders').insertOne({ id, buyer_id: buyerId, checkout_request_id: requestId, total_amount: total / 100,
       subtotal: quote.subtotal, discount_amount: quote.discount, coupon_code: quote.coupon_code,
-      status: 'pending', shipping_address: details.address, shipping_details: details, payment_method: 'cod', payment_status: 'pending', created_at: timestamp() }, { session });
+      ...(financial ? { finance_version: 1, currency: 'GHS', total_pesewas: total, merchandise_pesewas: merchandise, delivery_pesewas: delivery, tax_pesewas: tax, version: 1 } : {}),
+      status: 'pending', shipping_address: details.address, shipping_details: details, payment_method: params._payment_method, payment_status: 'pending', created_at: timestamp() }, { session });
     await db.collection('order_items').insertMany(snapshots.map(item => ({ ...item, order_id: id })), { session });
-    await db.collection('transactions').insertOne({ id: crypto.randomUUID(), user_id: buyerId, amount: total / 100, currency: 'GHS', type: 'payment', status: 'pending', payment_method: 'cod', reference_id: id, created_at: timestamp() }, { session });
+    if (financial) await db.collection('payments').insertOne({ id: financeId(), order_id: id, buyer_id: buyerId, reference: 'uni_' + id.replaceAll('-', ''),
+      provider: params._payment_method === 'cod' ? 'cod' : 'paystack', amount_pesewas: total, currency: 'GHS', status: params._payment_method === 'cod' ? 'pending' : 'initiated',
+      estimated_fee_pesewas: params._payment_method === 'cod' ? 0 : commission(total, financial.settings.estimated_processing_fee_bps), fee_bearer: 'platform',
+      mode: ctx.config.paystackTestMode ? 'test' : 'live', expires_at: new Date(Date.now() + (ctx.config.checkoutExpiryMinutes || 30) * 60000).toISOString(), created_at: timestamp(), version: 1 }, { session });
+    await db.collection('transactions').insertOne({ id: crypto.randomUUID(), user_id: buyerId, amount: total / 100, currency: 'GHS', type: 'payment', status: 'pending', payment_method: params._payment_method, reference_id: id, created_at: timestamp() }, { session });
     for (const sellerId of new Set(snapshots.map(item => item.vendor_id))) await notify(db, session, sellerId, 'new_order', 'New Order Received', 'You have a new order for your items.', '/vendor/orders', 'success');
     return id;
   });
@@ -87,10 +112,11 @@ async function fulfill(ctx, params, buyerCancellation = false) {
     const order = await db.collection('orders').findOne({ id: params._order_id }, { session });
     if (!order) fail(404, 'Order not found.');
     const all = await db.collection('order_items').find({ order_id: order.id }, { session }).toArray();
+    if (order.finance_version && order.payment_method === 'paystack' && newStatus !== 'cancelled' && !['successful', 'partially_refunded'].includes(order.payment_status)) fail(409, 'Payment must be verified before fulfillment.');
     if (buyerCancellation) {
       if (order.buyer_id !== actor.id) fail(404, 'Order not found in your account.');
       if (all.length && all.every(line => line.fulfillment_status === 'cancelled')) return true;
-      if (order.payment_status !== 'pending' || all.some(line => !['pending', 'confirmed', 'processing', 'cancelled'].includes(line.fulfillment_status))) fail(409, 'This order has already been dispatched or paid. Contact support for help.');
+      if (!['pending', 'initiated', 'failed'].includes(order.payment_status) || all.some(line => !['pending', 'confirmed', 'processing', 'cancelled'].includes(line.fulfillment_status))) fail(409, 'This order has already been dispatched or paid. Contact support for help.');
     }
     const isStaff = hasRole(actor, 'admin', ...ORDER_STAFF);
     const lines = all.filter(line => buyerCancellation || isStaff || (approved(actor) && line.vendor_id === actor.id));
@@ -100,15 +126,15 @@ async function fulfill(ctx, params, buyerCancellation = false) {
       const old = line.fulfillment_status;
       if (old === newStatus || old === 'cancelled') continue;
       const allowed = (newStatus === 'confirmed' && old === 'pending') || (newStatus === 'shipped' && ['confirmed', 'processing'].includes(old)) ||
-        (newStatus === 'delivered' && old === 'shipped') || (newStatus === 'cancelled' && ['pending', 'confirmed', 'processing'].includes(old) && order.payment_status === 'pending');
+        (newStatus === 'delivered' && old === 'shipped') || (newStatus === 'cancelled' && ['pending', 'confirmed', 'processing'].includes(old) && ['pending', 'initiated', 'failed'].includes(order.payment_status));
       if (!allowed) fail(409, 'This fulfillment transition is not allowed.');
       if (newStatus === 'cancelled') await db.collection('products').updateOne({ id: line.product_id }, { $inc: { stock: line.quantity } }, { session });
-      await db.collection('order_items').updateOne({ id: line.id }, { $set: { fulfillment_status: newStatus } }, { session });
+      await db.collection('order_items').updateOne({ id: line.id }, { $set: { fulfillment_status: newStatus, ...(order.finance_version && newStatus === 'delivered' ? { vendor_delivered_at: timestamp() } : {}), ...(newStatus === 'cancelled' ? { stock_released: true } : {}) } }, { session });
       line.fulfillment_status = newStatus;
     }
     const status = aggregateStatus(all.map(line => line.fulfillment_status));
     const total = all.filter(line => line.fulfillment_status !== 'cancelled').reduce((sum, line) => sum + lineCents(line), 0) / 100;
-    await db.collection('orders').updateOne({ id: order.id }, { $set: { status, total_amount: total, updated_at: timestamp() } }, { session });
+    await db.collection('orders').updateOne({ id: order.id }, { $set: { status, ...(order.finance_version ? {} : { total_amount: total }), updated_at: timestamp() } }, { session });
     await db.collection('transactions').updateMany({ reference_id: order.id, type: 'payment', status: 'pending' }, { $set: { amount: total, ...(status === 'cancelled' ? { status: 'failed' } : {}) } }, { session });
     if (buyerCancellation) {
       for (const vendorId of new Set(all.map(line => line.vendor_id))) await notify(db, session, vendorId, 'new_order', 'Order cancelled', 'The buyer cancelled an order before dispatch. Reserved stock has been restored.', '/vendor/orders', 'warning');
@@ -142,17 +168,30 @@ async function requestPayout(ctx, params) {
 
 export async function commerceRpc(ctx, name, params) {
   const { db, client, user } = ctx;
-  if (name === 'quote_checkout') return quoteCart(db, params._items, params._coupon_code);
+  if (name === 'quote_checkout') {
+    const quote = await quoteCart(db, params._items, params._coupon_code);
+    if (!ctx.config) return quote;
+    const settings = await financeSettings(db, ctx.config), delivery = settings.delivery_fee_pesewas, tax = commission(cents(quote.total), settings.tax_bps);
+    return { ...quote, merchandise_total: quote.total, delivery_fee: delivery / 100, tax: tax / 100, total: (cents(quote.total) + delivery + tax) / 100 };
+  }
   if (['get_user_role', 'get_user_role_text', 'get_vendor_status'].includes(name)) {
     identity(user);
     if (params._user_id !== user.id) fail(403, 'Account permissions are private.');
     return name === 'get_vendor_status' ? user.vendor_status : user.role;
   }
-  if (['create_order_v2', 'create_order_secure'].includes(name)) return checkout(ctx, { ...params, _request_id: params._request_id || (name === 'create_order_secure' ? crypto.randomUUID() : undefined) });
+  if (['create_order_v2', 'create_order_secure'].includes(name)) {
+    if (ctx.config) {
+      if (params._payment_method !== 'cod') fail(400, 'Use /api/checkout for online payment.');
+      const result = await (await import('./finance.mjs')).createCheckout(ctx, { items: params._items, coupon_code: params._coupon_code, shipping_details: params._shipping_details, request_id: params._request_id, payment_method: 'cod' });
+      return result.order_id;
+    }
+    return checkout(ctx, { ...params, _request_id: params._request_id || (name === 'create_order_secure' ? crypto.randomUUID() : undefined) });
+  }
   if (name === 'update_order_fulfillment') return fulfill(ctx, params);
   if (name === 'cancel_buyer_order') return fulfill(ctx, params, true);
-  if (name === 'request_vendor_payout') return requestPayout(ctx, params);
+  if (name === 'request_vendor_payout') { if (ctx.config) fail(409, 'Eligible online earnings are paid through reviewed weekly finance batches.'); return requestPayout(ctx, params); }
   if (name === 'mark_order_collected') {
+    if (ctx.config) return (await import('./finance.mjs')).collectCod(ctx, params._order_id);
     staff(user, ...ORDER_STAFF);
     return transact(client, async session => {
       const actor = await lockAccount(db, session, user.id); staff(actor, ...ORDER_STAFF);
@@ -166,6 +205,7 @@ export async function commerceRpc(ctx, name, params) {
     });
   }
   if (name === 'approve_payout_request') {
+    if (ctx.config) fail(409, 'Use finance batches. Online payouts require provider-confirmed settlement.');
     staff(user, ...ORDER_STAFF);
     return transact(client, async session => {
       const actor = await lockAccount(db, session, user.id); staff(actor, ...ORDER_STAFF);

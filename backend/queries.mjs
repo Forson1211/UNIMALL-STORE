@@ -193,7 +193,7 @@ async function pipelineFor(db, user, resource) {
       ...(table === 'active_flash_deals' ? [{ $match: { product: { $ne: null } } }, { $set: { name: '$product.name', image: '$product.image_url', stock: '$product.stock', original_price: '$product.price', category: '$product.category', vendor_name: '$vendor.store_name' } }] : [])] };
   }
   if (table === 'vendor_payment_methods' || table === 'payout_requests') {
-    identity(user); return { collection: table, pipeline: [{ $match: orderStaff && table === 'payout_requests' ? {} : { vendor_id: user.id } }] };
+    identity(user); return { collection: table, pipeline: [{ $match: orderStaff && table === 'payout_requests' ? {} : { vendor_id: user.id } }, { $unset: ['details', 'payment_details', 'encrypted_details', 'encrypted_payment_details'] }] };
   }
   if (table === 'vendor_delivery_contacts') { identity(user); return { collection: table, pipeline: [{ $match: { vendor_id: user.id } }] }; }
   if (table === 'vendor_follows') { identity(user); return { collection: table, pipeline: [{ $match: { user_id: user.id } }] }; }
@@ -436,6 +436,7 @@ export async function mutateQuery(ctx, query) {
   let user = ctx.user;
   identity(user);
   const table = aliases[query.table] || query.table;
+  if (ctx.config && table === 'vendor_payment_methods') fail(403, 'Use the verified, encrypted payout account settings in Earnings & Payouts.');
   if (!Object.hasOwn(fields, table)) fail(403, 'This resource cannot be modified directly.');
   const op = query.operation;
   const inputs = Array.isArray(query.values) ? query.values : [query.values];
@@ -466,24 +467,50 @@ export async function mutateQuery(ctx, query) {
         if (table === 'products' && record.stock > 3 && data.stock <= 3) await notify(db, session, record.vendor_id, 'low_stock', 'Low Stock', `${record.name} is running low.`, '/vendor/products', 'warning');
       }
     } else if (['insert', 'upsert'].includes(op)) {
-      for (const input of inputs) {
-        if (!input || typeof input !== 'object') fail(400, 'Invalid record.');
-        if (input.user_id && !hasRole(user, 'admin') && input.user_id !== user.id) fail(403, 'Record owner must match your account.');
-        let existing = null;
-        if (op === 'upsert') {
-          if (table === 'wishlists') existing = await db.collection(table).findOne({ user_id: user.id, product_id: input.product_id }, { session });
-          else if (table === 'site_settings') { staff(user, ...contentRoles); existing = await db.collection(table).findOne({ setting_key: input.setting_key }, { session }); }
-          else fail(400, 'Upsert is not supported for this resource.');
+      if (table === 'site_settings' && op === 'upsert') {
+        staff(user, ...contentRoles);
+        const keys = inputs.map(i => i?.setting_key).filter(Boolean);
+        const existingDocs = await db.collection(table).find({ setting_key: { $in: keys } }, { session }).toArray();
+        const existingMap = new Map(existingDocs.map(d => [d.setting_key, d]));
+        const writes = [];
+        for (const input of inputs) {
+          if (!input || typeof input !== 'object') fail(400, 'Invalid record.');
+          const existing = existingMap.get(input.setting_key);
+          if (existing) {
+            const data = await validateWrite(db, session, user, table, input, existing);
+            writes.push({ updateOne: { filter: { id: existing.id }, update: { $set: { ...data, updated_at: timestamp() } } } });
+            results.push({ ...existing, ...data });
+          } else {
+            writeScope(user, table);
+            const data = await validateWrite(db, session, user, table, input, null);
+            const doc = { ...data, id: crypto.randomUUID(), created_at: timestamp(), updated_at: timestamp() };
+            writes.push({ insertOne: { document: doc } });
+            results.push(doc);
+          }
         }
-        if (existing) { const data = await validateWrite(db, session, user, table, input, existing); await db.collection(table).updateOne({ id: existing.id }, { $set: data }, { session }); results.push({ ...existing, ...data }); }
-        else {
-          // Insert permissions are checked independently of ownership update scopes.
-          if (['profiles', 'messages', 'reviews', 'wishlists', 'support_tickets'].includes(table)) { if (table === 'profiles') fail(403, 'Profiles are created when accounts are registered.'); }
-          else writeScope(user, table);
-          const data = await validateWrite(db, session, user, table, input, null);
-          const doc = { ...data, id: crypto.randomUUID(), created_at: timestamp(), updated_at: timestamp() };
-          await db.collection(table).insertOne(doc, { session }); results.push(doc);
-          if (table === 'reviews') { const product = await db.collection('products').findOne({ id: doc.product_id }, { session }); if (product) await notify(db, session, product.vendor_id, 'product_reviews', 'New Review', 'A customer reviewed your product.', '/vendor/reviews'); }
+        if (writes.length) {
+          await db.collection(table).bulkWrite(writes, { session });
+        }
+      } else {
+        for (const input of inputs) {
+          if (!input || typeof input !== 'object') fail(400, 'Invalid record.');
+          if (input.user_id && !hasRole(user, 'admin') && input.user_id !== user.id) fail(403, 'Record owner must match your account.');
+          let existing = null;
+          if (op === 'upsert') {
+            if (table === 'wishlists') existing = await db.collection(table).findOne({ user_id: user.id, product_id: input.product_id }, { session });
+            else if (table === 'site_settings') { staff(user, ...contentRoles); existing = await db.collection(table).findOne({ setting_key: input.setting_key }, { session }); }
+            else fail(400, 'Upsert is not supported for this resource.');
+          }
+          if (existing) { const data = await validateWrite(db, session, user, table, input, existing); await db.collection(table).updateOne({ id: existing.id }, { $set: data }, { session }); results.push({ ...existing, ...data }); }
+          else {
+            // Insert permissions are checked independently of ownership update scopes.
+            if (['profiles', 'messages', 'reviews', 'wishlists', 'support_tickets'].includes(table)) { if (table === 'profiles') fail(403, 'Profiles are created when accounts are registered.'); }
+            else writeScope(user, table);
+            const data = await validateWrite(db, session, user, table, input, null);
+            const doc = { ...data, id: crypto.randomUUID(), created_at: timestamp(), updated_at: timestamp() };
+            await db.collection(table).insertOne(doc, { session }); results.push(doc);
+            if (table === 'reviews') { const product = await db.collection('products').findOne({ id: doc.product_id }, { session }); if (product) await notify(db, session, product.vendor_id, 'product_reviews', 'New Review', 'A customer reviewed your product.', '/vendor/reviews'); }
+          }
         }
       }
     } else fail(400, 'Unsupported write operation.');

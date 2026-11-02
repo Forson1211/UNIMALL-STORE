@@ -3,25 +3,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, CheckCircle, CreditCard, ShieldCheck, Sparkles, Upload, Smartphone, Landmark, Trash2, WalletCards, Store } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Store } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useSiteSettingsContext } from "@/contexts/SiteSettingsContext";
-import { api } from "@/integrations/api/client";
+import { financeRequest, api } from "@/integrations/api/client";
 import { vendorService } from "@/services/vendorService";
 import { useState, useEffect, useRef } from "react";
-import { PRODUCT_CATEGORIES } from "@/lib/categories";
 
 const CAMPUS_OPTIONS = [
   "University of Ghana",
@@ -61,74 +56,14 @@ const VendorSettings = () => {
   });
   const [passwordForm, setPasswordForm] = useState({ current: "", next: "", confirm: "" });
   const [passwordLoading, setPasswordLoading] = useState(false);
-  const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
-  const [paymentMethodForm, setPaymentMethodForm] = useState({ type: "momo" as "momo" | "bank", label: "", accountNumber: "" });
-  const queryClient = useQueryClient();
-
-  const { data: balance, error: balanceError, isLoading: balanceLoading } = useQuery({
-    queryKey: ["vendor-balance", user?.id],
-    queryFn: () => vendorService.getAvailableBalance(user!.id),
-    enabled: !!user,
-    refetchInterval: 15000,
+  const { data: finance, error: balanceError } = useQuery({
+    queryKey: ["finance-summary", "vendor"],
+    queryFn: () => financeRequest<{ eligible_pesewas: number; reserved_pesewas: number; payout_account: { masked_account: string } | null }>("/vendor/finance/summary"),
+    enabled: !!user && canSell, refetchInterval: 15000,
   });
-
-  const { data: paymentMethods = [], error: methodsError } = useQuery({
-    queryKey: ["vendor-payment-methods", user?.id],
-    queryFn: () => vendorService.getPaymentMethods(user!.id),
-    enabled: !!user,
-  });
-
-  const { data: payoutRequests = [], error: payoutsError } = useQuery({
-    queryKey: ["vendor-payout-requests", user?.id],
-    queryFn: () => vendorService.getPayoutRequests(user!.id),
-    enabled: !!user,
-    refetchInterval: 15000,
-  });
-
-  const hasPendingPayout = (payoutRequests || []).some((p: any) => ["pending", "approved"].includes(p.status));
-
-  const requestPayoutMutation = useMutation({
-    mutationFn: () => {
-      const method = paymentMethods.find((m: any) => m.is_default) || paymentMethods[0];
-      if (!method) throw new Error("Add a payment method first");
-      return vendorService.requestPayout(user!.id, balance || 0, method.id);
-    },
-    onSuccess: () => {
-      toast.success("Payout requested! We'll process it shortly.");
-      queryClient.invalidateQueries({ queryKey: ["vendor-payout-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["vendor-balance"] });
-    },
-    onError: (error: any) => toast.error(error.message || "Failed to request payout"),
-  });
-
-  const addPaymentMethodMutation = useMutation({
-    mutationFn: () => vendorService.addPaymentMethod(user!.id, {
-      type: paymentMethodForm.type,
-      label: paymentMethodForm.label.trim(),
-      details: { accountNumber: paymentMethodForm.accountNumber.trim() },
-    }),
-    onSuccess: () => {
-      toast.success("Payment method added");
-      queryClient.invalidateQueries({ queryKey: ["vendor-payment-methods"] });
-      setIsAddPaymentOpen(false);
-      setPaymentMethodForm({ type: "momo", label: "", accountNumber: "" });
-    },
-    onError: (error: any) => toast.error(error.message || "Failed to add payment method"),
-  });
-
-  const deletePaymentMethodMutation = useMutation({
-    mutationFn: (id: string) => vendorService.deletePaymentMethod(id),
-    onSuccess: () => {
-      toast.success("Payment method removed");
-      queryClient.invalidateQueries({ queryKey: ["vendor-payment-methods"] });
-    },
-    onError: (error: any) => toast.error(error.message || "Failed to remove payment method"),
-  });
-  const setDefaultMethodMutation = useMutation({
-    mutationFn: (id: string) => vendorService.setDefaultPaymentMethod(user!.id, id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['vendor-payment-methods'] }); toast.success('Default payout destination updated'); },
-    onError: (error: Error) => toast.error(error.message),
-  });
+  const balance = (finance?.eligible_pesewas || 0) / 100;
+  const hasPendingPayout = (finance?.reserved_pesewas || 0) > 0;
+  const paymentMethods = finance?.payout_account ? [finance.payout_account] : [];
 
   const notificationPreferences = {
     ...DEFAULT_NOTIFICATION_PREFERENCES,
@@ -344,112 +279,11 @@ const VendorSettings = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="payments">
-          <Card>
-            <CardHeader>
-              <CardTitle>Payment Settings</CardTitle>
-              <CardDescription>Manage your payout preferences</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {!canSell && <p role="status" className="text-sm text-amber-700">Payout destinations and requests become available after staff approval.</p>}
-              {(balanceError || methodsError || payoutsError) && <p role="alert" className="text-sm text-destructive">Payout details could not be loaded. {(balanceError || methodsError || payoutsError)?.message}</p>}
-              <div className="p-4 rounded-lg bg-muted/50">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-muted-foreground">Available Balance</span>
-                  <span className="text-2xl font-bold">GH₵{(balance || 0).toFixed(2)}</span>
-                </div>
-                <Button
-                  className="w-full"
-                  disabled={!canSell || balanceLoading || !!balanceError || !!methodsError || !!payoutsError || Number(balance || 0) < 10 || hasPendingPayout || paymentMethods.length === 0 || requestPayoutMutation.isPending}
-                  onClick={() => requestPayoutMutation.mutate()}
-                >
-                  {hasPendingPayout ? "Payout Pending" : requestPayoutMutation.isPending ? "Requesting..." : "Request Payout"}
-                </Button>
-                {paymentMethods.length === 0 && (
-                  <p className="text-xs text-muted-foreground mt-2">Add a payment method below before requesting a payout.</p>
-                )}
-              </div>
-
-              <Separator />
-
-              <div className="space-y-2">
-                <Label>Payout Method</Label>
-                <div className="grid gap-3">
-                  {paymentMethods.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No payment methods added yet.</p>
-                  ) : (
-                    paymentMethods.map((method: any) => (
-                      <div key={method.id} className={`p-4 rounded-lg border-2 ${method.is_default ? "border-primary bg-primary/5" : "border-border"}`}>
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
-                              {method.type === "momo" ? <Smartphone className="w-5 h-5" /> : <Landmark className="w-5 h-5" />}
-                            </div>
-                            <div>
-                              <p className="font-medium">{method.label}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {method.type === "momo" ? "Mobile Money" : "Bank Account"} · **** {String(method.details?.accountNumber || "").slice(-4)}
-                              </p>
-                            </div>
-                          </div>
-                          {!method.is_default && <Button variant="outline" size="sm" disabled={!canSell || setDefaultMethodMutation.isPending} onClick={() => setDefaultMethodMutation.mutate(method.id)}>Make default</Button>}
-                          {method.is_default && <Badge variant="outline">Default</Badge>}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            aria-label={`Remove ${method.label}`}
-                            disabled={!canSell || deletePaymentMethodMutation.isPending}
-                            onClick={() => deletePaymentMethodMutation.mutate(method.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-                <Button variant="outline" className="mt-2" disabled={!canSell} onClick={() => setIsAddPaymentOpen(true)}>Add Payment Method</Button>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-2">
-                <Label>Payout Schedule</Label>
-                <p className="text-sm text-muted-foreground">Payouts are reviewed and processed by the Unimall team, typically within a few business days.</p>
-              </div>
-
-              {payoutRequests.length > 0 && (
-                <>
-                  <Separator />
-                  <div className="space-y-2">
-                    <Label>Recent Payout Requests</Label>
-                    <div className="space-y-2">
-                      {payoutRequests.slice(0, 5).map((p: any) => (
-                        <div key={p.id} className="flex items-center justify-between text-sm p-3 rounded-lg bg-muted/30">
-                          <div>
-                            <p className="font-medium">GH₵{Number(p.amount).toFixed(2)}</p>
-                            <p className="text-xs text-muted-foreground">{new Date(p.requested_at).toLocaleDateString()}</p>
-                          </div>
-                          <Badge
-                            variant="outline"
-                            className={
-                              p.status === "paid" ? "bg-primary/10 text-primary border-primary/20" :
-                              p.status === "rejected" ? "bg-destructive/10 text-destructive border-destructive/20" :
-                              "bg-muted text-muted-foreground"
-                            }
-                          >
-                            {p.status}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+        <TabsContent value="payments"><Card><CardHeader><CardTitle>Earnings & Payouts</CardTitle><CardDescription>View pending, eligible and reserved earnings, Friday payout history, and your verified payout account.</CardDescription></CardHeader><CardContent className="space-y-4">
+          {balanceError && <p role="alert">{balanceError.message}</p>}
+          <p>Eligible earnings: GHS {balance.toFixed(2)}</p><p className="text-sm text-muted-foreground">Minimum GHS 20. Buyer confirmation and the delivery waiting period apply. COD cash is separate from online earnings.</p>
+          <Button asChild disabled={!canSell}><Link to="/vendor/finance">Manage earnings and payout account</Link></Button>
+        </CardContent></Card></TabsContent>
 
         <TabsContent value="security">
           <Card>
@@ -513,55 +347,6 @@ const VendorSettings = () => {
         </Tabs>
       </div>
 
-      <Dialog open={isAddPaymentOpen} onOpenChange={setIsAddPaymentOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Payment Method</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label>Type</Label>
-              <Select
-                value={paymentMethodForm.type}
-                onValueChange={(val: "momo" | "bank") => setPaymentMethodForm({ ...paymentMethodForm, type: val })}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="momo">Mobile Money</SelectItem>
-                  <SelectItem value="bank">Bank Account</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="pm-label">Label (e.g. MTN MoMo, GCB Bank)</Label>
-              <Input
-                id="pm-label"
-                value={paymentMethodForm.label}
-                onChange={(e) => setPaymentMethodForm({ ...paymentMethodForm, label: e.target.value })}
-                placeholder="MTN MoMo"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="pm-account">{paymentMethodForm.type === "momo" ? "Mobile Money Number" : "Account Number"}</Label>
-              <Input
-                id="pm-account"
-                value={paymentMethodForm.accountNumber}
-                onChange={(e) => setPaymentMethodForm({ ...paymentMethodForm, accountNumber: e.target.value })}
-                placeholder="024XXXXXXX"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddPaymentOpen(false)}>Cancel</Button>
-            <Button
-              disabled={!paymentMethodForm.label.trim() || !paymentMethodForm.accountNumber.trim() || addPaymentMethodMutation.isPending}
-              onClick={() => addPaymentMethodMutation.mutate()}
-            >
-              {addPaymentMethodMutation.isPending ? "Saving..." : "Add Method"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </DashboardLayout>
   );
 };

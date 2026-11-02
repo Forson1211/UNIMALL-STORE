@@ -1,5 +1,5 @@
-const { auth, from } = vi.hoisted(() => ({ auth: { getUser: vi.fn() }, from: vi.fn() }));
-vi.mock("@/integrations/api/client", () => ({ api: { auth, from } }));
+const { auth, from, financeRequest } = vi.hoisted(() => ({ auth: { getUser: vi.fn() }, from: vi.fn(), financeRequest: vi.fn() }));
+vi.mock("@/integrations/api/client", () => ({ api: { auth, from }, financeRequest }));
 import { vendorService, packProductMetadata, unpackProductMetadata, validateProductInput } from "./vendorService";
 import { calculateVendorProfileCompleteness } from "@/lib/vendorProfileUtils";
 
@@ -103,12 +103,11 @@ it("counts only delivered and collected orders as revenue", async () => {
   vi.restoreAllMocks();
 });
 
-it("excludes cancelled vendor lines from the payout balance of delivered orders", async () => {
-  from.mockReturnValueOnce(query({ data: [
-    { vendor_total: 50, order_status: "delivered", payment_status: "paid" },
-    { vendor_total: 0, order_status: "cancelled", payment_status: "paid" },
-  ] })).mockReturnValueOnce(query({ data: [{ amount: 10, status: "approved" }] }));
+it("uses only server ledger eligibility for payout balance, excluding gross sales and COD cash", async () => {
+  financeRequest.mockResolvedValue({ eligible_pesewas: 4000, pending_pesewas: 10000, reserved_pesewas: 2000, cod_commission_owed_pesewas: 500 });
   expect(await vendorService.getAvailableBalance(vendorId)).toBe(40);
+  expect(financeRequest).toHaveBeenCalledWith("/vendor/finance/summary");
+  expect(from).not.toHaveBeenCalled();
 });
 
 it("derives availability from current stock instead of stale embedded status", () => {
@@ -117,12 +116,11 @@ it("derives availability from current stock instead of stale embedded status", (
   expect(unpackProductMetadata({ ...row, stock: 4, is_active: false }).status).toBe("draft");
 });
 
-it("rounds available earnings to cents before requesting a payout", async () => {
-  from.mockReturnValueOnce(query({ data: [
-    { vendor_total: 10.1, order_status: "delivered", payment_status: "paid" },
-    { vendor_total: 10.2, order_status: "delivered", payment_status: "paid" },
-  ] })).mockReturnValueOnce(query({ data: [] }));
+it("preserves server pesewas and exposes finance outages instead of fabricating an available balance", async () => {
+  financeRequest.mockResolvedValueOnce({ eligible_pesewas: 2030 });
   expect(await vendorService.getAvailableBalance(vendorId)).toBe(20.3);
+  financeRequest.mockRejectedValueOnce(new Error("Finance unavailable"));
+  await expect(vendorService.getAvailableBalance(vendorId)).rejects.toThrow("Finance unavailable");
 });
 
 it.each([-1, 1.5, NaN, Infinity, "", null])("rejects invalid stock %s", stock => {

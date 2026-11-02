@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -10,9 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, ArrowLeft, Check, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/integrations/api/client";
+import { api, financeRequest } from "@/integrations/api/client";
 import { matchesOrder, ORDER_STEPS, orderProgress, orderStatusMessage } from "@/lib/orderTracking";
 import { toast } from "sonner";
+import ItemFinanceActions, { FinancialItem } from '@/components/orders/ItemFinanceActions';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
 interface BuyerOrder {
@@ -21,11 +22,12 @@ interface BuyerOrder {
   shipping_details: { fullName?: string; phone?: string; email?: string };
   trackingNumber: string;
   coupon_code?: string; discount_amount?: number;
-  order_items: { quantity: number; price_at_purchase: number; total_price?: number; discount_amount?: number; fulfillment_status?: string; products: { id: string; name: string; image_url: string } | null }[];
+  order_items: (FinancialItem & { quantity: number; price_at_purchase: number; total_price?: number; discount_amount?: number; products: { id: string; name: string; image_url: string } | null })[];
 }
 const date = (value: string) => new Date(value).toLocaleString("en-GH", { timeZone: "Africa/Accra", dateStyle: "medium", timeStyle: "short" });
 export default function BuyerOrders() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const tab = params.get("tab") === "tracking" ? "tracking" : "all";
   const [trackingId, setTrackingId] = useState(params.get("order") || "");
@@ -37,7 +39,7 @@ export default function BuyerOrders() {
     refetchOnMount: true, refetchOnWindowFocus: true,
     queryFn: async (): Promise<BuyerOrder[]> => {
       const { data, error } = await api.from("orders")
-        .select("*, order_items(quantity, price_at_purchase, total_price, discount_amount, fulfillment_status, products(id, name, image_url))")
+        .select("*, order_items(id, finance_version, buyer_confirmed_at, buyer_cash_confirmed_at, quantity, price_at_purchase, total_price, discount_amount, fulfillment_status, products(id, name, image_url))")
         .eq("buyer_id", user!.id).order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []).map(order => ({
@@ -59,6 +61,7 @@ export default function BuyerOrders() {
     onSuccess: () => { void client.invalidateQueries({ queryKey: ["buyer-orders", user?.id] }); toast.success("Order cancelled. Reserved stock has been restored."); },
     onError: (error: Error) => { toast.error(error.message); void refetch(); },
   });
+  const checkPayment = useMutation({ mutationFn: (orderId: string) => financeRequest<{ id: string }>('/orders/' + orderId + '/payment'), onSuccess: p => navigate('/payment-return?payment=' + p.id), onError: (error: Error) => toast.error(error.message) });
   const changeTab = (value: string) => {
     const next = new URLSearchParams(params); next.set("tab", value); setParams(next);
   };
@@ -86,9 +89,9 @@ export default function BuyerOrders() {
               <div><CardTitle className="text-lg">Order {order.id.slice(0, 8).toUpperCase()}</CardTitle><p className="text-sm text-muted-foreground mt-1">{date(order.created_at)}</p><p className="text-xs text-muted-foreground mt-1">{order.trackingNumber}</p></div>
               <div className="space-y-2"><Badge variant={["delivered", "completed"].includes(order.status) ? "default" : "secondary"}>{order.status}</Badge><p className="font-bold">GH₵{order.total_amount.toFixed(2)}</p></div>
             </CardHeader>
-            <CardContent className="p-6"><div className="space-y-3 mb-5">{order.order_items.map((item, index) => <div key={index} className="flex items-center gap-4"><img src={item.products?.image_url || "/placeholder.svg"} alt={item.products?.name || "Purchased product"} className="w-14 h-14 rounded-lg object-cover" /><div className="flex-1">{item.products ? <Link className="font-semibold hover:text-primary" to={"/products/" + item.products.id}>{item.products.name}</Link> : <p>Product no longer listed</p>}<p className="text-sm text-muted-foreground">Qty: {item.quantity} · GH₵{Number(item.price_at_purchase).toFixed(2)}</p></div></div>)}</div>
+            <CardContent className="p-6"><p className="mb-4 text-sm capitalize">Payment: {order.payment_status.replace(/_/g, " ")}</p><div className="space-y-3 mb-5">{order.order_items.map((item, index) => <div key={index} className="flex items-center gap-4"><img src={item.products?.image_url || "/placeholder.svg"} alt={item.products?.name || "Purchased product"} className="w-14 h-14 rounded-lg object-cover" /><div className="flex-1">{item.products ? <Link className="font-semibold hover:text-primary" to={"/products/" + item.products.id}>{item.products.name}</Link> : <p>Product no longer listed</p>}<p className="text-sm text-muted-foreground">Qty: {item.quantity} · GH₵{Number(item.price_at_purchase).toFixed(2)}</p><ItemFinanceActions item={item} cod={order.payment_method === "cod"} /></div></div>)}</div>
               {!!order.discount_amount && <p className="text-sm text-emerald-700 mb-3">Coupon {order.coupon_code}: GHS {order.discount_amount.toFixed(2)} saved at checkout.</p>}
-              <div className="flex justify-between items-center gap-4 flex-wrap"><p className="text-sm text-muted-foreground">{orderStatusMessage(order.status)}</p><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => track(order)}>Details & tracking</Button>
+              <div className="flex justify-between items-center gap-4 flex-wrap"><p className="text-sm text-muted-foreground">{orderStatusMessage(order.status)}</p><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => track(order)}>Details & tracking</Button>{order.payment_method === 'paystack' && <Button variant="outline" disabled={checkPayment.isPending} onClick={() => checkPayment.mutate(order.id)}>Check payment</Button>}
                 {order.payment_status === "pending" && ["pending", "confirmed", "processing"].includes(order.status) && !order.order_items.some(item => ["shipped", "delivered"].includes(item.fulfillment_status || "")) && <AlertDialog><AlertDialogTrigger asChild><Button variant="outline" disabled={cancel.isPending}>Cancel order</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Cancel this order?</AlertDialogTitle><AlertDialogDescription>This cancels all items before dispatch and returns them to the sellers' stock.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep order</AlertDialogCancel><AlertDialogAction onClick={() => cancel.mutate(order.id)}>Cancel order</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>}
               </div></div>
             </CardContent>

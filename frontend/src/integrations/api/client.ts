@@ -29,6 +29,12 @@ async function request(path: string, body?: unknown, options: { signal?: AbortSi
   }
 }
 
+export async function financeRequest<T>(path: string, body?: unknown, method?: string): Promise<T> {
+  const result = await request(path, body, { method });
+  if (result.error) throw result.error;
+  return result.data.data as T;
+}
+
 class ResourceQuery implements PromiseLike<ApiResult> {
   private spec: Record<string, any>;
   private signal?: AbortSignal;

@@ -32,11 +32,20 @@ const DEFAULT_SHOP_SLIDES: ShopHeroSlide[] = [
 
 const ShopHeroCarousel = () => {
   const { getSetting } = useSiteSettingsContext();
-  const configuredSlides = getSetting("shop_slider_images", DEFAULT_SHOP_SLIDES);
+  const savedSlides = getSetting("shop_slider_images", DEFAULT_SHOP_SLIDES);
+  const legacyDefaults = [
+    ["Hot Campus Deals", "photo-1526170315870-ef6876b84782"],
+    ["Fresh Vendor Drops", "photo-1519389950473-47ba0277781c"],
+    ["Sell On Unimall", "photo-1556742049-0cfed4f6a45d"],
+  ];
+  const hasLegacyDefaults = Array.isArray(savedSlides) && savedSlides.length === legacyDefaults.length
+    && savedSlides.every((slide, i) => slide.title === legacyDefaults[i][0] && String(slide.image || slide.src || "").includes(legacyDefaults[i][1]));
+  const configuredSlides = hasLegacyDefaults ? DEFAULT_SHOP_SLIDES : savedSlides;
   const slides: ShopHeroSlide[] = Array.isArray(configuredSlides) && configuredSlides.length > 0
     ? configuredSlides.map((s, idx) => ({
         ...DEFAULT_SHOP_SLIDES[idx % DEFAULT_SHOP_SLIDES.length],
         ...s,
+        banner: s.banner === true,
         image: s.image || (s as any).src || DEFAULT_SHOP_SLIDES[idx % DEFAULT_SHOP_SLIDES.length]?.image
       }))
     : DEFAULT_SHOP_SLIDES;
@@ -61,12 +70,12 @@ const ShopHeroCarousel = () => {
       <section aria-label="Shop banner" className="relative mb-6 w-full overflow-hidden bg-[#ffda9b]">
         <img src={slideImage} alt="Shopping trolley filled with colourful bags" className="block h-auto w-full" loading="eager" fetchPriority="high" />
         <div className="absolute inset-0 mx-auto grid max-w-[1280px] grid-cols-2 items-center px-4 xl:px-0">
-          <div className="space-y-2 py-2 text-left md:space-y-4 md:py-6">
+          <div className="space-y-1.5 py-1.5 text-left md:space-y-4 md:py-6">
             <h1 className="whitespace-pre-line text-[clamp(1.125rem,5.2vw,1.75rem)] font-black leading-[1.05] tracking-tight text-gray-900 sm:text-4xl md:text-5xl lg:text-6xl">
               {slide.title}
             </h1>
             <p className="text-[9px] font-medium text-gray-700 sm:text-xs md:text-base lg:text-lg">{slide.subtitle}</p>
-            <a href={slide.ctaLink || "#all-products"} className="inline-flex items-center gap-1 bg-[#FF5500] px-3 py-2 text-[8px] font-bold uppercase tracking-wider text-white transition-colors hover:bg-[#df4900] sm:text-[10px] md:px-6 md:py-3 md:text-xs">
+            <a href={slide.ctaLink || "#all-products"} className="inline-flex items-center gap-1 bg-[#FF5500] px-3 py-1.5 text-[8px] font-bold uppercase tracking-wider text-white transition-colors hover:bg-[#df4900] sm:py-2 sm:text-[10px] md:px-6 md:py-3 md:text-xs">
               {slide.cta}
               <ChevronRight className="h-3 w-3 md:h-4 md:w-4" />
             </a>

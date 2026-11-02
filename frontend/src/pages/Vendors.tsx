@@ -169,8 +169,9 @@ const Vendors = () => {
             fetchPriority="high"
           />
           <div className="absolute inset-0 mx-auto grid max-w-[1280px] grid-cols-2 items-center px-4 xl:px-0">
-            <h1 className="text-[clamp(1.125rem,5.5vw,1.5rem)] font-black leading-[1.05] tracking-tight text-white sm:text-3xl md:text-5xl lg:text-6xl">
-              Find Your<br />Favourite Vendor
+            <h1 className="text-[clamp(0.875rem,4.2vw,1.5rem)] font-black leading-[1.08] tracking-tight text-white sm:text-3xl md:text-4xl lg:text-5xl xl:text-[64px]">
+              <span className="block whitespace-nowrap">Find Your</span>
+              <span className="block whitespace-nowrap">Favourite Vendor</span>
             </h1>
           </div>
         </section>
